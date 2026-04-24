@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="en">
@@ -364,18 +363,17 @@ const STATUS_LABELS = {'pending':'⏳ Pending','approved':'✅ Approved','declin
 const PRIORITY_COLORS = {'urgent':'priority-urgent','normal':'priority-normal','scheduled':'priority-scheduled'};
 
 async function loadAll(){
-  el('loading').style.display='flex';
-  el('app').style.display='none';
+  if(el('loading')) el('loading').style.display='flex';
+  if(el('app')) el('app').style.display='none';
   try{
-    state.bookings = await apiFetch('/bookings');
-    el('loading').style.display='none';
-    el('app').style.display='block';
-    renderAll();
+    const result = await apiFetch('/bookings');
+    state.bookings = Array.isArray(result) ? result : [];
   }catch(e){
-    el('loading').style.display='none';
-    el('app').style.display='block';
-    renderAll();
+    state.bookings = [];
   }
+  if(el('loading')) el('loading').style.display='none';
+  if(el('app')) el('app').style.display='block';
+  try{ renderAll(); }catch(e){ console.error('renderAll error:',e); }
 }
 
 function renderAll(){
