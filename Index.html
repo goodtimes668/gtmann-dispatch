@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="en">
@@ -12,12 +13,12 @@ body{margin:0;padding:0;font-family:'DM Sans',sans-serif;background:#0a0a0a;colo
 .page{padding:20px 16px 110px;max-width:640px;margin:0 auto;display:none}
 .page.active{display:block}
 .tv-input{width:100%;padding:14px 16px;background:#1a1a1a;border:2px solid #2a2a2a;border-radius:14px;font-size:16px;font-family:'DM Sans',sans-serif;outline:none;color:#fff;-webkit-appearance:none;display:block}
-.tv-input:focus{border-color:#f59e0b;background:#1e1e1e}
+.tv-input:focus{border-color:#38bdf8;background:#1e1e1e}
 .tv-label{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:8px}
 .tv-badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap}
 .tv-card{background:#1a1a1a;border-radius:20px;padding:20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
 .tv-btn{display:block;width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center}
-.btn-amber{background:#f59e0b;color:#0a0a0a}
+.btn-amber{background:#38bdf8;color:#0a0a0a}
 .btn-dark{background:#222;color:#fff}
 .btn-ghost{background:#1e1e1e;color:#ccc;border:1px solid #2a2a2a}
 .btn-green{background:#059669;color:#fff}
@@ -29,8 +30,8 @@ textarea.tv-input{resize:vertical;min-height:80px}
 .topbar-inner{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto}
 .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #1e1e1e;display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom,0px)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0 9px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555;font-size:10px;font-weight:500;position:relative}
-.nav-btn.active{color:#f59e0b;font-weight:700}
-.nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:3px;background:#f59e0b;border-radius:0 0 3px 3px}
+.nav-btn.active{color:#38bdf8;font-weight:700}
+.nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:3px;background:#38bdf8;border-radius:0 0 3px 3px}
 .nav-icon{font-size:20px}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;display:none;flex-direction:column;justify-content:flex-end}
 .modal-bg.open{display:flex}
@@ -45,7 +46,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
 .divider{height:1px;background:#1e1e1e;margin:16px 0}
 
 /* Status badges */
-.status-pending{background:#292005;color:#f59e0b;border:1px solid #854d0e}
+.status-pending{background:#292005;color:#38bdf8;border:1px solid #854d0e}
 .status-approved{background:#052e16;color:#4ade80;border:1px solid #166534}
 .status-declined{background:#2d0a0a;color:#f87171;border:1px solid #991b1b}
 .status-completed{background:#0c1a2e;color:#60a5fa;border:1px solid #1e40af}
@@ -62,14 +63,14 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
 .cal-day-label{text-align:center;font-size:11px;font-weight:700;color:#555;padding:6px 0}
 .cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;position:relative;border:1.5px solid transparent}
 .cal-day:hover{background:#1e1e1e}
-.cal-day.today{border-color:#f59e0b}
-.cal-day.selected{background:#f59e0b;color:#0a0a0a}
-.cal-day.has-booking::after{content:’’;position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#f59e0b}
+.cal-day.today{border-color:#38bdf8}
+.cal-day.selected{background:#38bdf8;color:#0a0a0a}
+.cal-day.has-booking::after{content:’’;position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#38bdf8}
 .cal-day.selected.has-booking::after{background:#0a0a0a}
 .cal-day.other-month{opacity:0.25}
 .cal-day-num{font-size:13px;font-weight:600}
-.week-slot{background:#1a1a1a;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid #f59e0b}
-.booking-card{background:#1a1a1a;border-radius:18px;padding:18px;margin-bottom:12px;border-left:4px solid #f59e0b}
+.week-slot{background:#1a1a1a;border-radius:14px;padding:14px;margin-bottom:8px;border-left:4px solid #38bdf8}
+.booking-card{background:#1a1a1a;border-radius:18px;padding:18px;margin-bottom:12px;border-left:4px solid #38bdf8}
 
 /* Loading */
 .loading{position:fixed;inset:0;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
@@ -89,7 +90,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
 
 <div id="loading" class="loading">
   <div style="font-size:32px">🚚</div>
-  <div style="color:#f59e0b;font-size:13px;letter-spacing:0.15em;font-family:'DM Mono',monospace" id="loadingText">LOADING...</div>
+  <div style="color:#38bdf8;font-size:13px;letter-spacing:0.15em;font-family:'DM Mono',monospace" id="loadingText">LOADING...</div>
 </div>
 
 <!-- App -->
@@ -101,7 +102,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
   <div class="topbar">
     <div class="topbar-inner">
       <div style="display:flex;align-items:center;gap:11px">
-        <div style="width:36px;height:36px;background:#f59e0b;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🚚</div>
+        <div style="width:36px;height:36px;background:#38bdf8;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🚚</div>
         <div>
           <div style="font-family:'DM Mono',monospace;color:#fff;font-size:14px;font-weight:500">GT Mann Dispatch</div>
           <div style="color:#555;font-size:11px;margin-top:1px">Delivery & Booking</div>
@@ -141,7 +142,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
       </div>
       <div id="stat-pending" style="background:#1a1a1a;border-radius:20px;padding:18px">
         <div style="font-size:20px;margin-bottom:10px">⏳</div>
-        <div style="font-size:36px;font-weight:800;color:#f59e0b;line-height:1">0</div>
+        <div style="font-size:36px;font-weight:800;color:#38bdf8;line-height:1">0</div>
         <div style="font-size:13px;font-weight:600;color:#666;margin-top:6px">Pending</div>
       </div>
       <div id="stat-today" style="background:#1a1a1a;border-radius:20px;padding:18px">
@@ -162,7 +163,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
     </div>
     <h2>Quick Actions</h2>
     <div class="grid2" style="margin-bottom:20px">
-      <button onclick="openBookingForm('delivery')" style="background:#f59e0b;border-radius:18px;padding:20px 16px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:10px;font-family:'DM Sans',sans-serif">
+      <button onclick="openBookingForm('delivery')" style="background:#38bdf8;border-radius:18px;padding:20px 16px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:10px;font-family:'DM Sans',sans-serif">
         <span style="font-size:22px">📦</span><span style="font-size:15px;font-weight:700;color:#0a0a0a;text-align:left;line-height:1.3">Material Delivery</span>
       </button>
       <button onclick="openBookingForm('pickup')" style="background:#1a1a1a;border-radius:18px;padding:20px 16px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:10px;font-family:'DM Sans',sans-serif;border:1px solid #2a2a2a">
@@ -214,11 +215,11 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
   <div id="pg-brent" class="page" style="position:relative;z-index:1">
     <h1>Brent's Jobs</h1>
     <div style="background:#1a1a1a;border-radius:18px;padding:16px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
-      <div style="width:48px;height:48px;background:#f59e0b;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👷</div>
+      <div style="width:48px;height:48px;background:#38bdf8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👷</div>
       <div>
         <div style="font-size:17px;font-weight:700;color:#fff">Brent</div>
         <div style="font-size:13px;color:#888;margin-top:2px">Driver & Delivery Coordinator</div>
-        <div id="brentJobCount" style="font-size:13px;color:#f59e0b;margin-top:2px;font-weight:600"></div>
+        <div id="brentJobCount" style="font-size:13px;color:#38bdf8;margin-top:2px;font-weight:600"></div>
       </div>
     </div>
     <h2>Pending Approval</h2>
@@ -275,7 +276,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
         <div>
           <label class="tv-label">Type</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="typeButtons">
-            <button class="type-btn active-type" data-type="delivery" onclick="setBookingType('delivery')" style="padding:12px;border-radius:12px;border:2px solid #f59e0b;background:#1e1a0a;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#f59e0b">📦 Material Delivery</button>
+            <button class="type-btn active-type" data-type="delivery" onclick="setBookingType('delivery')" style="padding:12px;border-radius:12px;border:2px solid #38bdf8;background:#0c1a2e;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#38bdf8">📦 Material Delivery</button>
             <button class="type-btn" data-type="pickup" onclick="setBookingType('pickup')" style="padding:12px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#666">🔧 Tool Pickup</button>
             <button class="type-btn" data-type="tool-delivery" onclick="setBookingType('tool-delivery')" style="padding:12px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#666">🚚 Tool Delivery</button>
             <button class="type-btn" data-type="misc" onclick="setBookingType('misc')" style="padding:12px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#666">📝 Misc Task</button>
@@ -293,7 +294,7 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
           <label class="tv-label">Priority *</label>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
             <button class="priority-btn" data-priority="urgent" onclick="setPriority('urgent')" style="padding:11px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#666">🚨 Urgent</button>
-            <button class="priority-btn active-priority" data-priority="normal" onclick="setPriority('normal')" style="padding:11px;border-radius:12px;border:2px solid #f59e0b;background:#1e1a0a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#f59e0b">📋 Normal</button>
+            <button class="priority-btn active-priority" data-priority="normal" onclick="setPriority('normal')" style="padding:11px;border-radius:12px;border:2px solid #38bdf8;background:#0c1a2e;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#38bdf8">📋 Normal</button>
             <button class="priority-btn" data-priority="scheduled" onclick="setPriority('scheduled')" style="padding:11px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#666">📅 Planned</button>
           </div>
         </div>
@@ -317,12 +318,18 @@ h2{font-size:16px;font-weight:700;color:#fff;margin:0 0 12px}
 
 <script>
 const SLACK_WEBHOOK = ''; // Optional: add your Slack webhook URL here
-const DB_KEY = 'gtmann-bookings';
+const API = 'https://toolvault-slack-backend-production.up.railway.app/api';
 const SITES_KEY = 'gtmann-sites';
 const NOTIF_KEY = 'gtmann-notifs';
 
+async function apiFetch(path, opts={}){
+  const res = await fetch(API+path, {headers:{'Content-Type':'application/json'},...opts, body:opts.body?JSON.stringify(opts.body):undefined});
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+
 let state = {
-  bookings: JSON.parse(localStorage.getItem(DB_KEY)||'[]'),
+  bookings: [],
   jobSites: JSON.parse(localStorage.getItem(SITES_KEY)||'["Grand & Fir","GT Mann Main Office","Warehouse"]'),
   notifications: JSON.parse(localStorage.getItem(NOTIF_KEY)||'[]'),
   bookingType: 'delivery',
@@ -333,8 +340,7 @@ let state = {
   filter: 'all'
 };
 
-function save(){
-  localStorage.setItem(DB_KEY, JSON.stringify(state.bookings));
+function saveLocal(){
   localStorage.setItem(SITES_KEY, JSON.stringify(state.jobSites));
   localStorage.setItem(NOTIF_KEY, JSON.stringify(state.notifications));
 }
@@ -357,14 +363,19 @@ const STATUS_COLORS = {'pending':'status-pending','approved':'status-approved','
 const STATUS_LABELS = {'pending':'⏳ Pending','approved':'✅ Approved','declined':'❌ Declined','completed':'🏁 Completed','in-progress':'🔄 In Progress'};
 const PRIORITY_COLORS = {'urgent':'priority-urgent','normal':'priority-normal','scheduled':'priority-scheduled'};
 
-function loadAll(){
+async function loadAll(){
   el('loading').style.display='flex';
   el('app').style.display='none';
-  setTimeout(()=>{
+  try{
+    state.bookings = await apiFetch('/bookings');
     el('loading').style.display='none';
     el('app').style.display='block';
     renderAll();
-  }, 400);
+  }catch(e){
+    el('loading').style.display='none';
+    el('app').style.display='block';
+    renderAll();
+  }
 }
 
 function renderAll(){
@@ -402,7 +413,7 @@ function renderDashboard(){
 
 function bookingCardHTML(b, compact=false){
   const typeIcon = b.type==='delivery'?'📦':b.type==='pickup'?'🔧':b.type==='tool-delivery'?'🚚':'📝';
-  const borderColor = b.priority==='urgent'?'#dc2626':b.status==='approved'?'#059669':b.status==='completed'?'#2563eb':'#f59e0b';
+  const borderColor = b.priority==='urgent'?'#dc2626':b.status==='approved'?'#059669':b.status==='completed'?'#2563eb':'#38bdf8';
   return `<div class="booking-card" style="border-left-color:${borderColor};cursor:pointer" onclick="openDetail('${b.id}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
       <div style="flex:1;padding-right:12px">
@@ -416,7 +427,7 @@ function bookingCardHTML(b, compact=false){
     </div>
     <div style="font-size:14px;color:#aaa;margin-bottom:10px;line-height:1.5">${b.description.length>80?b.description.slice(0,80)+'...':b.description}</div>
     <div style="display:flex;gap:16px">
-      <div><div class="info-label">Date</div><div class="info-val" style="color:#f59e0b">${fmtDate(b.date)}</div></div>
+      <div><div class="info-label">Date</div><div class="info-val" style="color:#38bdf8">${fmtDate(b.date)}</div></div>
       ${b.time?`<div><div class="info-label">Time</div><div class="info-val">${fmtTime(b.time)}</div></div>`:''}
     </div>
   </div>`;
@@ -438,13 +449,13 @@ function openDetail(id){
     <div class="grid2" style="margin-bottom:16px">
       <div><div class="info-label">Requested By</div><div class="info-val">${b.requester}</div></div>
       <div><div class="info-label">Job Site</div><div class="info-val">${b.site||'—'}</div></div>
-      <div><div class="info-label">Date</div><div class="info-val" style="color:#f59e0b">${fmtDate(b.date)}</div></div>
+      <div><div class="info-label">Date</div><div class="info-val" style="color:#38bdf8">${fmtDate(b.date)}</div></div>
       <div><div class="info-label">Time</div><div class="info-val">${b.time?fmtTime(b.time):'Not specified'}</div></div>
       ${b.pickupLocation?`<div style="grid-column:span 2"><div class="info-label">Pickup Location</div><div class="info-val">${b.pickupLocation}</div></div>`:''}
     </div>
     <div style="margin-bottom:16px"><div class="info-label">Description</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:14px;margin-top:6px">${b.description}</div></div>
     ${b.notes?`<div style="margin-bottom:16px"><div class="info-label">Notes</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:14px;margin-top:6px">${b.notes}</div></div>`:''}
-    ${b.brentNotes?`<div style="margin-bottom:16px"><div class="info-label">Brent's Notes</div><div style="font-size:14px;color:#f59e0b;line-height:1.6;background:#1a1a0a;border-radius:12px;padding:14px;margin-top:6px">${b.brentNotes}</div></div>`:''}
+    ${b.brentNotes?`<div style="margin-bottom:16px"><div class="info-label">Brent's Notes</div><div style="font-size:14px;color:#38bdf8;line-height:1.6;background:#1a1a0a;border-radius:12px;padding:14px;margin-top:6px">${b.brentNotes}</div></div>`:''}
     <div class="info-label" style="margin-bottom:8px">Submitted ${new Date(b.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
     <div class="divider"></div>
     ${b.status==='pending'?`
@@ -475,9 +486,12 @@ const b = state.bookings.find(x=>x.id===id);
 if(!b) return;
 const notesEl = el(‘detail-notes’);
 if(notesEl && notesEl.value) b.brentNotes = notesEl.value;
+try{
+await apiFetch(’/bookings/’+id,{method:‘PUT’,body:{status, brentNotes: b.brentNotes}});
+}catch(e){}
 b.status = status;
 b.updatedAt = new Date().toISOString();
-save();
+saveLocal();
 // Add notification
 const msgs = {‘approved’:’✅ Booking approved by Brent: ‘+TYPE_LABELS[b.type]+’ for ’+b.site,‘declined’:’❌ Booking declined: ‘+TYPE_LABELS[b.type]+’ for ’+b.site,‘completed’:’🏁 Job completed by Brent: ‘+TYPE_LABELS[b.type]+’ for ’+b.site,‘in-progress’:’🔄 Brent started: ‘+TYPE_LABELS[b.type]+’ for ’+b.site};
 if(msgs[status]) addNotification(msgs[status]);
@@ -487,10 +501,11 @@ renderAll();
 
 function deleteBooking(id){
 if(!confirm(‘Delete this booking?’)) return;
+try{ await apiFetch(’/bookings/’+id,{method:‘DELETE’}); }catch(e){}
 state.bookings = state.bookings.filter(b=>b.id!==id);
-save();
+saveLocal();
 closeModal(‘detailModal’);
-renderAll();
+await loadAll();
 }
 
 function renderBookingsList(){
@@ -604,7 +619,7 @@ const dateStr = d.toISOString().split(‘T’)[0];
 const isT = dateStr===todayStr;
 const isSel = dateStr===state.selectedDate;
 const hasBk = bookingDays.has(dateStr);
-html+=`<div onclick="selectDate('${dateStr}')" style="text-align:center;cursor:pointer;padding:10px 4px;border-radius:12px;background:${isSel?'#f59e0b':isT?'#1e1a0a':'#1a1a1a'};border:${isT&&!isSel?'1.5px solid #f59e0b':'1.5px solid transparent'}"> <div style="font-size:11px;font-weight:600;color:${isSel?'#0a0a0a':'#888'};margin-bottom:4px">${days[i]}</div> <div style="font-size:16px;font-weight:700;color:${isSel?'#0a0a0a':isT?'#f59e0b':'#fff'}">${d.getDate()}</div> ${hasBk?`<div style="width:5px;height:5px;border-radius:50%;background:${isSel?'#0a0a0a':'#f59e0b'};margin:4px auto 0"></div>`:'<div style="height:9px"></div>'} </div>`;
+html+=`<div onclick="selectDate('${dateStr}')" style="text-align:center;cursor:pointer;padding:10px 4px;border-radius:12px;background:${isSel?'#38bdf8':isT?'#0c1a2e':'#1a1a1a'};border:${isT&&!isSel?'1.5px solid #38bdf8':'1.5px solid transparent'}"> <div style="font-size:11px;font-weight:600;color:${isSel?'#0a0a0a':'#888'};margin-bottom:4px">${days[i]}</div> <div style="font-size:16px;font-weight:700;color:${isSel?'#0a0a0a':isT?'#38bdf8':'#fff'}">${d.getDate()}</div> ${hasBk?`<div style="width:5px;height:5px;border-radius:50%;background:${isSel?'#0a0a0a':'#38bdf8'};margin:4px auto 0"></div>`:'<div style="height:9px"></div>'} </div>`;
 }
 html+=’</div>’;
 el(‘calContainer’).innerHTML=html;
@@ -647,9 +662,9 @@ function setBookingType(type){
 state.bookingType=type;
 document.querySelectorAll(’.type-btn’).forEach(btn=>{
 const active=btn.dataset.type===type;
-btn.style.border=active?‘2px solid #f59e0b’:‘2px solid #2a2a2a’;
-btn.style.background=active?’#1e1a0a’:’#1a1a1a’;
-btn.style.color=active?’#f59e0b’:’#666’;
+btn.style.border=active?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
+btn.style.background=active?’#0c1a2e’:’#1a1a1a’;
+btn.style.color=active?’#38bdf8’:’#666’;
 });
 el(‘bk-pickupDiv’).style.display=(type===‘pickup’||type===‘tool-delivery’)?‘block’:‘none’;
 }
@@ -658,9 +673,9 @@ function setPriority(p){
 state.priority=p;
 document.querySelectorAll(’.priority-btn’).forEach(btn=>{
 const active=btn.dataset.priority===p;
-btn.style.border=active?‘2px solid #f59e0b’:‘2px solid #2a2a2a’;
-btn.style.background=active?’#1e1a0a’:’#1a1a1a’;
-btn.style.color=active?’#f59e0b’:’#666’;
+btn.style.border=active?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
+btn.style.background=active?’#0c1a2e’:’#1a1a1a’;
+btn.style.color=active?’#38bdf8’:’#666’;
 });
 }
 
@@ -694,20 +709,17 @@ description:desc,date,time:el(‘bk-time’).value,
 priority:state.priority,notes:el(‘bk-notes’).value,
 status:‘pending’,createdAt:new Date().toISOString()
 };
-state.bookings.push(booking);
-save();
-addNotification(`📬 New ${TYPE_LABELS[booking.type]} request from ${requester} for ${fmtDate(date)}`);
-// Send to Slack if webhook configured
-if(SLACK_WEBHOOK){
 try{
-await fetch(SLACK_WEBHOOK,{method:‘POST’,body:JSON.stringify({
-text:`🚚 *New Booking Request — GT Mann*\n*Type:* ${TYPE_LABELS[booking.type]}\n*From:* ${requester}\n*Site:* ${site||'TBD'}\n*Date:* ${fmtDate(date)}${booking.time?' at '+fmtTime(booking.time):''}\n*Priority:* ${booking.priority.toUpperCase()}\n*Description:* ${desc}${booking.notes?'\n*Notes:* '+booking.notes:''}`,
-username:‘GT Mann Dispatch’,icon_emoji:’:truck:’
-}),headers:{‘Content-Type’:‘application/json’}});
-}catch(e){}
+const saved = await apiFetch(’/bookings’,{method:‘POST’,body:booking});
+state.bookings.push(saved);
+addNotification(`📬 New ${TYPE_LABELS[booking.type]} request from ${requester} for ${fmtDate(date)}`);
+}catch(e){
+alert(’Failed to submit booking: ’+e.message);
+el(‘bk-submit’).textContent=‘Submit Booking Request’;el(‘bk-submit’).disabled=false;
+return;
 }
 closeModal(‘bookingModal’);
-renderAll();
+await loadAll();
 el(‘bk-submit’).textContent=‘Submit Booking Request’;el(‘bk-submit’).disabled=false;
 }
 
