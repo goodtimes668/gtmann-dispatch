@@ -3,169 +3,152 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <title>GT Mann Dispatch</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#0a0a0a;color:#fff;min-height:100vh}
-.topbar{background:#111;padding:14px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e1e1e;position:sticky;top:0;z-index:10}
-.logo{width:36px;height:36px;background:#38bdf8;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.page{padding:20px 16px 110px;max-width:640px;margin:0 auto}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.stat{background:#1a1a1a;border-radius:18px;padding:18px}
-.btn{display:block;width:100%;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center}
-.card{background:#1a1a1a;border-radius:18px;padding:18px;margin-bottom:12px;border-left:4px solid #38bdf8}
-.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #1e1e1e;display:flex}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 0 10px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555;font-size:10px;font-weight:500}
-.nav-btn.active{color:#38bdf8;font-weight:700}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:none;flex-direction:column;justify-content:flex-end;pointer-events:none}
-.modal-bg.open{display:flex;pointer-events:all}
-.modal{background:#111;border-radius:28px 28px 0 0;padding:24px 20px 32px;max-height:92vh;overflow-y:auto;border-top:1px solid #222}
-.handle{width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 20px}
-input,select,textarea{width:100%;padding:14px 16px;background:#1a1a1a;border:2px solid #2a2a2a;border-radius:14px;font-size:16px;font-family:'DM Sans',sans-serif;color:#fff;outline:none;-webkit-appearance:none;display:block}
-input:focus,select:focus,textarea:focus{border-color:#38bdf8}
-label{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:8px;margin-top:14px}
-textarea{resize:vertical;min-height:80px}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
-.badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
-h1{font-size:24px;font-weight:800;margin-bottom:20px}
-h2{font-size:16px;font-weight:700;margin:20px 0 10px}
+body{font-family:sans-serif;background:#0a0a0a;color:#fff;padding:20px}
+button{cursor:pointer;font-family:sans-serif}
+.btn{background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;width:100%;margin-bottom:12px}
+.ghost{background:#1a1a1a;color:#fff;border:1px solid #333}
+.card{background:#1a1a1a;border-radius:16px;padding:18px;margin-bottom:12px}
 .hidden{display:none}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;justify-content:flex-end;z-index:100}
+.sheet{background:#111;border-radius:24px 24px 0 0;padding:24px 20px 40px;max-height:90vh;overflow-y:auto}
+input,select,textarea{width:100%;padding:14px;background:#1a1a1a;border:2px solid #333;border-radius:12px;font-size:16px;color:#fff;outline:none;font-family:sans-serif;display:block;margin-bottom:14px}
+input:focus,select:focus,textarea:focus{border-color:#38bdf8}
+textarea{resize:vertical;min-height:80px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;-webkit-appearance:none}
+.lbl{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #222;display:flex;padding-bottom:env(safe-area-inset-bottom,0)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0;background:none;border:none;cursor:pointer;color:#555;font-size:10px;font-weight:500;font-family:sans-serif}
+.nb.on{color:#38bdf8;font-weight:700}
+.pg{padding-bottom:90px}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo">🚚</div>
-  <div>
-    <div style="font-size:14px;font-weight:700;color:#fff">GT Mann Dispatch</div>
-    <div style="font-size:11px;color:#555">Delivery & Booking</div>
-  </div>
-  <button onclick="loadData()" style="margin-left:auto;background:#1e1e1e;border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px">🔄</button>
-</div>
+<!-- Pages -->
 
-<!-- Dashboard -->
-
-<div id="pg-dashboard" class="page">
-  <h1>Dashboard</h1>
-  <div class="g2" style="margin-bottom:20px">
-    <div style="background:#111;border-radius:20px;padding:20px;grid-column:span 2;border:1px solid #1e1e1e">
-      <div id="todayStr" style="font-size:20px;font-weight:800"></div>
-      <div id="brentStr" style="font-size:13px;color:#38bdf8;margin-top:6px;font-weight:600">Loading...</div>
+<div id="pg-home" class="pg">
+  <div style="display:flex;align-items:center;gap:12px;padding:4px 0 20px">
+    <div style="width:38px;height:38px;background:#38bdf8;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px">🚚</div>
+    <div>
+      <div style="font-size:15px;font-weight:700">GT Mann Dispatch</div>
+      <div style="font-size:12px;color:#555">Delivery & Booking</div>
     </div>
-    <div class="stat"><div style="font-size:18px;margin-bottom:8px">⏳</div><div id="nPending" style="font-size:34px;font-weight:800;color:#f59e0b">0</div><div style="font-size:13px;color:#666;margin-top:4px">Pending</div></div>
-    <div class="stat"><div style="font-size:18px;margin-bottom:8px">📅</div><div id="nToday" style="font-size:34px;font-weight:800;color:#4ade80">0</div><div style="font-size:13px;color:#666;margin-top:4px">Today</div></div>
-    <div class="stat"><div style="font-size:18px;margin-bottom:8px">📋</div><div id="nWeek" style="font-size:34px;font-weight:800;color:#60a5fa">0</div><div style="font-size:13px;color:#666;margin-top:4px">This Week</div></div>
-    <div class="stat"><div style="font-size:18px;margin-bottom:8px">🚨</div><div id="nUrgent" style="font-size:34px;font-weight:800;color:#f87171">0</div><div style="font-size:13px;color:#666;margin-top:4px">Urgent</div></div>
+    <button onclick="loadData()" style="margin-left:auto;background:#1a1a1a;border:none;border-radius:8px;width:34px;height:34px;font-size:15px">🔄</button>
   </div>
-  <h2 style="margin-top:0">Quick Actions</h2>
+
+  <div class="card" style="margin-bottom:20px">
+    <div id="todayTxt" style="font-size:19px;font-weight:800"></div>
+    <div id="brentTxt" style="font-size:13px;color:#38bdf8;margin-top:6px;font-weight:600">Loading...</div>
+  </div>
+
   <div class="g2" style="margin-bottom:20px">
-    <button onclick="openForm('delivery')" style="background:#38bdf8;border-radius:18px;padding:18px 14px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-family:'DM Sans',sans-serif"><span style="font-size:20px">📦</span><span style="font-size:14px;font-weight:700;color:#0a0a0a">Material Delivery</span></button>
-    <button onclick="openForm('pickup')" style="background:#1a1a1a;border-radius:18px;padding:18px 14px;border:1px solid #2a2a2a;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-family:'DM Sans',sans-serif"><span style="font-size:20px">🔧</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Pickup</span></button>
-    <button onclick="openForm('tool-delivery')" style="background:#1a1a1a;border-radius:18px;padding:18px 14px;border:1px solid #2a2a2a;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-family:'DM Sans',sans-serif"><span style="font-size:20px">🚚</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Delivery</span></button>
-    <button onclick="openForm('misc')" style="background:#1a1a1a;border-radius:18px;padding:18px 14px;border:1px solid #2a2a2a;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;font-family:'DM Sans',sans-serif"><span style="font-size:20px">📝</span><span style="font-size:14px;font-weight:700;color:#fff">Misc Task</span></button>
+    <div class="card"><div style="font-size:16px;margin-bottom:6px">⏳</div><div id="nP" style="font-size:30px;font-weight:800;color:#f59e0b">0</div><div style="font-size:12px;color:#666;margin-top:4px">Pending</div></div>
+    <div class="card"><div style="font-size:16px;margin-bottom:6px">📅</div><div id="nT" style="font-size:30px;font-weight:800;color:#4ade80">0</div><div style="font-size:12px;color:#666;margin-top:4px">Today</div></div>
+    <div class="card"><div style="font-size:16px;margin-bottom:6px">📋</div><div id="nW" style="font-size:30px;font-weight:800;color:#60a5fa">0</div><div style="font-size:12px;color:#666;margin-top:4px">This Week</div></div>
+    <div class="card"><div style="font-size:16px;margin-bottom:6px">🚨</div><div id="nU" style="font-size:30px;font-weight:800;color:#f87171">0</div><div style="font-size:12px;color:#666;margin-top:4px">Urgent</div></div>
   </div>
-  <h2>Upcoming Bookings</h2>
-  <div id="dashList"><div style="text-align:center;color:#555;padding:30px 0">No bookings yet</div></div>
+
+  <div style="font-size:16px;font-weight:700;margin-bottom:12px">Quick Actions</div>
+  <div class="g2" style="margin-bottom:20px">
+    <button class="btn" onclick="openForm('delivery')" style="background:#38bdf8;color:#0a0a0a;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:none;text-align:left">
+      <span style="font-size:22px">📦</span><span style="font-size:14px;font-weight:700">Material Delivery</span>
+    </button>
+    <button class="btn ghost" onclick="openForm('pickup')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
+      <span style="font-size:22px">🔧</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Pickup</span>
+    </button>
+    <button class="btn ghost" onclick="openForm('tool-delivery')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
+      <span style="font-size:22px">🚚</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Delivery</span>
+    </button>
+    <button class="btn ghost" onclick="openForm('misc')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
+      <span style="font-size:22px">📝</span><span style="font-size:14px;font-weight:700;color:#fff">Misc Task</span>
+    </button>
+  </div>
+
+  <div style="font-size:16px;font-weight:700;margin-bottom:12px">Upcoming</div>
+  <div id="homeList"><div style="text-align:center;color:#555;padding:30px 0;font-size:14px">No bookings yet</div></div>
 </div>
 
-<!-- Bookings -->
-
-<div id="pg-bookings" class="page hidden">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <h1 style="margin:0">Bookings</h1>
-    <button onclick="openForm('delivery')" style="background:#38bdf8;border:none;border-radius:12px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#0a0a0a">+ New</button>
+<div id="pg-bookings" class="pg hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="font-size:22px;font-weight:800">All Bookings</div>
+    <button onclick="openForm('delivery')" style="background:#38bdf8;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;color:#0a0a0a">+ New</button>
   </div>
-  <div id="bookingsList"><div style="text-align:center;color:#555;padding:40px 0">No bookings yet</div></div>
+  <div id="allList"><div style="text-align:center;color:#555;padding:40px 0;font-size:14px">No bookings yet</div></div>
 </div>
 
-<!-- Brent -->
-
-<div id="pg-brent" class="page hidden">
-  <h1>Brent's Jobs</h1>
-  <div style="background:#1a1a1a;border-radius:18px;padding:16px;margin-bottom:20px;display:flex;gap:14px;align-items:center">
-    <div style="width:48px;height:48px;background:#38bdf8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px">👷</div>
-    <div><div style="font-size:17px;font-weight:700">Brent Van Dusen</div><div id="brentJobCount" style="font-size:13px;color:#38bdf8;margin-top:3px;font-weight:600">Loading...</div></div>
+<div id="pg-brent" class="pg hidden">
+  <div style="font-size:22px;font-weight:800;margin-bottom:16px">Brent's Jobs</div>
+  <div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:20px">
+    <div style="width:48px;height:48px;background:#38bdf8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👷</div>
+    <div><div style="font-size:16px;font-weight:700">Brent Van Dusen</div><div id="brentCnt" style="font-size:13px;color:#38bdf8;margin-top:3px;font-weight:600">Loading...</div></div>
   </div>
-  <h2 style="margin-top:0">Needs Approval</h2>
-  <div id="brentPending"><div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No pending requests</div></div>
-  <h2>Today's Jobs</h2>
-  <div id="brentToday"><div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No jobs today</div></div>
-  <h2>Upcoming</h2>
-  <div id="brentUpcoming"><div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No upcoming jobs</div></div>
-</div>
-
-<!-- Calendar -->
-
-<div id="pg-calendar" class="page hidden">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-    <h1 style="margin:0">Calendar</h1>
-    <div style="display:flex;gap:8px">
-      <button id="btn-month" onclick="setCalView('month')" style="background:#38bdf8;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;color:#0a0a0a;font-family:'DM Sans',sans-serif">Month</button>
-      <button id="btn-week" onclick="setCalView('week')" style="background:#1e1e1e;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;color:#888;font-family:'DM Sans',sans-serif">Week</button>
-    </div>
-  </div>
-  <div id="calGrid"></div>
-  <div id="calDayList" style="margin-top:16px"></div>
+  <div style="font-size:14px;font-weight:700;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em">Needs Approval</div>
+  <div id="bPending"></div>
+  <div style="font-size:14px;font-weight:700;color:#888;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Today's Jobs</div>
+  <div id="bToday"></div>
+  <div style="font-size:14px;font-weight:700;color:#888;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Upcoming</div>
+  <div id="bUpcoming"></div>
 </div>
 
 <!-- Bottom Nav -->
 
-<div class="bottomnav">
-  <button class="nav-btn active" id="nav-dashboard" onclick="showPage('dashboard')"><span style="font-size:20px">🏠</span>Home</button>
-  <button class="nav-btn" id="nav-bookings" onclick="showPage('bookings')"><span style="font-size:20px">📋</span>Bookings</button>
-  <button class="nav-btn" id="nav-brent" onclick="showPage('brent')"><span style="font-size:20px">👷</span>Brent</button>
-  <button class="nav-btn" id="nav-calendar" onclick="showPage('calendar')"><span style="font-size:20px">📅</span>Calendar</button>
+<div class="nav">
+  <button class="nb on" id="nb-home" onclick="showPage('home')"><span style="font-size:20px">🏠</span>Home</button>
+  <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span style="font-size:20px">📋</span>Bookings</button>
+  <button class="nb" id="nb-brent" onclick="showPage('brent')"><span style="font-size:20px">👷</span>Brent</button>
 </div>
 
 <!-- Booking Form -->
 
-<div id="formModal" class="modal-bg" onclick="closeModal()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="handle"></div>
+<div id="formSheet" class="overlay hidden">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 20px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <span id="formTitle" style="font-size:20px;font-weight:800">New Booking</span>
-      <button onclick="closeModal()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:15px">✕</button>
+      <span id="fTitle" style="font-size:20px;font-weight:800">New Booking</span>
+      <button onclick="closeForm()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:16px">✕</button>
     </div>
-    <label>Type</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
-      <button class="type-btn" data-t="delivery" onclick="setType(this)" style="padding:11px;border-radius:12px;border:2px solid #38bdf8;background:#0d1f2d;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#38bdf8">📦 Material Delivery</button>
-      <button class="type-btn" data-t="pickup" onclick="setType(this)" style="padding:11px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555">🔧 Tool Pickup</button>
-      <button class="type-btn" data-t="tool-delivery" onclick="setType(this)" style="padding:11px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555">🚚 Tool Delivery</button>
-      <button class="type-btn" data-t="misc" onclick="setType(this)" style="padding:11px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555">📝 Misc Task</button>
-    </div>
-    <label>Requested By *</label><input id="f-who" placeholder="Your name"/>
-    <label>Job Site</label>
-    <select id="f-site">
+    <span class="lbl">Requested By *</span>
+    <input id="fWho" placeholder="Your name"/>
+    <span class="lbl">Job Site</span>
+    <select id="fSite">
       <option value="">— Select job site —</option>
       <option>Grand &amp; Fir</option>
       <option>GT Mann Office</option>
       <option>Warehouse</option>
     </select>
-    <div id="pickupWrap"><label>Pickup Location</label><input id="f-pickup" placeholder="Where to pick up from"/></div>
-    <label>Description *</label><textarea id="f-desc" placeholder="What needs to be picked up or delivered?"></textarea>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div><label>Date *</label><input type="date" id="f-date"/></div>
-      <div><label>Time</label><input type="time" id="f-time"/></div>
+    <div id="fPickupWrap" class="hidden">
+      <span class="lbl">Pickup Location</span>
+      <input id="fPickup" placeholder="Where to pick up from"/>
     </div>
-    <label>Priority</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px">
-      <button class="pri-btn" data-p="urgent" onclick="setPri(this)" style="padding:10px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555">🚨 Urgent</button>
-      <button class="pri-btn" data-p="normal" onclick="setPri(this)" style="padding:10px;border-radius:12px;border:2px solid #38bdf8;background:#0d1f2d;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#38bdf8">📋 Normal</button>
-      <button class="pri-btn" data-p="scheduled" onclick="setPri(this)" style="padding:10px;border-radius:12px;border:2px solid #2a2a2a;background:#1a1a1a;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:#555">📅 Planned</button>
+    <span class="lbl">Description *</span>
+    <textarea id="fDesc" placeholder="What needs to be picked up or delivered?"></textarea>
+    <div class="g2" style="margin-bottom:14px">
+      <div><span class="lbl">Date *</span><input type="date" id="fDate"/></div>
+      <div><span class="lbl">Time</span><input type="time" id="fTime"/></div>
     </div>
-    <label>Notes</label><textarea id="f-notes" placeholder="Access codes, contacts, instructions..."></textarea>
-    <button id="f-submit" onclick="submitBooking()" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:16px">Submit Booking</button>
-    <button onclick="closeModal()" style="background:#1a1a1a;color:#aaa;border:1px solid #2a2a2a;border-radius:14px;padding:14px;font-size:15px;font-weight:600;width:100%;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:10px">Cancel</button>
+    <span class="lbl">Priority</span>
+    <div class="g2" style="margin-bottom:16px">
+      <button id="pri-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:2px solid #333;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;color:#888;font-family:sans-serif">🚨 Urgent</button>
+      <button id="pri-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #38bdf8;background:#0d1f2d;font-weight:700;font-size:13px;cursor:pointer;color:#38bdf8;font-family:sans-serif">📋 Normal</button>
+      <button id="pri-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:2px solid #333;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;color:#888;font-family:sans-serif">📅 Planned</button>
+    </div>
+    <span class="lbl">Notes</span>
+    <textarea id="fNotes" placeholder="Access codes, contacts, instructions..."></textarea>
+    <button id="fSubmit" onclick="submitBooking()" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;width:100%;cursor:pointer;font-family:sans-serif;margin-bottom:10px">Submit Booking</button>
+    <button onclick="closeForm()" style="background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:14px;padding:14px;font-size:15px;font-weight:600;width:100%;cursor:pointer;font-family:sans-serif">Cancel</button>
   </div>
 </div>
 
-<!-- Detail Modal -->
+<!-- Detail Sheet -->
 
-<div id="detailModal" class="modal-bg" onclick="closeDetail()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="handle"></div>
+<div id="detailSheet" class="overlay hidden">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 20px"></div>
     <div id="detailContent"></div>
   </div>
 </div>
@@ -173,344 +156,140 @@ h2{font-size:16px;font-weight:700;margin:20px 0 10px}
 <script>
 var API = 'https://toolvault-slack-backend-production.up.railway.app/api';
 var bookings = [];
-var currentType = 'delivery';
-var currentPri = 'normal';
-var calView = 'month';
-var selDate = null;
-var calMonth = new Date();
+var curType = 'delivery';
+var curPri = 'normal';
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function today(){ return new Date().toISOString().split('T')[0]; }
 function fmtD(d){ if(!d) return '—'; try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }catch(e){ return d; } }
 function fmtT(t){ if(!t) return ''; try{ var p=t.split(':'); return ((p[0]%12)||12)+':'+p[1]+(p[0]>=12?'PM':'AM'); }catch(e){ return t; } }
 function isToday(d){ return d===today(); }
-function isThisWeek(d){
-  var n=new Date(), s=new Date(n); s.setDate(n.getDate()-n.getDay());
-  var e=new Date(s); e.setDate(s.getDate()+6);
-  var dt=new Date(d+'T12:00:00'); return dt>=s&&dt<=e;
-}
-
-function apiCall(path, method, body, cb){
-  var opts = { method: method||'GET', headers: {'Content-Type':'application/json'} };
-  if(body) opts.body = JSON.stringify(body);
-  fetch(API+path, opts)
-    .then(function(r){ return r.json(); })
-    .then(function(data){ if(cb) cb(null, data); })
-    .catch(function(e){ if(cb) cb(e, null); });
-}
+function isThisWeek(d){ var n=new Date(),s=new Date(n);s.setDate(n.getDate()-n.getDay());var e=new Date(s);e.setDate(s.getDate()+6);var dt=new Date(d+'T12:00:00');return dt>=s&&dt<=e; }
+function g(id){ return document.getElementById(id); }
 
 function loadData(){
-  apiCall('/bookings', 'GET', null, function(err, data){
-    if(!err && Array.isArray(data)) bookings = data;
-    updateStats();
-    renderDashList();
-    renderBookingsList();
-    renderBrent();
-    renderCal();
-  });
+  fetch(API+'/bookings')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      bookings = Array.isArray(data) ? data : [];
+      renderAll();
+    })
+    .catch(function(){ renderAll(); });
 }
 
-function updateStats(){
+function renderAll(){
   var now = new Date();
-  document.getElementById('todayStr').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  var pending = bookings.filter(function(b){ return b.status==='pending'; }).length;
-  var todayJ = bookings.filter(function(b){ return isToday(b.date) && b.status!=='declined'; }).length;
-  var weekJ = bookings.filter(function(b){ return isThisWeek(b.date) && b.status!=='declined'; }).length;
-  var urgent = bookings.filter(function(b){ return b.priority==='urgent' && b.status!=='completed' && b.status!=='declined'; }).length;
-  var active = bookings.filter(function(b){ return b.status==='approved'||b.status==='in-progress'; }).length;
-  document.getElementById('nPending').textContent = pending;
-  document.getElementById('nToday').textContent = todayJ;
-  document.getElementById('nWeek').textContent = weekJ;
-  document.getElementById('nUrgent').textContent = urgent;
-  document.getElementById('brentStr').textContent = active>0 ? 'Brent has '+active+' active job'+(active>1?'s':'') : 'Brent is available';
-  document.getElementById('brentJobCount').textContent = pending>0 ? pending+' job'+(pending>1?'s':'')+' need approval' : 'All clear';
-}
-
-function cardHTML(b){
-  var icons = {delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
-  var labels = {delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
-  var sc = {pending:'background:#1a1200;color:#f59e0b',approved:'background:#052e16;color:#4ade80',declined:'background:#1a0000;color:#f87171',completed:'background:#0c1a2e;color:#60a5fa','in-progress':'background:#1a0d2e;color:#c084fc'};
-  var sl = {pending:'⏳ Pending',approved:'✅ Approved',declined:'❌ Declined',completed:'🏁 Done','in-progress':'🔄 In Progress'};
-  var bc = b.priority==='urgent'?'#dc2626':b.status==='approved'?'#059669':b.status==='completed'?'#2563eb':'#38bdf8';
-  var desc = (b.description||'');
-  if(desc.length>80) desc = desc.slice(0,80)+'...';
-  return '<div class="card" style="border-left-color:'+bc+';cursor:pointer" onclick="openDetail(\''+b.id+'\')">'
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-    +'<div style="flex:1;padding-right:10px"><div style="font-size:15px;font-weight:700">'+(icons[b.type]||'📋')+' '+(labels[b.type]||b.type)+'</div>'
-    +'<div style="font-size:13px;color:#888;margin-top:3px">'+(b.requester||'')+(b.site?' · '+b.site:'')+'</div></div>'
-    +'<span class="badge" style="'+(sc[b.status]||sc.pending)+';border-radius:20px;font-size:11px">'+(sl[b.status]||b.status)+'</span></div>'
-    +'<div style="font-size:13px;color:#aaa;margin-bottom:8px;line-height:1.5">'+desc+'</div>'
-    +'<div style="font-size:13px;color:#38bdf8;font-weight:600">'+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div>'
-    +'</div>';
-}
-
-function renderDashList(){
-  var list = bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); });
-  list.sort(function(a,b){ return a.date.localeCompare(b.date); });
-  list = list.slice(0,5);
-  document.getElementById('dashList').innerHTML = list.length ? list.map(cardHTML).join('') : '<div style="text-align:center;color:#555;padding:30px 0">No upcoming bookings</div>';
-}
-
-function renderBookingsList(){
-  var list = bookings.slice().sort(function(a,b){ return b.createdAt.localeCompare(a.createdAt); });
-  document.getElementById('bookingsList').innerHTML = list.length ? list.map(cardHTML).join('') : '<div style="text-align:center;color:#555;padding:40px 0">No bookings yet</div>';
-}
-
-function renderBrent(){
+  g('todayTxt').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   var pending = bookings.filter(function(b){ return b.status==='pending'; });
-  var todayJ = bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); });
-  var upcoming = bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,10);
-  document.getElementById('brentPending').innerHTML = pending.length ? pending.map(cardHTML).join('') : '<div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No pending requests</div>';
-  document.getElementById('brentToday').innerHTML = todayJ.length ? todayJ.map(cardHTML).join('') : '<div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No jobs today</div>';
-  document.getElementById('brentUpcoming').innerHTML = upcoming.length ? upcoming.map(cardHTML).join('') : '<div style="text-align:center;color:#555;padding:20px 0;font-size:14px">No upcoming jobs</div>';
+  var todayJ = bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'; });
+  var weekJ = bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'; });
+  var urgent = bookings.filter(function(b){ return b.priority==='urgent'&&b.status!=='completed'&&b.status!=='declined'; });
+  var active = bookings.filter(function(b){ return b.status==='approved'||b.status==='in-progress'; });
+  g('nP').textContent=pending.length; g('nT').textContent=todayJ.length; g('nW').textContent=weekJ.length; g('nU').textContent=urgent.length;
+  g('brentTxt').textContent = active.length>0 ? 'Brent has '+active.length+' active job'+(active.length>1?'s':'') : 'Brent is available';
+  g('brentCnt').textContent = pending.length>0 ? pending.length+' job'+(pending.length>1?'s':'')+' need approval' : 'All clear';
+  var upcoming = bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
+  g('homeList').innerHTML = upcoming.length ? upcoming.map(card).join('') : '<div style="text-align:center;color:#555;padding:30px 0;font-size:14px">No upcoming bookings</div>';
+  var all = bookings.slice().sort(function(a,b){ return b.createdAt.localeCompare(a.createdAt); });
+  g('allList').innerHTML = all.length ? all.map(card).join('') : '<div style="text-align:center;color:#555;padding:40px 0;font-size:14px">No bookings yet</div>';
+  var bPend = pending;
+  var bToday = bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); });
+  var bUp = bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
+  g('bPending').innerHTML = bPend.length ? bPend.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No pending requests</div>';
+  g('bToday').innerHTML = bToday.length ? bToday.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No jobs today</div>';
+  g('bUpcoming').innerHTML = bUp.length ? bUp.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No upcoming jobs</div>';
+}
+
+function card(b){
+  var ic={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
+  var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
+  var sc={pending:'background:#1a1200;color:#f59e0b',approved:'background:#052e16;color:#4ade80',declined:'background:#1a0000;color:#f87171',completed:'background:#0c1a2e;color:#60a5fa','in-progress':'background:#1a0d2e;color:#c084fc'};
+  var sl={pending:'⏳ Pending',approved:'✅ Approved',declined:'❌ Declined',completed:'🏁 Done','in-progress':'🔄 In Progress'};
+  var bc=b.priority==='urgent'?'#dc2626':b.status==='approved'?'#059669':b.status==='completed'?'#2563eb':'#38bdf8';
+  var desc=(b.description||'').slice(0,80)+((b.description||'').length>80?'...':'');
+  return '<div style="background:#1a1a1a;border-radius:16px;padding:16px;margin-bottom:10px;border-left:4px solid '+bc+';cursor:pointer" onclick="openDetail(\''+b.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="flex:1;padding-right:8px"><div style="font-size:15px;font-weight:700">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</div><div style="font-size:13px;color:#888;margin-top:3px">'+(b.requester||'')+(b.site?' · '+b.site:'')+'</div></div><span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;'+(sc[b.status]||sc.pending)+'">'+(sl[b.status]||b.status)+'</span></div><div style="font-size:13px;color:#aaa;margin-bottom:6px;line-height:1.5">'+desc+'</div><div style="font-size:13px;color:#38bdf8;font-weight:600">'+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
 }
 
 function openDetail(id){
-  var b = bookings.find(function(x){ return x.id===id; });
+  var b=bookings.find(function(x){ return x.id===id; });
   if(!b) return;
-  var icons={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
-  var labels={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
-  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-    +'<span style="font-size:18px;font-weight:800">'+(icons[b.type]||'📋')+' '+(labels[b.type]||b.type)+'</span>'
-    +'<button onclick="closeDetail()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:15px">✕</button></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
-    +'<div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">From</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.requester||'—')+'</div></div>'
-    +'<div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Site</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.site||'—')+'</div></div>'
-    +'<div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:600;color:#38bdf8">'+fmtD(b.date)+'</div></div>'
-    +'<div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Time</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.time?fmtT(b.time):'Not set')+'</div></div>'
-    +'</div>'
-    +'<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Description</div>'
-    +'<div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+(b.description||'')+'</div></div>';
-  if(b.notes) html += '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Notes</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+b.notes+'</div></div>';
-  if(b.brentNotes) html += '<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Brent\'s Notes</div><div style="font-size:14px;color:#38bdf8;line-height:1.6;background:#0d1f2d;border-radius:12px;padding:12px">'+b.brentNotes+'</div></div>';
-  html += '<hr style="border:none;border-top:1px solid #1e1e1e;margin:14px 0"/>';
-  if(b.status==='pending'){
-    html += '<textarea id="d-notes" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>'
+  var ic={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
+  var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:15px">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">From</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.requester||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Site</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.site||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:600;color:#38bdf8">'+fmtD(b.date)+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Time</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Description</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+(b.description||'')+'</div></div>';
+  if(b.notes) html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Notes</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+b.notes+'</div></div>';
+  html+='<hr style="border:none;border-top:1px solid #222;margin:14px 0"/>';
+  if(b.status==='pending') html+='<textarea id="dNotes" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'approved\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif;font-size:15px">✅ Approve</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#dc2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif;font-size:15px">❌ Decline</button></div>';
 
-```
-  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-  +'<button onclick="doStatus(\''+b.id+'\',\'approved\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">✅ Approve</button>'
-  +'<button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#dc2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">❌ Decline</button></div>';
-```
-
-} else if(b.status===‘approved’){
-html += ‘<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">’
-+’<button onclick="doStatus(\''+b.id+'\',\'in-progress\')" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">🔄 Start Job</button>’
-+’<button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#1a1a1a;color:#aaa;border:1px solid #2a2a2a;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:\'DM Sans\',sans-serif">Cancel</button></div>’;
-} else if(b.status===‘in-progress’){
-html += ‘<button onclick="doStatus(\''+b.id+'\',\'completed\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;width:100%;cursor:pointer;font-family:\'DM Sans\',sans-serif">🏁 Mark Complete</button>’;
-}
-html += ‘<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#f87171;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:\'DM Sans\',sans-serif;font-weight:600">🗑️ Delete Booking</button>’;
-document.getElementById(‘detailContent’).innerHTML = html;
-document.getElementById(‘detailModal’).classList.add(‘open’);
+else if(b.status===‘approved’) html+=’<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">Cancel</button></div>’;
+else if(b.status===‘in-progress’) html+=’<button onclick="doStatus(\''+b.id+'\',\'completed\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;width:100%;cursor:pointer;font-family:sans-serif">🏁 Mark Complete</button>’;
+html+=’<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#f87171;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:sans-serif;font-weight:600">🗑️ Delete</button>’;
+g(‘detailContent’).innerHTML=html;
+g(‘detailSheet’).classList.remove(‘hidden’);
 }
 
-function doStatus(id, status){
-var b = bookings.find(function(x){ return x.id===id; });
-if(!b) return;
-var notesEl = document.getElementById(‘d-notes’);
-var brentNotes = notesEl ? notesEl.value : ‘’;
-apiCall(’/bookings/’+id, ‘PUT’, {status:status, brentNotes:brentNotes}, function(){
-b.status = status;
-if(brentNotes) b.brentNotes = brentNotes;
-closeDetail();
-updateStats();
-renderDashList();
-renderBookingsList();
-renderBrent();
-});
+function doStatus(id,status){
+var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+var n=g(‘dNotes’); var notes=n?n.value:’’;
+fetch(API+’/bookings/’+id,{method:‘PUT’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify({status:status,brentNotes:notes})}).catch(function(){});
+b.status=status; if(notes) b.brentNotes=notes;
+closeDetail(); renderAll();
 }
 
 function doDelete(id){
 if(!confirm(‘Delete this booking?’)) return;
-apiCall(’/bookings/’+id, ‘DELETE’, null, function(){
-bookings = bookings.filter(function(b){ return b.id!==id; });
-closeDetail();
-updateStats();
-renderDashList();
-renderBookingsList();
-renderBrent();
-});
-}
-
-function setType(btn){
-currentType = btn.dataset.t;
-document.querySelectorAll(’.type-btn’).forEach(function(b){
-var a = b===btn;
-b.style.border = a?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
-b.style.background = a?’#0d1f2d’:’#1a1a1a’;
-b.style.color = a?’#38bdf8’:’#555’;
-});
-document.getElementById(‘pickupWrap’).style.display = (currentType===‘pickup’||currentType===‘tool-delivery’)?‘block’:‘none’;
-}
-
-function setPri(btn){
-currentPri = btn.dataset.p;
-document.querySelectorAll(’.pri-btn’).forEach(function(b){
-var a = b===btn;
-b.style.border = a?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
-b.style.background = a?’#0d1f2d’:’#1a1a1a’;
-b.style.color = a?’#38bdf8’:’#555’;
-});
+fetch(API+’/bookings/’+id,{method:‘DELETE’,headers:{‘Content-Type’:‘application/json’}}).catch(function(){});
+bookings=bookings.filter(function(b){ return b.id!==id; });
+closeDetail(); renderAll();
 }
 
 function openForm(type){
-currentType = type||‘delivery’; currentPri = ‘normal’;
-document.querySelectorAll(’.type-btn’).forEach(function(b){
-var a=b.dataset.t===currentType;
-b.style.border=a?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
-b.style.background=a?’#0d1f2d’:’#1a1a1a’;
-b.style.color=a?’#38bdf8’:’#555’;
-});
-document.querySelectorAll(’.pri-btn’).forEach(function(b){
-var a=b.dataset.p===‘normal’;
-b.style.border=a?‘2px solid #38bdf8’:‘2px solid #2a2a2a’;
-b.style.background=a?’#0d1f2d’:’#1a1a1a’;
-b.style.color=a?’#38bdf8’:’#555’;
-});
-document.getElementById(‘f-who’).value=’’;
-document.getElementById(‘f-desc’).value=’’;
-document.getElementById(‘f-notes’).value=’’;
-document.getElementById(‘f-pickup’).value=’’;
-document.getElementById(‘f-time’).value=’’;
-document.getElementById(‘f-date’).value=today();
-document.getElementById(‘f-site’).value=’’;
-document.getElementById(‘pickupWrap’).style.display=(type===‘pickup’||type===‘tool-delivery’)?‘block’:‘none’;
+curType=type||‘delivery’; curPri=‘normal’;
 var titles={delivery:‘📦 Material Delivery’,pickup:‘🔧 Tool Pickup’,‘tool-delivery’:‘🚚 Tool Delivery’,misc:‘📝 Misc Task’};
-document.getElementById(‘formTitle’).textContent=titles[type]||‘New Booking’;
-document.getElementById(‘formModal’).classList.add(‘open’);
+g(‘fTitle’).textContent=titles[type]||‘New Booking’;
+g(‘fWho’).value=’’; g(‘fDesc’).value=’’; g(‘fNotes’).value=’’; g(‘fPickup’).value=’’; g(‘fTime’).value=’’;
+g(‘fDate’).value=today(); g(‘fSite’).value=’’;
+g(‘fPickupWrap’).className=(type===‘pickup’||type===‘tool-delivery’)?’’:‘hidden’;
+setPri(‘normal’);
+g(‘formSheet’).classList.remove(‘hidden’);
+}
+
+function closeForm(){ g(‘formSheet’).classList.add(‘hidden’); }
+function closeDetail(){ g(‘detailSheet’).classList.add(‘hidden’); }
+
+function setPri(p){
+curPri=p;
+[‘urgent’,‘normal’,‘scheduled’].forEach(function(x){
+var btn=g(‘pri-’+x); if(!btn) return;
+var on=x===p;
+btn.style.border=on?‘2px solid #38bdf8’:‘2px solid #333’;
+btn.style.background=on?’#0d1f2d’:’#1a1a1a’;
+btn.style.color=on?’#38bdf8’:’#888’;
+});
 }
 
 function submitBooking(){
-var who=document.getElementById(‘f-who’).value.trim();
-var desc=document.getElementById(‘f-desc’).value.trim();
-var date=document.getElementById(‘f-date’).value;
+var who=g(‘fWho’).value.trim(), desc=g(‘fDesc’).value.trim(), date=g(‘fDate’).value;
 if(!who||!desc||!date){ alert(‘Required: Your name, Description, Date.’); return; }
-var btn = document.getElementById(‘f-submit’);
-btn.textContent=‘Submitting…’; btn.disabled=true;
-var booking={id:uid(),type:currentType,requester:who,site:document.getElementById(‘f-site’).value,pickupLocation:document.getElementById(‘f-pickup’).value,description:desc,date:date,time:document.getElementById(‘f-time’).value,priority:currentPri,notes:document.getElementById(‘f-notes’).value,status:‘pending’,createdAt:new Date().toISOString()};
-apiCall(’/bookings’,‘POST’,booking,function(err,saved){
-if(!err&&saved) bookings.push(saved);
-else bookings.push(booking);
-closeModal();
-updateStats();
-renderDashList();
-renderBookingsList();
+var btn=g(‘fSubmit’); btn.textContent=‘Submitting…’; btn.disabled=true;
+var bk={id:uid(),type:curType,requester:who,site:g(‘fSite’).value,pickupLocation:g(‘fPickup’).value,description:desc,date:date,time:g(‘fTime’).value,priority:curPri,notes:g(‘fNotes’).value,status:‘pending’,createdAt:new Date().toISOString()};
+fetch(API+’/bookings’,{method:‘POST’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify(bk)})
+.then(function(r){ return r.json(); })
+.then(function(saved){ bookings.push(saved||bk); closeForm(); renderAll(); })
+.catch(function(){ bookings.push(bk); closeForm(); renderAll(); });
 btn.textContent=‘Submit Booking’; btn.disabled=false;
-});
 }
 
-function showPage(page){
-[‘dashboard’,‘bookings’,‘brent’,‘calendar’].forEach(function(p){
-document.getElementById(‘pg-’+p).className=‘page’+(p===page?’’:’ hidden’);
-document.getElementById(‘nav-’+p).className=‘nav-btn’+(p===page?’ active’:’’);
+function showPage(p){
+[‘home’,‘bookings’,‘brent’].forEach(function(x){
+g(‘pg-’+x).className=‘pg’+(x===p?’’:’ hidden’);
+g(‘nb-’+x).className=‘nb’+(x===p?’ on’:’’);
 });
 window.scrollTo(0,0);
-if(page===‘calendar’) renderCal();
 }
 
-function closeModal(){ document.getElementById(‘formModal’).classList.remove(‘open’); }
-function closeDetail(){ document.getElementById(‘detailModal’).classList.remove(‘open’); }
-
-// Calendar
-function setCalView(v){
-calView=v;
-document.getElementById(‘btn-month’).style.background=v===‘month’?’#38bdf8’:’#1e1e1e’;
-document.getElementById(‘btn-month’).style.color=v===‘month’?’#0a0a0a’:’#888’;
-document.getElementById(‘btn-week’).style.background=v===‘week’?’#38bdf8’:’#1e1e1e’;
-document.getElementById(‘btn-week’).style.color=v===‘week’?’#0a0a0a’:’#888’;
-renderCal();
-}
-
-function renderCal(){
-if(calView===‘month’) renderMonth();
-else renderWeek();
-}
-
-function renderMonth(){
-var y=calMonth.getFullYear(), m=calMonth.getMonth();
-var first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), prev=new Date(y,m,0).getDate();
-var bkDays={};
-bookings.filter(function(b){ return b.status!==‘declined’; }).forEach(function(b){ bkDays[b.date]=true; });
-var mn=calMonth.toLocaleDateString(‘en-US’,{month:‘long’,year:‘numeric’});
-var html=’<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">’
-+’<button onclick="changeMonth(-1)" style="background:#1e1e1e;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:#fff;font-size:18px">‹</button>’
-+’<span style="font-size:17px;font-weight:700">’+mn+’</span>’
-+’<button onclick="changeMonth(1)" style="background:#1e1e1e;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:#fff;font-size:18px">›</button></div>’
-+’<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">’
-+[‘S’,‘M’,‘T’,‘W’,‘T’,‘F’,‘S’].map(function(d){ return ‘<div style="text-align:center;font-size:11px;font-weight:700;color:#555;padding:6px 0">’+d+’</div>’; }).join(’’)+’</div>’
-+’<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">’;
-for(var i=first-1;i>=0;i–) html+=’<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:#333">’+( prev-i)+’</div>’;
-for(var d=1;d<=days;d++){
-var ds=y+’-’+String(m+1).padStart(2,‘0’)+’-’+String(d).padStart(2,‘0’);
-var isT=ds===today(),isSel=ds===selDate,hasBk=bkDays[ds];
-html+=’<div onclick="selDay(\''+ds+'\')" style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;position:relative;background:'+(isSel?'#38bdf8':'transparent')+';border:1.5px solid '+(isT&&!isSel?'#38bdf8':'transparent')+';">’
-+’<span style="color:'+(isSel?'#0a0a0a':isT?'#38bdf8':'#fff')+'">’+d+’</span>’
-+(hasBk?’<div style="width:5px;height:5px;border-radius:50%;background:'+(isSel?'#0a0a0a':'#38bdf8')+';position:absolute;bottom:4px;left:50%;transform:translateX(-50%)"></div>’:’’)
-+’</div>’;
-}
-var total=Math.ceil((first+days)/7)*7;
-for(var d2=1;d2<=total-first-days;d2++) html+=’<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:#333">’+d2+’</div>’;
-html+=’</div>’;
-document.getElementById(‘calGrid’).innerHTML=html;
-renderCalDay();
-}
-
-function renderWeek(){
-var ws=new Date(calMonth); ws.setDate(calMonth.getDate()-calMonth.getDay());
-var bkDays={};
-bookings.filter(function(b){ return b.status!==‘declined’; }).forEach(function(b){ bkDays[b.date]=true; });
-var days=[‘Sun’,‘Mon’,‘Tue’,‘Wed’,‘Thu’,‘Fri’,‘Sat’];
-var html=’<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">’
-+’<button onclick="changeWeek(-1)" style="background:#1e1e1e;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:#fff;font-size:18px">‹</button>’
-+’<span style="font-size:15px;font-weight:700">Week of ‘+ws.toLocaleDateString(‘en-US’,{month:‘short’,day:‘numeric’})+’</span>’
-+’<button onclick="changeWeek(1)" style="background:#1e1e1e;border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:#fff;font-size:18px">›</button></div>’
-+’<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">’;
-for(var i=0;i<7;i++){
-var d=new Date(ws); d.setDate(ws.getDate()+i);
-var ds=d.toISOString().split(‘T’)[0];
-var isT=ds===today(),isSel=ds===selDate,hasBk=bkDays[ds];
-html+=’<div onclick="selDay(\''+ds+'\')" style="text-align:center;cursor:pointer;padding:10px 4px;border-radius:12px;background:'+(isSel?'#38bdf8':isT?'#0d1f2d':'#1a1a1a')+';border:1.5px solid '+(isT&&!isSel?'#38bdf8':'transparent')+'">’
-+’<div style="font-size:10px;font-weight:600;color:'+(isSel?'#0a0a0a':'#555')+';margin-bottom:3px">’+days[i]+’</div>’
-+’<div style="font-size:15px;font-weight:700;color:'+(isSel?'#0a0a0a':isT?'#38bdf8':'#fff')+'">’+d.getDate()+’</div>’
-+(hasBk?’<div style="width:5px;height:5px;border-radius:50%;background:'+(isSel?'#0a0a0a':'#38bdf8')+';margin:3px auto 0"></div>’:’<div style="height:8px"></div>’)
-+’</div>’;
-}
-html+=’</div>’;
-document.getElementById(‘calGrid’).innerHTML=html;
-renderCalDay();
-}
-
-function changeMonth(d){ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1); renderCal(); }
-function changeWeek(d){ calMonth=new Date(calMonth.getTime()+d*7*86400000); renderCal(); }
-function selDay(ds){ selDate=ds; renderCal(); }
-
-function renderCalDay(){
-if(!selDate){ document.getElementById(‘calDayList’).innerHTML=’<div style="text-align:center;color:#555;font-size:14px;padding:16px 0">Tap a date to see bookings</div>’; return; }
-var bks=bookings.filter(function(b){ return b.date===selDate&&b.status!==‘declined’; });
-document.getElementById(‘calDayList’).innerHTML=’<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 style="margin:0;font-size:15px">’+fmtD(selDate)+’</h2><button onclick="openForm(\'delivery\')" style="background:#38bdf8;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;color:#0a0a0a;font-family:\'DM Sans\',sans-serif">+ Add</button></div>’+(bks.length?bks.map(cardHTML).join(’’):’<div style="text-align:center;color:#555;font-size:14px;padding:20px 0">No bookings this day</div>’);
-}
-
-// Global error handler
-window.onerror = function(msg, src, line, col, err){
-document.getElementById(‘todayStr’).textContent = ‘JS Error: ‘+msg+’ (line ‘+line+’)’;
-document.getElementById(‘todayStr’).style.color = ‘#f87171’;
-document.getElementById(‘todayStr’).style.fontSize = ‘13px’;
-return false;
-};
-
-// Init - show immediately, load data in background
-try {
-selDate = today();
-updateStats();
-renderDashList();
-renderCal();
+// Start
+g(‘todayTxt’).textContent = new Date().toLocaleDateString(‘en-US’,{weekday:‘long’,month:‘long’,day:‘numeric’});
 loadData();
-} catch(e) {
-document.getElementById(‘todayStr’).textContent = ’Init error: ’+e.message;
-document.getElementById(‘todayStr’).style.color = ‘#f87171’;
-document.getElementById(‘todayStr’).style.fontSize = ‘13px’;
-}
 </script>
 
 </body>
