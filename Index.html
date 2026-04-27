@@ -7,22 +7,22 @@
 <title>GT Mann Dispatch</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:sans-serif;background:#0a0a0a;color:#fff;padding:20px}
+body{font-family:sans-serif;background:#f4f4f5;color:#18181b;padding:20px}
 button{cursor:pointer;font-family:sans-serif}
 .btn{background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:700;width:100%;margin-bottom:12px}
-.ghost{background:#1a1a1a;color:#fff;border:1px solid #333}
-.card{background:#1a1a1a;border-radius:16px;padding:18px;margin-bottom:12px}
+.ghost{background:#fff;color:#fff;border:1px solid #e4e4e7}
+.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:12px}
 .hidden{display:none}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;justify-content:flex-end;z-index:100}
-.sheet{background:#111;border-radius:24px 24px 0 0;padding:24px 20px 40px;max-height:90vh;overflow-y:auto}
-input,select,textarea{width:100%;padding:14px;background:#1a1a1a;border:2px solid #333;border-radius:12px;font-size:16px;color:#fff;outline:none;font-family:sans-serif;display:block;margin-bottom:14px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;flex-direction:column;justify-content:flex-end;z-index:100}
+.sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 40px;max-height:90vh;overflow-y:auto}
+input,select,textarea{width:100%;padding:14px;background:#fff;border:2px solid #e4e4e7;border-radius:12px;font-size:16px;color:#fff;outline:none;font-family:sans-serif;display:block;margin-bottom:14px}
 input:focus,select:focus,textarea:focus{border-color:#38bdf8}
 textarea{resize:vertical;min-height:80px}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;-webkit-appearance:none}
-.lbl{font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px}
+.lbl{font-size:12px;font-weight:700;color:#71717a;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:6px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid #222;display:flex;padding-bottom:env(safe-area-inset-bottom,0)}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0;background:none;border:none;cursor:pointer;color:#555;font-size:10px;font-weight:500;font-family:sans-serif}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e4e4e7;display:flex;padding-bottom:env(safe-area-inset-bottom,0)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 0;background:none;border:none;cursor:pointer;color:#a1a1aa;font-size:10px;font-weight:500;font-family:sans-serif}
 .nb.on{color:#38bdf8;font-weight:700}
 .pg{padding-bottom:90px}
 </style>
@@ -38,7 +38,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div style="font-size:15px;font-weight:700">GT Mann Dispatch</div>
       <div style="font-size:12px;color:#555">Delivery & Booking</div>
     </div>
-    <button onclick="loadData()" style="margin-left:auto;background:#1a1a1a;border:none;border-radius:8px;width:34px;height:34px;font-size:15px">🔄</button>
+    <button onclick="loadData()" style="margin-left:auto;background:#fff;border:none;border-radius:8px;width:34px;height:34px;font-size:15px">🔄</button>
   </div>
 
   <div class="card" style="margin-bottom:20px">
@@ -58,19 +58,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <button class="btn" onclick="openForm('delivery')" style="background:#38bdf8;color:#0a0a0a;border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:none;text-align:left">
       <span style="font-size:22px">📦</span><span style="font-size:14px;font-weight:700">Material Delivery</span>
     </button>
-    <button class="btn ghost" onclick="openForm('pickup')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
-      <span style="font-size:22px">🔧</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Pickup</span>
+    <button class="btn ghost" onclick="openForm('pickup')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #e4e4e7;text-align:left">
+      <span style="font-size:22px">🔧</span><span style="font-size:14px;font-weight:700;color:#18181b">Tool Pickup</span>
     </button>
-    <button class="btn ghost" onclick="openForm('tool-delivery')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
-      <span style="font-size:22px">🚚</span><span style="font-size:14px;font-weight:700;color:#fff">Tool Delivery</span>
+    <button class="btn ghost" onclick="openForm('tool-delivery')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #e4e4e7;text-align:left">
+      <span style="font-size:22px">🚚</span><span style="font-size:14px;font-weight:700;color:#18181b">Tool Delivery</span>
     </button>
-    <button class="btn ghost" onclick="openForm('misc')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #333;text-align:left">
-      <span style="font-size:22px">📝</span><span style="font-size:14px;font-weight:700;color:#fff">Misc Task</span>
+    <button class="btn ghost" onclick="openForm('misc')" style="border-radius:16px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;border:1px solid #e4e4e7;text-align:left">
+      <span style="font-size:22px">📝</span><span style="font-size:14px;font-weight:700;color:#18181b">Misc Task</span>
     </button>
   </div>
 
   <div style="font-size:16px;font-weight:700;margin-bottom:12px">Upcoming</div>
-  <div id="homeList"><div style="text-align:center;color:#555;padding:30px 0;font-size:14px">No bookings yet</div></div>
+  <div id="homeList"><div style="text-align:center;color:#a1a1aa;padding:30px 0;font-size:14px">No bookings yet</div></div>
 </div>
 
 <div id="pg-bookings" class="pg hidden">
@@ -78,7 +78,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div style="font-size:22px;font-weight:800">All Bookings</div>
     <button onclick="openForm('delivery')" style="background:#38bdf8;border:none;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;color:#0a0a0a">+ New</button>
   </div>
-  <div id="allList"><div style="text-align:center;color:#555;padding:40px 0;font-size:14px">No bookings yet</div></div>
+  <div id="allList"><div style="text-align:center;color:#a1a1aa;padding:40px 0;font-size:14px">No bookings yet</div></div>
 </div>
 
 <div id="pg-brent" class="pg hidden">
@@ -87,11 +87,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div style="width:48px;height:48px;background:#38bdf8;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👷</div>
     <div><div style="font-size:16px;font-weight:700">Brent Van Dusen</div><div id="brentCnt" style="font-size:13px;color:#38bdf8;margin-top:3px;font-weight:600">Loading...</div></div>
   </div>
-  <div style="font-size:14px;font-weight:700;color:#888;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em">Needs Approval</div>
+  <div style="font-size:14px;font-weight:700;color:#71717a;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em">Needs Approval</div>
   <div id="bPending"></div>
-  <div style="font-size:14px;font-weight:700;color:#888;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Today's Jobs</div>
+  <div style="font-size:14px;font-weight:700;color:#71717a;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Today's Jobs</div>
   <div id="bToday"></div>
-  <div style="font-size:14px;font-weight:700;color:#888;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Upcoming</div>
+  <div style="font-size:14px;font-weight:700;color:#71717a;margin:16px 0 10px;text-transform:uppercase;letter-spacing:0.06em">Upcoming</div>
   <div id="bUpcoming"></div>
 </div>
 
@@ -106,11 +106,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <!-- Booking Form -->
 
 <div id="formSheet" class="overlay hidden">
-  <div class="sheet" onclick="event.stopPropagation()">
+  <div class="sheet" style="background:#fff" onclick="event.stopPropagation()">
     <div style="width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 20px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <span id="fTitle" style="font-size:20px;font-weight:800">New Booking</span>
-      <button onclick="closeForm()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:16px">✕</button>
+      <button onclick="closeForm()" style="background:#f4f4f5;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#71717a;font-size:16px">✕</button>
     </div>
     <span class="lbl">Requested By *</span>
     <input id="fWho" placeholder="Your name"/>
@@ -133,21 +133,21 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <span class="lbl">Priority</span>
     <div class="g2" style="margin-bottom:16px">
-      <button id="pri-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:2px solid #333;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;color:#888;font-family:sans-serif">🚨 Urgent</button>
-      <button id="pri-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #38bdf8;background:#0d1f2d;font-weight:700;font-size:13px;cursor:pointer;color:#38bdf8;font-family:sans-serif">📋 Normal</button>
-      <button id="pri-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:2px solid #333;background:#1a1a1a;font-weight:700;font-size:13px;cursor:pointer;color:#888;font-family:sans-serif">📅 Planned</button>
+      <button id="pri-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:2px solid #e4e4e7;background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:#71717a;font-family:sans-serif">🚨 Urgent</button>
+      <button id="pri-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #38bdf8;background:#e0f2fe;font-weight:700;font-size:13px;cursor:pointer;color:#38bdf8;font-family:sans-serif">📋 Normal</button>
+      <button id="pri-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:2px solid #e4e4e7;background:#fff;font-weight:700;font-size:13px;cursor:pointer;color:#71717a;font-family:sans-serif">📅 Planned</button>
     </div>
     <span class="lbl">Notes</span>
     <textarea id="fNotes" placeholder="Access codes, contacts, instructions..."></textarea>
     <button id="fSubmit" onclick="submitBooking()" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:700;width:100%;cursor:pointer;font-family:sans-serif;margin-bottom:10px">Submit Booking</button>
-    <button onclick="closeForm()" style="background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:14px;padding:14px;font-size:15px;font-weight:600;width:100%;cursor:pointer;font-family:sans-serif">Cancel</button>
+    <button onclick="closeForm()" style="background:#fff;color:#71717a;border:1px solid #e4e4e7;border-radius:14px;padding:14px;font-size:15px;font-weight:600;width:100%;cursor:pointer;font-family:sans-serif">Cancel</button>
   </div>
 </div>
 
 <!-- Detail Sheet -->
 
 <div id="detailSheet" class="overlay hidden">
-  <div class="sheet" onclick="event.stopPropagation()">
+  <div class="sheet" style="background:#fff" onclick="event.stopPropagation()">
     <div style="width:36px;height:4px;background:#333;border-radius:2px;margin:0 auto 20px"></div>
     <div id="detailContent"></div>
   </div>
@@ -189,15 +189,15 @@ function renderAll(){
   g('brentTxt').textContent = active.length>0 ? 'Brent has '+active.length+' active job'+(active.length>1?'s':'') : 'Brent is available';
   g('brentCnt').textContent = pending.length>0 ? pending.length+' job'+(pending.length>1?'s':'')+' need approval' : 'All clear';
   var upcoming = bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
-  g('homeList').innerHTML = upcoming.length ? upcoming.map(card).join('') : '<div style="text-align:center;color:#555;padding:30px 0;font-size:14px">No upcoming bookings</div>';
+  g('homeList').innerHTML = upcoming.length ? upcoming.map(card).join('') : '<div style="text-align:center;color:#a1a1aa;padding:30px 0;font-size:14px">No upcoming bookings</div>';
   var all = bookings.slice().sort(function(a,b){ return b.createdAt.localeCompare(a.createdAt); });
-  g('allList').innerHTML = all.length ? all.map(card).join('') : '<div style="text-align:center;color:#555;padding:40px 0;font-size:14px">No bookings yet</div>';
+  g('allList').innerHTML = all.length ? all.map(card).join('') : '<div style="text-align:center;color:#a1a1aa;padding:40px 0;font-size:14px">No bookings yet</div>';
   var bPend = pending;
   var bToday = bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); });
   var bUp = bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
-  g('bPending').innerHTML = bPend.length ? bPend.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No pending requests</div>';
-  g('bToday').innerHTML = bToday.length ? bToday.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No jobs today</div>';
-  g('bUpcoming').innerHTML = bUp.length ? bUp.map(card).join('') : '<div style="text-align:center;color:#555;padding:16px 0;font-size:14px">No upcoming jobs</div>';
+  g('bPending').innerHTML = bPend.length ? bPend.map(card).join('') : '<div style="text-align:center;color:#a1a1aa;padding:16px 0;font-size:14px">No pending requests</div>';
+  g('bToday').innerHTML = bToday.length ? bToday.map(card).join('') : '<div style="text-align:center;color:#a1a1aa;padding:16px 0;font-size:14px">No jobs today</div>';
+  g('bUpcoming').innerHTML = bUp.length ? bUp.map(card).join('') : '<div style="text-align:center;color:#a1a1aa;padding:16px 0;font-size:14px">No upcoming jobs</div>';
 }
 
 function card(b){
@@ -207,7 +207,7 @@ function card(b){
   var sl={pending:'⏳ Pending',approved:'✅ Approved',declined:'❌ Declined',completed:'🏁 Done','in-progress':'🔄 In Progress'};
   var bc=b.priority==='urgent'?'#dc2626':b.status==='approved'?'#059669':b.status==='completed'?'#2563eb':'#38bdf8';
   var desc=(b.description||'').slice(0,80)+((b.description||'').length>80?'...':'');
-  return '<div style="background:#1a1a1a;border-radius:16px;padding:16px;margin-bottom:10px;border-left:4px solid '+bc+';cursor:pointer" onclick="openDetail(\''+b.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="flex:1;padding-right:8px"><div style="font-size:15px;font-weight:700">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</div><div style="font-size:13px;color:#888;margin-top:3px">'+(b.requester||'')+(b.site?' · '+b.site:'')+'</div></div><span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;'+(sc[b.status]||sc.pending)+'">'+(sl[b.status]||b.status)+'</span></div><div style="font-size:13px;color:#aaa;margin-bottom:6px;line-height:1.5">'+desc+'</div><div style="font-size:13px;color:#38bdf8;font-weight:600">'+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
+  return '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:10px;border-left:4px solid '+bc+';cursor:pointer" onclick="openDetail(\''+b.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="flex:1;padding-right:8px"><div style="font-size:15px;font-weight:700">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</div><div style="font-size:13px;color:#71717a;margin-top:3px">'+(b.requester||'')+(b.site?' · '+b.site:'')+'</div></div><span style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;'+(sc[b.status]||sc.pending)+'">'+(sl[b.status]||b.status)+'</span></div><div style="font-size:13px;color:#71717a;margin-bottom:6px;line-height:1.5">'+desc+'</div><div style="font-size:13px;color:#38bdf8;font-weight:600">'+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
 }
 
 function openDetail(id){
@@ -215,12 +215,12 @@ function openDetail(id){
   if(!b) return;
   var ic={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
-  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" style="background:#1e1e1e;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#888;font-size:15px">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">From</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.requester||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Site</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.site||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:600;color:#38bdf8">'+fmtD(b.date)+'</div></div><div><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:3px">Time</div><div style="font-size:14px;font-weight:600;color:#ccc">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Description</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+(b.description||'')+'</div></div>';
-  if(b.notes) html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;margin-bottom:6px">Notes</div><div style="font-size:14px;color:#ccc;line-height:1.6;background:#1a1a1a;border-radius:12px;padding:12px">'+b.notes+'</div></div>';
-  html+='<hr style="border:none;border-top:1px solid #222;margin:14px 0"/>';
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" style="background:#f4f4f5;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#71717a;font-size:15px">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"><div><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:3px">From</div><div style="font-size:14px;font-weight:600;color:#3f3f46">'+(b.requester||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:3px">Site</div><div style="font-size:14px;font-weight:600;color:#3f3f46">'+(b.site||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:600;color:#38bdf8">'+fmtD(b.date)+'</div></div><div><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:3px">Time</div><div style="font-size:14px;font-weight:600;color:#3f3f46">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:6px">Description</div><div style="font-size:14px;color:#3f3f46;line-height:1.6;background:#fff;border-radius:12px;padding:12px">'+(b.description||'')+'</div></div>';
+  if(b.notes) html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;margin-bottom:6px">Notes</div><div style="font-size:14px;color:#3f3f46;line-height:1.6;background:#fff;border-radius:12px;padding:12px">'+b.notes+'</div></div>';
+  html+='<hr style="border:none;border-top:1px solid #e4e4e7;margin:14px 0"/>';
   if(b.status==='pending') html+='<textarea id="dNotes" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'approved\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif;font-size:15px">✅ Approve</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#dc2626;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif;font-size:15px">❌ Decline</button></div>';
 
-else if(b.status===‘approved’) html+=’<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">Cancel</button></div>’;
+else if(b.status===‘approved’) html+=’<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" style="background:#38bdf8;color:#0a0a0a;border:none;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" style="background:#fff;color:#71717a;border:1px solid #e4e4e7;border-radius:12px;padding:14px;font-weight:700;cursor:pointer;font-family:sans-serif">Cancel</button></div>’;
 else if(b.status===‘in-progress’) html+=’<button onclick="doStatus(\''+b.id+'\',\'completed\')" style="background:#059669;color:#fff;border:none;border-radius:12px;padding:14px;font-weight:700;width:100%;cursor:pointer;font-family:sans-serif">🏁 Mark Complete</button>’;
 html+=’<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#f87171;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:sans-serif;font-weight:600">🗑️ Delete</button>’;
 g(‘detailContent’).innerHTML=html;
