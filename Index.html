@@ -491,12 +491,26 @@ var bks=bookings.filter(function(b){ return b.date===selDate&&b.status!==‘decl
 document.getElementById(‘calDayList’).innerHTML=’<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 style="margin:0;font-size:15px">’+fmtD(selDate)+’</h2><button onclick="openForm(\'delivery\')" style="background:#38bdf8;border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;color:#0a0a0a;font-family:\'DM Sans\',sans-serif">+ Add</button></div>’+(bks.length?bks.map(cardHTML).join(’’):’<div style="text-align:center;color:#555;font-size:14px;padding:20px 0">No bookings this day</div>’);
 }
 
+// Global error handler
+window.onerror = function(msg, src, line, col, err){
+document.getElementById(‘todayStr’).textContent = ‘JS Error: ‘+msg+’ (line ‘+line+’)’;
+document.getElementById(‘todayStr’).style.color = ‘#f87171’;
+document.getElementById(‘todayStr’).style.fontSize = ‘13px’;
+return false;
+};
+
 // Init - show immediately, load data in background
+try {
 selDate = today();
 updateStats();
 renderDashList();
 renderCal();
 loadData();
+} catch(e) {
+document.getElementById(‘todayStr’).textContent = ’Init error: ’+e.message;
+document.getElementById(‘todayStr’).style.color = ‘#f87171’;
+document.getElementById(‘todayStr’).style.fontSize = ‘13px’;
+}
 </script>
 
 </body>
