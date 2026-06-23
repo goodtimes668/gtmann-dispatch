@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -47,7 +46,6 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 </div>
 
 <!-- HOME PAGE -->
-
 <div id="pg-home" class="page">
   <div class="card" style="margin-top:4px">
     <div id="todayTxt" style="font-size:18px;font-weight:800;color:#0f172a"></div>
@@ -74,7 +72,6 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 </div>
 
 <!-- BOOKINGS PAGE -->
-
 <div id="pg-bookings" class="page hidden">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
     <h1 style="margin:0">All Bookings</h1>
@@ -84,7 +81,6 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 </div>
 
 <!-- BRENT PAGE -->
-
 <div id="pg-brent" class="page hidden">
   <h1>Brent's Jobs</h1>
   <div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:4px">
@@ -103,7 +99,6 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 </div>
 
 <!-- BOTTOM NAV -->
-
 <div class="bottomnav">
   <button class="nb on" id="nb-home" onclick="showPage('home')"><span style="font-size:20px">🏠</span>Home</button>
   <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span style="font-size:20px">📋</span>Bookings</button>
@@ -111,7 +106,6 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 </div>
 
 <!-- BOOKING FORM OVERLAY -->
-
 <div id="formOverlay" class="overlay">
   <div class="sheet">
     <div class="handle"></div>
@@ -120,58 +114,54 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
       <button onclick="closeForm()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#64748b;font-size:15px;font-family:inherit">✕</button>
     </div>
 
-```
-<span class="lbl">Type</span>
-<div class="g2" style="margin-bottom:4px">
-  <button id="t-delivery" onclick="setType('delivery')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📦 Material Delivery</button>
-  <button id="t-pickup" onclick="setType('pickup')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🔧 Tool Pickup</button>
-  <button id="t-tool-delivery" onclick="setType('tool-delivery')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚚 Tool Delivery</button>
-  <button id="t-misc" onclick="setType('misc')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📝 Misc Task</button>
-</div>
+    <span class="lbl">Type</span>
+    <div class="g2" style="margin-bottom:4px">
+      <button id="t-delivery" onclick="setType('delivery')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📦 Material Delivery</button>
+      <button id="t-pickup" onclick="setType('pickup')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🔧 Tool Pickup</button>
+      <button id="t-tool-delivery" onclick="setType('tool-delivery')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚚 Tool Delivery</button>
+      <button id="t-misc" onclick="setType('misc')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📝 Misc Task</button>
+    </div>
 
-<span class="lbl">Requested By *</span>
-<input id="fWho" class="field" placeholder="Your name" type="text"/>
+    <span class="lbl">Requested By *</span>
+    <input id="fWho" class="field" placeholder="Your name" type="text"/>
 
-<span class="lbl">Job Site</span>
-<select id="fSite" class="field">
-  <option value="">— Select job site —</option>
-  <option>Grand &amp; Fir</option>
-  <option>GT Mann Office</option>
-  <option>Warehouse</option>
-</select>
+    <span class="lbl">Job Site</span>
+    <select id="fSite" class="field">
+      <option value="">— Select job site —</option>
+      <option>Grand &amp; Fir</option>
+      <option>GT Mann Office</option>
+      <option>Warehouse</option>
+    </select>
 
-<div id="fPickupWrap" class="hidden">
-  <span class="lbl">Pickup Location</span>
-  <input id="fPickup" class="field" placeholder="Where to pick up from" type="text"/>
-</div>
+    <div id="fPickupWrap" class="hidden">
+      <span class="lbl">Pickup Location</span>
+      <input id="fPickup" class="field" placeholder="Where to pick up from" type="text"/>
+    </div>
 
-<span class="lbl">Description *</span>
-<textarea id="fDesc" class="field" placeholder="What needs to be picked up or delivered? Include quantities, materials, tools..."></textarea>
+    <span class="lbl">Description *</span>
+    <textarea id="fDesc" class="field" placeholder="What needs to be picked up or delivered? Include quantities, materials, tools..."></textarea>
 
-<div class="g2">
-  <div><span class="lbl">Date *</span><input id="fDate" class="field" type="date"/></div>
-  <div><span class="lbl">Time</span><input id="fTime" class="field" type="time"/></div>
-</div>
+    <div class="g2">
+      <div><span class="lbl">Date *</span><input id="fDate" class="field" type="date"/></div>
+      <div><span class="lbl">Time</span><input id="fTime" class="field" type="time"/></div>
+    </div>
 
-<span class="lbl">Priority</span>
-<div class="g2" style="margin-bottom:4px">
-  <button id="p-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚨 Urgent</button>
-  <button id="p-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📋 Normal</button>
-  <button id="p-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📅 Planned</button>
-</div>
+    <span class="lbl">Priority</span>
+    <div class="g2" style="margin-bottom:4px">
+      <button id="p-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚨 Urgent</button>
+      <button id="p-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📋 Normal</button>
+      <button id="p-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📅 Planned</button>
+    </div>
 
-<span class="lbl">Notes</span>
-<textarea id="fNotes" class="field" placeholder="Access codes, contacts, special instructions..."></textarea>
+    <span class="lbl">Notes</span>
+    <textarea id="fNotes" class="field" placeholder="Access codes, contacts, special instructions..."></textarea>
 
-<button id="fSubmit" onclick="submitBooking()" class="btn-blue" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Submit Booking Request</button>
-<button onclick="closeForm()" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
-```
-
+    <button id="fSubmit" onclick="submitBooking()" class="btn-blue" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Submit Booking Request</button>
+    <button onclick="closeForm()" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
   </div>
 </div>
 
 <!-- DETAIL OVERLAY -->
-
 <div id="detailOverlay" class="overlay">
   <div class="sheet">
     <div class="handle"></div>
@@ -258,105 +248,113 @@ function openDetail(id){
   html+='<hr style="border:none;border-top:1px solid #e2e8f0;margin:14px 0"/>';
   if(b.status==='pending'){
     html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
-
-```
-html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'approved\')" class="btn-green" style="width:100%">✅ Approve</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-red" style="width:100%">❌ Decline</button></div>';
-```
-
-} else if(b.status===‘approved’){
-html+=’<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" class="btn-blue" style="width:100%">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-outline" style="width:100%">Cancel</button></div>’;
-} else if(b.status===‘in-progress’){
-html+=’<button onclick="doStatus(\''+b.id+'\',\'completed\')" class="btn-green" style="width:100%">🏁 Mark Complete</button>’;
-}
-html+=’<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600">🗑️ Delete Booking</button>’;
-el(‘detailContent’).innerHTML=html;
-el(‘detailOverlay’).classList.add(‘show’);
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'approved\')" class="btn-green" style="width:100%">✅ Approve</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-red" style="width:100%">❌ Decline</button></div>';
+  } else if(b.status==='approved'){
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" class="btn-blue" style="width:100%">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-outline" style="width:100%">Cancel</button></div>';
+  } else if(b.status==='in-progress'){
+    html+='<button onclick="doStatus(\''+b.id+'\',\'completed\')" class="btn-green" style="width:100%">🏁 Mark Complete</button>';
+  }
+  html+='<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600">🗑️ Delete Booking</button>';
+  el('detailContent').innerHTML=html;
+  el('detailOverlay').classList.add('show');
 }
 
 function doStatus(id,status){
-var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
-var n=el(‘dNotes’); var notes=n?n.value:’’;
-fetch(API+’/bookings/’+id,{method:‘PUT’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify({status:status,brentNotes:notes})}).catch(function(){});
-b.status=status; if(notes) b.brentNotes=notes;
-closeDetail(); renderAll();
+  var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+  var n=el('dNotes'); var notes=n?n.value:'';
+  fetch(API+'/bookings/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status,brentNotes:notes})}).catch(function(){});
+  b.status=status; if(notes) b.brentNotes=notes;
+  closeDetail(); renderAll();
 }
 
 function doDelete(id){
-if(!confirm(‘Delete this booking?’)) return;
-fetch(API+’/bookings/’+id,{method:‘DELETE’,headers:{‘Content-Type’:‘application/json’}}).catch(function(){});
-bookings=bookings.filter(function(b){ return b.id!==id; });
-closeDetail(); renderAll();
+  if(!confirm('Delete this booking?')) return;
+  fetch(API+'/bookings/'+id,{method:'DELETE',headers:{'Content-Type':'application/json'}}).catch(function(){});
+  bookings=bookings.filter(function(b){ return b.id!==id; });
+  closeDetail(); renderAll();
 }
 
 function setType(t){
-curType=t;
-[‘delivery’,‘pickup’,‘tool-delivery’,‘misc’].forEach(function(x){
-var btn=el(‘t-’+x); if(!btn) return;
-var on=x===t;
-btn.style.border=on?‘2px solid #0ea5e9’:‘1.5px solid #e2e8f0’;
-btn.style.background=on?’#f0f9ff’:’#fff’;
-btn.style.color=on?’#0284c7’:’#64748b’;
-btn.style.fontWeight=on?‘700’:‘600’;
-});
-el(‘fPickupWrap’).className=(t===‘pickup’||t===‘tool-delivery’)?’’:‘hidden’;
+  curType=t;
+  ['delivery','pickup','tool-delivery','misc'].forEach(function(x){
+    var btn=el('t-'+x); if(!btn) return;
+    var on=x===t;
+    btn.style.border=on?'2px solid #0ea5e9':'1.5px solid #e2e8f0';
+    btn.style.background=on?'#f0f9ff':'#fff';
+    btn.style.color=on?'#0284c7':'#64748b';
+    btn.style.fontWeight=on?'700':'600';
+  });
+  el('fPickupWrap').className=(t==='pickup'||t==='tool-delivery')?'':'hidden';
 }
 
 function setPri(p){
-curPri=p;
-[‘urgent’,‘normal’,‘scheduled’].forEach(function(x){
-var btn=el(‘p-’+x); if(!btn) return;
-var on=x===p;
-btn.style.border=on?‘2px solid #0ea5e9’:‘1.5px solid #e2e8f0’;
-btn.style.background=on?’#f0f9ff’:’#fff’;
-btn.style.color=on?’#0284c7’:’#64748b’;
-btn.style.fontWeight=on?‘700’:‘600’;
-});
+  curPri=p;
+  ['urgent','normal','scheduled'].forEach(function(x){
+    var btn=el('p-'+x); if(!btn) return;
+    var on=x===p;
+    btn.style.border=on?'2px solid #0ea5e9':'1.5px solid #e2e8f0';
+    btn.style.background=on?'#f0f9ff':'#fff';
+    btn.style.color=on?'#0284c7':'#64748b';
+    btn.style.fontWeight=on?'700':'600';
+  });
 }
 
 function openForm(type){
-curType=type||‘delivery’; curPri=‘normal’;
-var titles={delivery:‘📦 Material Delivery’,pickup:‘🔧 Tool Pickup’,‘tool-delivery’:‘🚚 Tool Delivery’,misc:‘📝 Misc Task’};
-el(‘fTitle’).textContent=titles[type]||‘New Booking’;
-el(‘fWho’).value=’’; el(‘fDesc’).value=’’; el(‘fNotes’).value=’’;
-if(el(‘fPickup’)) el(‘fPickup’).value=’’;
-if(el(‘fTime’)) el(‘fTime’).value=’’;
-el(‘fDate’).value=today(); el(‘fSite’).value=’’;
-setType(curType); setPri(‘normal’);
-el(‘formOverlay’).classList.add(‘show’);
+  curType=type||'delivery'; curPri='normal';
+  var titles={delivery:'📦 Material Delivery',pickup:'🔧 Tool Pickup','tool-delivery':'🚚 Tool Delivery',misc:'📝 Misc Task'};
+  el('fTitle').textContent=titles[type]||'New Booking';
+  el('fWho').value=''; el('fDesc').value=''; el('fNotes').value='';
+  if(el('fPickup')) el('fPickup').value='';
+  if(el('fTime')) el('fTime').value='';
+  el('fDate').value=today(); el('fSite').value='';
+  setType(curType); setPri('normal');
+  el('formOverlay').classList.add('show');
 }
 
-function closeForm(){ el(‘formOverlay’).classList.remove(‘show’); }
-function closeDetail(){ el(‘detailOverlay’).classList.remove(‘show’); }
+function closeForm(){ el('formOverlay').classList.remove('show'); }
+function closeDetail(){ el('detailOverlay').classList.remove('show'); }
 
 function submitBooking(){
-var who=el(‘fWho’).value.trim();
-var desc=el(‘fDesc’).value.trim();
-var date=el(‘fDate’).value;
-if(!who||!desc||!date){ alert(‘Please fill in: Your name, Description, and Date.’); return; }
-var btn=el(‘fSubmit’);
-btn.textContent=‘Submitting…’; btn.disabled=true;
-var bk={id:uid(),type:curType,requester:who,site:el(‘fSite’).value,description:desc,date:date,time:el(‘fTime’).value,priority:curPri,notes:el(‘fNotes’).value,status:‘pending’,createdAt:new Date().toISOString()};
-if(el(‘fPickup’)) bk.pickupLocation=el(‘fPickup’).value;
-fetch(API+’/bookings’,{method:‘POST’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify(bk)})
-.then(function(r){ return r.json(); })
-.then(function(saved){ bookings.push(saved||bk); closeForm(); renderAll(); })
-.catch(function(){ bookings.push(bk); closeForm(); renderAll(); })
-.finally(function(){ btn.textContent=‘Submit Booking Request’; btn.disabled=false; });
+  var who=el('fWho').value.trim();
+  var desc=el('fDesc').value.trim();
+  var date=el('fDate').value;
+  if(!who||!desc||!date){ alert('Please fill in: Your name, Description, and Date.'); return; }
+  var btn=el('fSubmit');
+  btn.textContent='Submitting...'; btn.disabled=true;
+  var bk={id:uid(),type:curType,requester:who,site:el('fSite').value,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value,status:'pending',createdAt:new Date().toISOString()};
+  if(el('fPickup')) bk.pickupLocation=el('fPickup').value;
+  fetch(API+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bk)})
+    .then(function(r){ return r.json(); })
+    .then(function(saved){ bookings.push(saved||bk); closeForm(); renderAll(); })
+    .catch(function(){ bookings.push(bk); closeForm(); renderAll(); })
+    .finally(function(){ btn.textContent='Submit Booking Request'; btn.disabled=false; });
 }
 
 function showPage(p){
-[‘home’,‘bookings’,‘brent’].forEach(function(x){
-var pg=el(‘pg-’+x); var nb=el(‘nb-’+x);
-if(pg) pg.className=‘page’+(x===p?’’:’ hidden’);
-if(nb) nb.className=‘nb’+(x===p?’ on’:’’);
-});
-window.scrollTo(0,0);
+  ['home','bookings','brent'].forEach(function(x){
+    var pg=el('pg-'+x); var nb=el('nb-'+x);
+    if(pg) pg.className='page'+(x===p?'':' hidden');
+    if(nb) nb.className='nb'+(x===p?' on':'');
+  });
+  window.scrollTo(0,0);
 }
 
+// Global error catcher
+window.onerror = function(msg, src, line){
+  var bt = document.getElementById('brentTxt');
+  if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = '#dc2626'; }
+  return false;
+};
+
 // Init
-el(‘todayTxt’).textContent=new Date().toLocaleDateString(‘en-US’,{weekday:‘long’,month:‘long’,day:‘numeric’});
+el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+
+setTimeout(function(){
+  var bt = document.getElementById('brentTxt');
+  if(bt && bt.textContent === 'Loading...'){ bt.textContent = 'Brent is available (offline)'; }
+}, 5000);
+
 loadData();
 </script>
-
 </body>
 </html>
