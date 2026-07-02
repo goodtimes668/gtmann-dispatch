@@ -10,9 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ================================================================
-   GT MANN DISPATCH — dark industrial
-   Matches Field Tracker / Field Command design system.
-   Hazard yellow accent · mono numerals · uppercase micro-labels
+   GT MANN DISPATCH v2 — dark industrial
+   Role gate · offline retry queue · edit · photos · metrics
    ================================================================ */
 :root{
   --bg:#0d0d0f;
@@ -39,36 +38,33 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .hidden{display:none!important}
 svg{display:block;flex-shrink:0}
 
-/* hazard stripe — the suite's signature */
 .hazard{height:4px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 10px,#0d0d0f 10px 20px)}
 
-/* topbar */
 .topbar{background:#111114;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:10}
 .logo{width:36px;height:36px;background:var(--yellow);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#0d0d0f;flex-shrink:0}
 .apptitle{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;letter-spacing:0.12em;color:var(--text)}
 .appsub{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.18em;color:var(--faint);text-transform:uppercase;margin-top:2px}
-.iconbtn{margin-left:auto;background:var(--card2);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
+.iconbtn{background:var(--card2);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
 .iconbtn:active{color:var(--yellow);border-color:var(--yellow)}
+.iconbtn.unlocked{color:var(--yellow);border-color:rgba(245,197,24,0.5)}
 
-/* cards */
 .card{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-/* stat cards */
 .stat{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:14px;margin-bottom:0;position:relative;overflow:hidden}
 .stat .sic{margin-bottom:10px}
 .stat .num{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;line-height:1}
+.stat .num.sm{font-size:20px}
 .stat .slbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);margin-top:6px}
 .stat::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,transparent);opacity:.85}
 
-/* buttons */
 .btn-primary{background:var(--yellow);color:#0d0d0f;border:none;border-radius:11px;padding:14px 18px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
 .btn-primary:disabled{opacity:.6}
 .btn-outline{background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:11px;padding:14px 18px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
 .btn-green{background:var(--green);color:#06130a;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-red{background:var(--red);color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
 
-/* quick actions */
 .qa{border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;text-align:left;font-family:inherit;transition:border-color .15s}
 .qa span{font-size:14px;font-weight:700}
 .qa-primary{background:var(--yellow);border:1px solid var(--yellow);color:#0d0d0f}
@@ -77,7 +73,6 @@ svg{display:block;flex-shrink:0}
 .qa-dark span{color:var(--text)}
 .qa-dark:active{border-color:var(--yellow)}
 
-/* form fields */
 .field{width:100%;padding:13px 14px;background:var(--card2);border:1px solid var(--border);border-radius:11px;font-size:16px;font-family:inherit;color:var(--text);outline:none;display:block;-webkit-appearance:none}
 .field::placeholder{color:var(--faint)}
 .field:focus{border-color:var(--yellow);background:#20201a}
@@ -86,31 +81,27 @@ select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;display:block;margin-bottom:7px;margin-top:16px}
 .lbl:first-child{margin-top:0}
 
-/* segmented pickers (type / priority) */
 .seg{padding:11px 10px;border-radius:11px;border:1px solid var(--border);background:var(--card2);font-weight:600;font-size:12px;cursor:pointer;color:var(--dim);font-family:inherit;display:flex;align-items:center;gap:7px;transition:border-color .15s,color .15s}
 .seg.on{border-color:var(--yellow);background:var(--yellow-dim);color:var(--yellow);font-weight:700}
 
-/* overlays */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;flex-direction:column;justify-content:flex-end}
 .overlay.show{display:flex}
 .sheet{background:#131318;border:1px solid var(--border-soft);border-bottom:none;border-radius:20px 20px 0 0;padding:18px 18px 36px;max-height:92vh;overflow-y:auto}
 .handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
 .closebtn{background:var(--card2);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center}
 
-/* bottom nav */
 .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#111114;border-top:1px solid var(--border-soft);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:50}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 8px;background:none;border:none;cursor:pointer;color:var(--faint);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
 .nb.on{color:var(--yellow)}
 
-/* booking cards */
 .bcard{background:var(--card);border:1px solid var(--border-soft);border-left:3px solid var(--bc,var(--faint));border-radius:13px;padding:15px;margin-bottom:10px;cursor:pointer}
 .bcard .row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .bcard .ttl{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
 .bcard .sub{font-size:13px;color:var(--dim);margin-top:4px}
 .bcard .desc{font-size:13px;color:var(--dim);margin-bottom:8px;line-height:1.5}
 .bcard .when{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:6px}
+.bcard.runsheet .when{font-size:14px}
 
-/* status badges */
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap}
 .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 .b-pending{background:rgba(245,158,11,0.14);color:var(--amber)}
@@ -118,18 +109,31 @@ select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 .b-declined{background:rgba(239,68,68,0.14);color:var(--red)}
 .b-completed{background:rgba(59,130,246,0.14);color:var(--blue)}
 .b-in-progress{background:rgba(167,139,250,0.14);color:var(--violet)}
+.b-queued{background:rgba(245,197,24,0.14);color:var(--yellow)}
 
-/* empty + skeleton states */
 .empty{text-align:center;color:var(--faint);padding:28px 0;font-size:13px}
-.empty svg{margin:0 auto 10px;opacity:.5}
 .skel{border-radius:13px;height:76px;margin-bottom:10px;background:linear-gradient(100deg,var(--card) 40%,var(--card2) 50%,var(--card) 60%);background-size:200% 100%;animation:shimmer 1.4s infinite}
 @keyframes shimmer{to{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}.toast{transition:none}}
 
-/* detail overlay bits */
 .dl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:4px}
 .dv{font-size:14px;font-weight:600;color:var(--text)}
 .dbox{font-size:14px;color:var(--dim);line-height:1.6;background:var(--card2);border:1px solid var(--border-soft);border-radius:11px;padding:12px}
+.dphoto{width:100%;border-radius:11px;border:1px solid var(--border-soft);display:block}
+
+/* toasts */
+#toasts{position:fixed;left:16px;right:16px;bottom:calc(70px + env(safe-area-inset-bottom,0));z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:#1c1c22;border:1px solid var(--border);border-left:3px solid var(--yellow);border-radius:11px;padding:12px 14px;font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:10px;box-shadow:0 6px 24px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;max-width:640px;margin:0 auto;width:100%}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-left-color:var(--green)}
+.toast.err{border-left-color:var(--red)}
+.toast.warn{border-left-color:var(--amber)}
+
+/* photo attach */
+.photobtn{display:flex;align-items:center;gap:8px;justify-content:center}
+.photoprev{position:relative;margin-top:10px}
+.photoprev img{width:100%;border-radius:11px;border:1px solid var(--border);display:block}
+.photoprev button{position:absolute;top:8px;right:8px;background:rgba(13,13,15,0.85);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--red);display:flex;align-items:center;justify-content:center}
 
 h1{font-size:21px;font-weight:800;color:var(--text);margin-bottom:18px}
 h2{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;margin:20px 0 10px}
@@ -145,7 +149,10 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
     <div class="apptitle">GT MANN DISPATCH</div>
     <div class="appsub">Delivery &amp; Booking</div>
   </div>
-  <button onclick="loadData()" class="iconbtn" id="refreshIc" aria-label="Refresh"></button>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button onclick="toggleRole()" class="iconbtn" id="lockBtn" aria-label="Dispatcher mode"></button>
+    <button onclick="manualRefresh()" class="iconbtn" id="refreshIc" aria-label="Refresh"></button>
+  </div>
 </div>
 
 <!-- HOME PAGE -->
@@ -193,9 +200,17 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
       <div id="brentCnt" style="font-size:13px;color:var(--yellow);margin-top:3px;font-weight:600">Loading...</div>
     </div>
   </div>
+
+  <h2>Last 30 Days</h2>
+  <div class="g3" style="margin-bottom:6px">
+    <div class="stat" style="--sc:var(--green)"><div id="mDone" class="num sm" style="color:var(--green)">—</div><div class="slbl">Completed</div></div>
+    <div class="stat" style="--sc:var(--yellow)"><div id="mTurn" class="num sm" style="color:var(--yellow)">—</div><div class="slbl">Avg Days</div></div>
+    <div class="stat" style="--sc:var(--blue)"><div id="mSite" class="num sm" style="color:var(--blue);font-size:13px;line-height:1.3;padding-top:4px">—</div><div class="slbl">Top Site</div></div>
+  </div>
+
   <h2>Needs Approval</h2>
   <div id="bPending"><div class="skel"></div></div>
-  <h2>Today's Jobs</h2>
+  <h2>Today's Run Sheet</h2>
   <div id="bToday"><div class="skel"></div></div>
   <h2>Upcoming</h2>
   <div id="bUpcoming"><div class="skel"></div></div>
@@ -256,6 +271,11 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
       <button id="p-scheduled" onclick="setPri('scheduled')" class="seg"><span data-ic="calendar" data-s="15"></span>Planned</button>
     </div>
 
+    <span class="lbl">Photo</span>
+    <input type="file" id="fPhoto" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(this)"/>
+    <button onclick="el('fPhoto').click()" class="btn-outline photobtn" style="width:100%;padding:13px" id="photoBtn"><span data-ic="camera" data-s="16"></span>Attach Photo</button>
+    <div id="photoPrev"></div>
+
     <span class="lbl">Notes</span>
     <textarea id="fNotes" class="field" placeholder="Access codes, contacts, special instructions..."></textarea>
 
@@ -272,24 +292,28 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
   </div>
 </div>
 
+<div id="toasts"></div>
+
 <script>
 var API = 'https://toolvault-slack-backend-production.up.railway.app/api';
+var DISPATCH_PIN = '4718'; // CHANGE THIS — give it to Brent + office only
 var bookings = [];
 var curType = 'delivery';
 var curPri = 'normal';
+var curPhoto = null;
+var editId = null;
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function today(){ return new Date().toISOString().split('T')[0]; }
 function el(id){ return document.getElementById(id); }
 
-/* escape user-entered content before injecting into HTML */
 function esc(s){
   return String(s==null?'':s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-/* ---- inline SVG icon registry (Lucide-style, 2px stroke) ---- */
+/* ---- icons ---- */
 var ICONS = {
   truck:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
   package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
@@ -307,12 +331,16 @@ var ICONS = {
   clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   play:'<polygon points="6 3 20 12 6 21 6 3"/>',
   checkcircle:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
-  inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
+  inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  edit:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+  lock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  unlock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+  mappin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'
 };
 function ico(name,size,color){
   return '<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="'+(color||'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';
 }
-/* hydrate any element carrying data-ic */
 function hydrateIcons(root){
   var nodes=(root||document).querySelectorAll('[data-ic]');
   for(var i=0;i<nodes.length;i++){
@@ -320,11 +348,96 @@ function hydrateIcons(root){
     n.innerHTML=ico(n.getAttribute('data-ic'), n.getAttribute('data-s')||18, n.getAttribute('data-c')||'currentColor');
   }
 }
-
 function emptyState(icon,msg){
   return '<div class="empty">'+ico(icon,26,'currentColor').replace('<svg','<svg style="margin:0 auto 10px;opacity:.5"')+'<div>'+msg+'</div></div>';
 }
 
+/* ---- toasts ---- */
+function toast(msg,kind){
+  var t=document.createElement('div');
+  t.className='toast'+(kind?' '+kind:'');
+  t.innerHTML=(kind==='err'?ico('alert',15,'var(--red)'):kind==='ok'?ico('check',15,'var(--green)'):kind==='warn'?ico('clock',15,'var(--amber)'):ico('refresh',15,'var(--yellow)'))+'<span>'+esc(msg)+'</span>';
+  el('toasts').appendChild(t);
+  requestAnimationFrame(function(){ t.classList.add('show'); });
+  setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); },250); },3200);
+}
+
+/* ---- role gate ----
+   Client-side gate only: stops accidental approvals by the crew.
+   NOT security against a determined attacker (PIN is in source). */
+function isDispatcher(){ return localStorage.getItem('gtd_role')==='dispatcher'; }
+function toggleRole(){
+  if(isDispatcher()){
+    localStorage.removeItem('gtd_role');
+    renderLock(); renderAll();
+    toast('Dispatcher mode off','warn');
+  } else {
+    var pin=prompt('Dispatcher PIN:');
+    if(pin===null) return;
+    if(pin===DISPATCH_PIN){
+      localStorage.setItem('gtd_role','dispatcher');
+      renderLock(); renderAll();
+      toast('Dispatcher mode on','ok');
+    } else {
+      toast('Wrong PIN','err');
+    }
+  }
+}
+function renderLock(){
+  var b=el('lockBtn');
+  b.innerHTML=ico(isDispatcher()?'unlock':'lock',16);
+  b.className='iconbtn'+(isDispatcher()?' unlocked':'');
+}
+
+/* ---- offline retry queue ---- */
+function getQueue(){ try{ return JSON.parse(localStorage.getItem('gtd_queue')||'[]'); }catch(e){ return []; } }
+function setQueue(q){ localStorage.setItem('gtd_queue',JSON.stringify(q)); }
+
+function apiCall(method,path,body,okMsg){
+  return fetch(API+path,{
+    method:method,
+    headers:{'Content-Type':'application/json'},
+    body:body?JSON.stringify(body):undefined
+  }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(okMsg) toast(okMsg,'ok');
+    return r.json().catch(function(){ return null; });
+  }).catch(function(){
+    var q=getQueue();
+    q.push({method:method,path:path,body:body,ts:Date.now()});
+    setQueue(q);
+    toast('Saved offline — will sync when connection returns','warn');
+    return null;
+  });
+}
+
+function flushQueue(){
+  var q=getQueue();
+  if(!q.length) return Promise.resolve(0);
+  var synced=0;
+  function next(){
+    if(!q.length){ setQueue([]); return Promise.resolve(synced); }
+    var item=q[0];
+    return fetch(API+item.path,{
+      method:item.method,
+      headers:{'Content-Type':'application/json'},
+      body:item.body?JSON.stringify(item.body):undefined
+    }).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      q.shift(); synced++; setQueue(q);
+      return next();
+    }).catch(function(){
+      setQueue(q);
+      return Promise.resolve(synced);
+    });
+  }
+  return next().then(function(n){
+    if(n>0){ toast('Synced '+n+' pending change'+(n>1?'s':''),'ok'); loadData(); }
+    return n;
+  });
+}
+
+/* ---- formatting ---- */
 function fmtD(d){
   if(!d) return '—';
   try{ return new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}); }
@@ -343,13 +456,50 @@ function isThisWeek(d){
   try{ var dt=new Date(d+'T12:00:00'); return dt>=s&&dt<=e; }catch(e){ return false; }
 }
 
+/* ---- data ---- */
 function loadData(){
   fetch(API+'/bookings')
     .then(function(r){ return r.json(); })
-    .then(function(d){ bookings=Array.isArray(d)?d:[]; renderAll(); })
-    .catch(function(){ renderAll(); });
+    .then(function(d){ bookings=Array.isArray(d)?d:[]; mergeQueued(); renderAll(); })
+    .catch(function(){ mergeQueued(); renderAll(); });
+}
+function mergeQueued(){
+  // show not-yet-synced POSTs so a page refresh doesn't hide someone's booking
+  var q=getQueue();
+  q.forEach(function(item){
+    if(item.method==='POST'&&item.body&&item.body.id){
+      if(!bookings.some(function(b){ return b.id===item.body.id; })){
+        var copy=JSON.parse(JSON.stringify(item.body));
+        copy._queued=true;
+        bookings.push(copy);
+      }
+    }
+  });
+}
+function manualRefresh(){
+  flushQueue().then(function(){ loadData(); });
 }
 
+/* ---- metrics ---- */
+function renderMetrics(){
+  var cutoff=Date.now()-30*24*60*60*1000;
+  var recent=bookings.filter(function(b){
+    var t=Date.parse(b.createdAt||''); return !isNaN(t)&&t>=cutoff;
+  });
+  var done=recent.filter(function(b){ return b.status==='completed'; });
+  el('mDone').textContent=done.length;
+  var turns=done.map(function(b){
+    var a=Date.parse(b.createdAt||''), z=Date.parse(b.completedAt||'');
+    return (!isNaN(a)&&!isNaN(z)&&z>=a)?(z-a)/86400000:null;
+  }).filter(function(x){ return x!==null; });
+  el('mTurn').textContent=turns.length?(turns.reduce(function(s,x){ return s+x; },0)/turns.length).toFixed(1):'—';
+  var counts={};
+  recent.forEach(function(b){ if(b.site) counts[b.site]=(counts[b.site]||0)+1; });
+  var top=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; })[0];
+  el('mSite').textContent=top||'—';
+}
+
+/* ---- render ---- */
 function renderAll(){
   var now=new Date();
   el('todayTxt').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
@@ -362,55 +512,84 @@ function renderAll(){
   el('brentTxt').textContent=act.length>0?'Brent has '+act.length+' active job'+(act.length>1?'s':''):'Brent is available';
   el('brentCnt').textContent=pend.length>0?pend.length+' job'+(pend.length>1?'s':'')+' need approval':'All clear';
   var up=bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
-  el('homeList').innerHTML=up.length?up.map(cardHTML).join(''):emptyState('inbox','No upcoming bookings');
+  el('homeList').innerHTML=up.length?up.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('inbox','No upcoming bookings');
   var all=bookings.slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
-  el('allList').innerHTML=all.length?all.map(cardHTML).join(''):emptyState('inbox','No bookings yet');
-  var bTod=bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); });
+  el('allList').innerHTML=all.length?all.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('inbox','No bookings yet');
+  var bTod=bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); })
+    .sort(function(a,b){ return (a.time||'99:99').localeCompare(b.time||'99:99'); });
   var bUp=bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
-  el('bPending').innerHTML=pend.length?pend.map(cardHTML).join(''):emptyState('checkcircle','No pending requests');
-  el('bToday').innerHTML=bTod.length?bTod.map(cardHTML).join(''):emptyState('calendar','No jobs today');
-  el('bUpcoming').innerHTML=bUp.length?bUp.map(cardHTML).join(''):emptyState('calendar','No upcoming jobs');
+  el('bPending').innerHTML=pend.length?pend.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('checkcircle','No pending requests');
+  el('bToday').innerHTML=bTod.length?bTod.map(function(b){ return cardHTML(b,true); }).join(''):emptyState('calendar','No jobs today');
+  el('bUpcoming').innerHTML=bUp.length?bUp.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('calendar','No upcoming jobs');
+  renderMetrics();
 }
 
-function cardHTML(b){
+function cardHTML(b,runsheet){
   var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   var sl={pending:'Pending',approved:'Approved',declined:'Declined',completed:'Done','in-progress':'In Progress'};
   var scls={pending:'b-pending',approved:'b-approved',declined:'b-declined',completed:'b-completed','in-progress':'b-in-progress'};
   var bc=b.priority==='urgent'?'var(--red)':b.status==='approved'?'var(--green)':b.status==='completed'?'var(--blue)':'var(--yellow)';
   var desc=(b.description||'').slice(0,80)+((b.description||'').length>80?'...':'');
-  return '<div class="bcard" style="--bc:'+bc+'" onclick="openDetail(\''+esc(b.id)+'\')">'
+  var badge=b._queued
+    ? '<span class="badge b-queued"><span class="dot"></span>Queued</span>'
+    : '<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span>';
+  var when=runsheet
+    ? (b.time?fmtT(b.time):'Anytime')
+    : fmtD(b.date)+(b.time?' · '+fmtT(b.time):'');
+  var extras='';
+  if(b.photo) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
+  var loc='';
+  if(runsheet&&(b.pickupLocation||b.site)){
+    loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
+  }
+  return '<div class="bcard'+(runsheet?' runsheet':'')+'" style="--bc:'+bc+'" onclick="openDetail(\''+esc(b.id)+'\')">'
     +'<div class="row"><div style="flex:1;padding-right:8px">'
-    +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+'</div>'
-    +'<div class="sub">'+esc(b.requester||'')+(b.site?' · '+esc(b.site):'')+'</div></div>'
-    +'<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span></div>'
+    +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+extras+'</div>'
+    +'<div class="sub">'+esc(b.requester||'')+(b.site&&!runsheet?' · '+esc(b.site):'')+'</div>'+loc+'</div>'
+    +badge+'</div>'
     +'<div class="desc">'+esc(desc)+'</div>'
-    +'<div class="when">'+ico('calendar',13,'currentColor')+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
+    +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div>';
 }
 
+/* ---- detail ---- */
 function openDetail(id){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
+  var disp=isDispatcher();
   var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:9px">'+ico(ic[b.type]||'clipboard',19,'var(--yellow)')+esc(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" class="closebtn">'+ico('x',15)+'</button></div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
     +'<div><div class="dl">From</div><div class="dv">'+esc(b.requester||'—')+'</div></div>'
     +'<div><div class="dl">Site</div><div class="dv">'+esc(b.site||'—')+'</div></div>'
     +'<div><div class="dl">Date</div><div class="dv" style="color:var(--yellow)">'+fmtD(b.date)+'</div></div>'
     +'<div><div class="dl">Time</div><div class="dv">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div>';
+  if(b.pickupLocation) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Pickup Location</div><div class="dbox">'+esc(b.pickupLocation)+'</div></div>';
   html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Description</div><div class="dbox">'+esc(b.description||'')+'</div></div>';
+  if(b.photo) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Photo</div><img class="dphoto" src="'+esc(b.photo)+'" alt="Booking photo"/></div>';
   if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
   if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
   html+='<hr/>';
-  if(b.status==='pending'){
-    html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'approved\')" class="btn-green">'+ico('check',16)+'Approve</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-red">'+ico('x',16)+'Decline</button></div>';
-  } else if(b.status==='approved'){
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'in-progress\')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-outline">Cancel</button></div>';
-  } else if(b.status==='in-progress'){
-    html+='<button onclick="doStatus(\''+esc(b.id)+'\',\'completed\')" class="btn-green" style="width:100%">'+ico('checkcircle',16)+'Mark Complete</button>';
+
+  var canEdit=b.status==='pending'||disp;
+  if(disp){
+    if(b.status==='pending'){
+      html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'approved\')" class="btn-green">'+ico('check',16)+'Approve</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-red">'+ico('x',16)+'Decline</button></div>';
+    } else if(b.status==='approved'){
+      html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'in-progress\')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-outline">Cancel</button></div>';
+    } else if(b.status==='in-progress'){
+      html+='<button onclick="doStatus(\''+esc(b.id)+'\',\'completed\')" class="btn-green" style="width:100%">'+ico('checkcircle',16)+'Mark Complete</button>';
+    }
+  } else if(b.status==='pending'){
+    html+='<div style="text-align:center;color:var(--faint);font-size:12px;padding:4px 0 8px;font-family:\'JetBrains Mono\',monospace;letter-spacing:0.08em">AWAITING DISPATCHER APPROVAL</div>';
   }
-  html+='<button onclick="doDelete(\''+esc(b.id)+'\')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('trash',15)+'Delete Booking</button>';
+  if(canEdit){
+    html+='<button onclick="startEdit(\''+esc(b.id)+'\')" class="btn-outline" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('edit',15)+'Edit Booking</button>';
+  }
+  if(disp){
+    html+='<button onclick="doDelete(\''+esc(b.id)+'\')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('trash',15)+'Delete Booking</button>';
+  }
   el('detailContent').innerHTML=html;
   el('detailOverlay').classList.add('show');
 }
@@ -418,18 +597,58 @@ function openDetail(id){
 function doStatus(id,status){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   var n=el('dNotes'); var notes=n?n.value:'';
-  fetch(API+'/bookings/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status,brentNotes:notes})}).catch(function(){});
+  var payload={status:status,brentNotes:notes};
+  if(status==='completed') payload.completedAt=new Date().toISOString();
+  if(status==='approved') payload.approvedAt=new Date().toISOString();
+  var msgs={approved:'Approved',declined:'Declined','in-progress':'Job started',completed:'Marked complete'};
+  apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated');
   b.status=status; if(notes) b.brentNotes=notes;
+  if(payload.completedAt) b.completedAt=payload.completedAt;
+  if(payload.approvedAt) b.approvedAt=payload.approvedAt;
   closeDetail(); renderAll();
 }
 
 function doDelete(id){
   if(!confirm('Delete this booking?')) return;
-  fetch(API+'/bookings/'+id,{method:'DELETE',headers:{'Content-Type':'application/json'}}).catch(function(){});
+  apiCall('DELETE','/bookings/'+id,null,'Booking deleted');
   bookings=bookings.filter(function(b){ return b.id!==id; });
   closeDetail(); renderAll();
 }
 
+/* ---- photo ---- */
+function handlePhoto(input){
+  var f=input.files&&input.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var max=1000, w=img.width, h=img.height;
+      if(w>max||h>max){ var r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      var data=c.toDataURL('image/jpeg',0.72);
+      if(data.length>900000){ toast('Photo too large even after compression','err'); return; }
+      curPhoto=data;
+      renderPhotoPrev();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+  input.value='';
+}
+function renderPhotoPrev(){
+  var p=el('photoPrev');
+  if(curPhoto){
+    p.innerHTML='<div class="photoprev"><img src="'+curPhoto+'" alt="Attached photo"/><button onclick="removePhoto()" aria-label="Remove photo">'+ico('x',14)+'</button></div>';
+    el('photoBtn').classList.add('hidden');
+  } else {
+    p.innerHTML='';
+    el('photoBtn').classList.remove('hidden');
+  }
+}
+function removePhoto(){ curPhoto=null; renderPhotoPrev(); }
+
+/* ---- form ---- */
 function setType(t){
   curType=t;
   ['delivery','pickup','tool-delivery','misc'].forEach(function(x){
@@ -438,7 +657,6 @@ function setType(t){
   });
   el('fPickupWrap').className=(t==='pickup'||t==='tool-delivery')?'':'hidden';
 }
-
 function setPri(p){
   curPri=p;
   ['urgent','normal','scheduled'].forEach(function(x){
@@ -448,14 +666,32 @@ function setPri(p){
 }
 
 function openForm(type){
-  curType=type||'delivery'; curPri='normal';
+  editId=null; curType=type||'delivery'; curPri='normal'; curPhoto=null;
   var titles={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   el('fTitle').textContent=titles[type]||'New Booking';
   el('fWho').value=''; el('fDesc').value=''; el('fNotes').value='';
   if(el('fPickup')) el('fPickup').value='';
   if(el('fTime')) el('fTime').value='';
   el('fDate').value=today(); el('fSite').value='';
-  setType(curType); setPri('normal');
+  el('fSubmit').textContent='Submit Booking Request';
+  setType(curType); setPri('normal'); renderPhotoPrev();
+  el('formOverlay').classList.add('show');
+}
+
+function startEdit(id){
+  var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+  closeDetail();
+  editId=id; curType=b.type||'delivery'; curPri=b.priority||'normal'; curPhoto=b.photo||null;
+  el('fTitle').textContent='Edit Booking';
+  el('fWho').value=b.requester||'';
+  el('fSite').value=b.site||'';
+  el('fDesc').value=b.description||'';
+  el('fDate').value=b.date||today();
+  el('fTime').value=b.time||'';
+  el('fNotes').value=b.notes||'';
+  if(el('fPickup')) el('fPickup').value=b.pickupLocation||'';
+  el('fSubmit').textContent='Save Changes';
+  setType(curType); setPri(curPri); renderPhotoPrev();
   el('formOverlay').classList.add('show');
 }
 
@@ -468,14 +704,36 @@ function submitBooking(){
   var date=el('fDate').value;
   if(!who||!desc||!date){ alert('Please fill in: Your name, Description, and Date.'); return; }
   var btn=el('fSubmit');
-  btn.textContent='Submitting...'; btn.disabled=true;
-  var bk={id:uid(),type:curType,requester:who,site:el('fSite').value,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value,status:'pending',createdAt:new Date().toISOString()};
-  if(el('fPickup')) bk.pickupLocation=el('fPickup').value;
-  fetch(API+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bk)})
-    .then(function(r){ return r.json(); })
-    .then(function(saved){ bookings.push(saved||bk); closeForm(); renderAll(); })
-    .catch(function(){ bookings.push(bk); closeForm(); renderAll(); })
-    .finally(function(){ btn.textContent='Submit Booking Request'; btn.disabled=false; });
+  var editing=!!editId;
+  btn.textContent=editing?'Saving...':'Submitting...'; btn.disabled=true;
+
+  var fields={type:curType,requester:who,site:el('fSite').value,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value};
+  if(el('fPickup')) fields.pickupLocation=el('fPickup').value;
+  fields.photo=curPhoto||null;
+
+  if(editing){
+    var b=bookings.find(function(x){ return x.id===editId; });
+    if(b){ Object.keys(fields).forEach(function(k){ b[k]=fields[k]; }); }
+    apiCall('PUT','/bookings/'+editId,fields,'Booking updated')
+      .then(function(){ closeForm(); renderAll(); })
+      .finally?undefined:null;
+    closeForm(); renderAll();
+    btn.textContent='Submit Booking Request'; btn.disabled=false; editId=null;
+    return;
+  }
+
+  var bk={id:uid(),status:'pending',createdAt:new Date().toISOString()};
+  Object.keys(fields).forEach(function(k){ bk[k]=fields[k]; });
+  apiCall('POST','/bookings',bk,'Booking submitted')
+    .then(function(saved){
+      var existing=bookings.some(function(x){ return x.id===bk.id; });
+      if(!existing){
+        if(saved&&saved.id) bookings.push(saved);
+        else { bk._queued=getQueue().some(function(q){ return q.body&&q.body.id===bk.id; }); bookings.push(bk); }
+      }
+      closeForm(); renderAll();
+    })
+    .then(function(){ btn.textContent='Submit Booking Request'; btn.disabled=false; });
 }
 
 function showPage(p){
@@ -498,6 +756,7 @@ window.onerror = function(msg, src, line){
 el('logoIc').innerHTML=ico('truck',19,'#0d0d0f');
 el('brentIc').innerHTML=ico('hardhat',24,'#0d0d0f');
 el('refreshIc').innerHTML=ico('refresh',16);
+renderLock();
 hydrateIcons(document);
 el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
 
@@ -506,7 +765,9 @@ setTimeout(function(){
   if(bt && bt.textContent === 'Loading...'){ bt.textContent = 'Brent is available (offline)'; }
 }, 5000);
 
-loadData();
+window.addEventListener('online',function(){ flushQueue(); });
+
+flushQueue().then(function(){ loadData(); });
 </script>
 </body>
 </html>
