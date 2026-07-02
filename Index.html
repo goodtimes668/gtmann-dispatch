@@ -3,108 +3,209 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0d0d0f"/>
 <title>GT Mann Dispatch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet"/>
 <style>
+/* ================================================================
+   GT MANN DISPATCH — dark industrial
+   Matches Field Tracker / Field Command design system.
+   Hazard yellow accent · mono numerals · uppercase micro-labels
+   ================================================================ */
+:root{
+  --bg:#0d0d0f;
+  --card:#16161b;
+  --card2:#1d1d24;
+  --border:#2a2a33;
+  --border-soft:#222229;
+  --text:#f4f4f6;
+  --dim:#9a9aa6;
+  --faint:#5c5c68;
+  --yellow:#f5c518;
+  --yellow-dim:rgba(245,197,24,0.12);
+  --amber:#f59e0b;
+  --green:#22c55e;
+  --red:#ef4444;
+  --blue:#3b82f6;
+  --violet:#a78bfa;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
-.page{padding:16px 16px 90px;max-width:640px;margin:0 auto}
+html{color-scheme:dark}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.page{padding:16px 16px 96px;max-width:640px;margin:0 auto}
 .hidden{display:none!important}
-.topbar{background:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+svg{display:block;flex-shrink:0}
+
+/* hazard stripe — the suite's signature */
+.hazard{height:4px;background:repeating-linear-gradient(-45deg,var(--yellow) 0 10px,#0d0d0f 10px 20px)}
+
+/* topbar */
+.topbar{background:#111114;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:10}
+.logo{width:36px;height:36px;background:var(--yellow);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#0d0d0f;flex-shrink:0}
+.apptitle{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;letter-spacing:0.12em;color:var(--text)}
+.appsub{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.18em;color:var(--faint);text-transform:uppercase;margin-top:2px}
+.iconbtn{margin-left:auto;background:var(--card2);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
+.iconbtn:active{color:var(--yellow);border-color:var(--yellow)}
+
+/* cards */
+.card{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn-blue{background:#0ea5e9;color:#fff;border:none;border-radius:12px;padding:14px 18px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
-.btn-outline{background:#fff;color:#334155;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px 18px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
-.btn-green{background:#10b981;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
-.btn-red{background:#ef4444;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
-.field{width:100%;padding:13px 14px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;font-size:16px;font-family:inherit;color:#1e293b;outline:none;display:block;-webkit-appearance:none}
-.field:focus{border-color:#0ea5e9;background:#f0f9ff}
+
+/* stat cards */
+.stat{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:14px;margin-bottom:0;position:relative;overflow:hidden}
+.stat .sic{margin-bottom:10px}
+.stat .num{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;line-height:1}
+.stat .slbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+.stat::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,transparent);opacity:.85}
+
+/* buttons */
+.btn-primary{background:var(--yellow);color:#0d0d0f;border:none;border-radius:11px;padding:14px 18px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.btn-primary:disabled{opacity:.6}
+.btn-outline{background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:11px;padding:14px 18px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-green{background:var(--green);color:#06130a;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-red{background:var(--red);color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* quick actions */
+.qa{border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;text-align:left;font-family:inherit;transition:border-color .15s}
+.qa span{font-size:14px;font-weight:700}
+.qa-primary{background:var(--yellow);border:1px solid var(--yellow);color:#0d0d0f}
+.qa-primary span{color:#0d0d0f}
+.qa-dark{background:var(--card);border:1px solid var(--border);color:var(--yellow)}
+.qa-dark span{color:var(--text)}
+.qa-dark:active{border-color:var(--yellow)}
+
+/* form fields */
+.field{width:100%;padding:13px 14px;background:var(--card2);border:1px solid var(--border);border-radius:11px;font-size:16px;font-family:inherit;color:var(--text);outline:none;display:block;-webkit-appearance:none}
+.field::placeholder{color:var(--faint)}
+.field:focus{border-color:var(--yellow);background:#20201a}
 textarea.field{resize:vertical;min-height:80px}
-select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
-.lbl{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:7px;margin-top:14px}
+select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9aa6' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+.lbl{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;display:block;margin-bottom:7px;margin-top:16px}
 .lbl:first-child{margin-top:0}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;flex-direction:column;justify-content:flex-end}
+
+/* segmented pickers (type / priority) */
+.seg{padding:11px 10px;border-radius:11px;border:1px solid var(--border);background:var(--card2);font-weight:600;font-size:12px;cursor:pointer;color:var(--dim);font-family:inherit;display:flex;align-items:center;gap:7px;transition:border-color .15s,color .15s}
+.seg.on{border-color:var(--yellow);background:var(--yellow-dim);color:var(--yellow);font-weight:700}
+
+/* overlays */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;flex-direction:column;justify-content:flex-end}
 .overlay.show{display:flex}
-.sheet{background:#fff;border-radius:24px 24px 0 0;padding:20px 18px 36px;max-height:92vh;overflow-y:auto}
-.handle{width:40px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 18px}
-.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;display:flex;padding-bottom:env(safe-area-inset-bottom,0);box-shadow:0 -2px 10px rgba(0,0,0,0.05)}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;background:none;border:none;cursor:pointer;color:#94a3b8;font-size:10px;font-weight:500;font-family:inherit}
-.nb.on{color:#0ea5e9;font-weight:700}
-.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-h1{font-size:22px;font-weight:800;color:#0f172a;margin-bottom:18px}
-h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.07em;margin:18px 0 10px}
+.sheet{background:#131318;border:1px solid var(--border-soft);border-bottom:none;border-radius:20px 20px 0 0;padding:18px 18px 36px;max-height:92vh;overflow-y:auto}
+.handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+.closebtn{background:var(--card2);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center}
+
+/* bottom nav */
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#111114;border-top:1px solid var(--border-soft);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:50}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 8px;background:none;border:none;cursor:pointer;color:var(--faint);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
+.nb.on{color:var(--yellow)}
+
+/* booking cards */
+.bcard{background:var(--card);border:1px solid var(--border-soft);border-left:3px solid var(--bc,var(--faint));border-radius:13px;padding:15px;margin-bottom:10px;cursor:pointer}
+.bcard .row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.bcard .ttl{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.bcard .sub{font-size:13px;color:var(--dim);margin-top:4px}
+.bcard .desc{font-size:13px;color:var(--dim);margin-bottom:8px;line-height:1.5}
+.bcard .when{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:6px}
+
+/* status badges */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-pending{background:rgba(245,158,11,0.14);color:var(--amber)}
+.b-approved{background:rgba(34,197,94,0.14);color:var(--green)}
+.b-declined{background:rgba(239,68,68,0.14);color:var(--red)}
+.b-completed{background:rgba(59,130,246,0.14);color:var(--blue)}
+.b-in-progress{background:rgba(167,139,250,0.14);color:var(--violet)}
+
+/* empty + skeleton states */
+.empty{text-align:center;color:var(--faint);padding:28px 0;font-size:13px}
+.empty svg{margin:0 auto 10px;opacity:.5}
+.skel{border-radius:13px;height:76px;margin-bottom:10px;background:linear-gradient(100deg,var(--card) 40%,var(--card2) 50%,var(--card) 60%);background-size:200% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skel{animation:none}}
+
+/* detail overlay bits */
+.dl{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:4px}
+.dv{font-size:14px;font-weight:600;color:var(--text)}
+.dbox{font-size:14px;color:var(--dim);line-height:1.6;background:var(--card2);border:1px solid var(--border-soft);border-radius:11px;padding:12px}
+
+h1{font-size:21px;font-weight:800;color:var(--text);margin-bottom:18px}
+h2{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:0.16em;margin:20px 0 10px}
+hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 </style>
 </head>
 <body>
 
+<div class="hazard"></div>
 <div class="topbar">
-  <div style="width:36px;height:36px;background:#0ea5e9;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🚚</div>
+  <div class="logo" id="logoIc"></div>
   <div>
-    <div style="font-size:14px;font-weight:700;color:#0f172a">GT Mann Dispatch</div>
-    <div style="font-size:11px;color:#94a3b8">Delivery & Booking</div>
+    <div class="apptitle">GT MANN DISPATCH</div>
+    <div class="appsub">Delivery &amp; Booking</div>
   </div>
-  <button onclick="loadData()" style="margin-left:auto;background:#f1f5f9;border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:15px">🔄</button>
+  <button onclick="loadData()" class="iconbtn" id="refreshIc" aria-label="Refresh"></button>
 </div>
 
 <!-- HOME PAGE -->
 <div id="pg-home" class="page">
   <div class="card" style="margin-top:4px">
-    <div id="todayTxt" style="font-size:18px;font-weight:800;color:#0f172a"></div>
-    <div id="brentTxt" style="font-size:13px;color:#0ea5e9;margin-top:5px;font-weight:600">Loading...</div>
+    <div id="todayTxt" class="mono" style="font-size:16px;font-weight:800;letter-spacing:0.04em"></div>
+    <div id="brentTxt" style="font-size:13px;color:var(--yellow);margin-top:6px;font-weight:600">Loading...</div>
   </div>
 
   <div class="g2" style="margin-bottom:18px">
-    <div class="card" style="margin-bottom:0"><div style="font-size:16px;margin-bottom:6px">⏳</div><div id="nP" style="font-size:30px;font-weight:800;color:#f59e0b;line-height:1">0</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Pending</div></div>
-    <div class="card" style="margin-bottom:0"><div style="font-size:16px;margin-bottom:6px">📅</div><div id="nT" style="font-size:30px;font-weight:800;color:#10b981;line-height:1">0</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Today</div></div>
-    <div class="card" style="margin-bottom:0"><div style="font-size:16px;margin-bottom:6px">📋</div><div id="nW" style="font-size:30px;font-weight:800;color:#3b82f6;line-height:1">0</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">This Week</div></div>
-    <div class="card" style="margin-bottom:0"><div style="font-size:16px;margin-bottom:6px">🚨</div><div id="nU" style="font-size:30px;font-weight:800;color:#ef4444;line-height:1">0</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Urgent</div></div>
+    <div class="stat" style="--sc:var(--amber)"><div class="sic" data-ic="clock" data-c="var(--amber)"></div><div id="nP" class="num" style="color:var(--amber)">0</div><div class="slbl">Pending</div></div>
+    <div class="stat" style="--sc:var(--green)"><div class="sic" data-ic="calendar" data-c="var(--green)"></div><div id="nT" class="num" style="color:var(--green)">0</div><div class="slbl">Today</div></div>
+    <div class="stat" style="--sc:var(--blue)"><div class="sic" data-ic="clipboard" data-c="var(--blue)"></div><div id="nW" class="num" style="color:var(--blue)">0</div><div class="slbl">This Week</div></div>
+    <div class="stat" style="--sc:var(--red)"><div class="sic" data-ic="alert" data-c="var(--red)"></div><div id="nU" class="num" style="color:var(--red)">0</div><div class="slbl">Urgent</div></div>
   </div>
 
   <h2 style="margin-top:0">Quick Actions</h2>
   <div class="g2" style="margin-bottom:20px">
-    <button onclick="openForm('delivery')" style="background:#0ea5e9;border-radius:16px;padding:18px 14px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;text-align:left"><span style="font-size:22px">📦</span><span style="font-size:14px;font-weight:700;color:#fff;font-family:inherit">Material Delivery</span></button>
-    <button onclick="openForm('pickup')" style="background:#fff;border-radius:16px;padding:18px 14px;border:1.5px solid #e2e8f0;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:22px">🔧</span><span style="font-size:14px;font-weight:700;color:#0f172a;font-family:inherit">Tool Pickup</span></button>
-    <button onclick="openForm('tool-delivery')" style="background:#fff;border-radius:16px;padding:18px 14px;border:1.5px solid #e2e8f0;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:22px">🚚</span><span style="font-size:14px;font-weight:700;color:#0f172a;font-family:inherit">Tool Delivery</span></button>
-    <button onclick="openForm('misc')" style="background:#fff;border-radius:16px;padding:18px 14px;border:1.5px solid #e2e8f0;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:100%;text-align:left;box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:22px">📝</span><span style="font-size:14px;font-weight:700;color:#0f172a;font-family:inherit">Misc Task</span></button>
+    <button onclick="openForm('delivery')" class="qa qa-primary"><span class="qic" data-ic="package"></span><span>Material Delivery</span></button>
+    <button onclick="openForm('pickup')" class="qa qa-dark"><span class="qic" data-ic="wrench"></span><span>Tool Pickup</span></button>
+    <button onclick="openForm('tool-delivery')" class="qa qa-dark"><span class="qic" data-ic="truck"></span><span>Tool Delivery</span></button>
+    <button onclick="openForm('misc')" class="qa qa-dark"><span class="qic" data-ic="file"></span><span>Misc Task</span></button>
   </div>
 
   <h2 style="margin-top:0">Upcoming</h2>
-  <div id="homeList"><div style="text-align:center;color:#94a3b8;padding:30px 0;font-size:14px">No upcoming bookings</div></div>
+  <div id="homeList"><div class="skel"></div><div class="skel"></div></div>
 </div>
 
 <!-- BOOKINGS PAGE -->
 <div id="pg-bookings" class="page hidden">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
     <h1 style="margin:0">All Bookings</h1>
-    <button onclick="openForm('delivery')" class="btn-blue" style="padding:10px 16px;font-size:13px">+ New</button>
+    <button onclick="openForm('delivery')" class="btn-primary" style="padding:10px 16px;font-size:13px">+ New</button>
   </div>
-  <div id="allList"><div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:14px">No bookings yet</div></div>
+  <div id="allList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
 </div>
 
 <!-- BRENT PAGE -->
 <div id="pg-brent" class="page hidden">
   <h1>Brent's Jobs</h1>
   <div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:4px">
-    <div style="width:48px;height:48px;background:#0ea5e9;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">👷</div>
+    <div class="logo" style="width:48px;height:48px;border-radius:13px" id="brentIc"></div>
     <div>
-      <div style="font-size:17px;font-weight:700;color:#0f172a">Brent Van Dusen</div>
-      <div id="brentCnt" style="font-size:13px;color:#0ea5e9;margin-top:3px;font-weight:600">Loading...</div>
+      <div style="font-size:17px;font-weight:700">Brent Van Dusen</div>
+      <div id="brentCnt" style="font-size:13px;color:var(--yellow);margin-top:3px;font-weight:600">Loading...</div>
     </div>
   </div>
   <h2>Needs Approval</h2>
-  <div id="bPending"><div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No pending requests</div></div>
+  <div id="bPending"><div class="skel"></div></div>
   <h2>Today's Jobs</h2>
-  <div id="bToday"><div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No jobs today</div></div>
+  <div id="bToday"><div class="skel"></div></div>
   <h2>Upcoming</h2>
-  <div id="bUpcoming"><div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No upcoming jobs</div></div>
+  <div id="bUpcoming"><div class="skel"></div></div>
 </div>
 
 <!-- BOTTOM NAV -->
 <div class="bottomnav">
-  <button class="nb on" id="nb-home" onclick="showPage('home')"><span style="font-size:20px">🏠</span>Home</button>
-  <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span style="font-size:20px">📋</span>Bookings</button>
-  <button class="nb" id="nb-brent" onclick="showPage('brent')"><span style="font-size:20px">👷</span>Brent</button>
+  <button class="nb on" id="nb-home" onclick="showPage('home')"><span data-ic="home"></span>Home</button>
+  <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span data-ic="clipboard"></span>Bookings</button>
+  <button class="nb" id="nb-brent" onclick="showPage('brent')"><span data-ic="hardhat"></span>Brent</button>
 </div>
 
 <!-- BOOKING FORM OVERLAY -->
@@ -112,16 +213,16 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
   <div class="sheet">
     <div class="handle"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <span id="fTitle" style="font-size:20px;font-weight:800;color:#0f172a">New Booking</span>
-      <button onclick="closeForm()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#64748b;font-size:15px;font-family:inherit">✕</button>
+      <span id="fTitle" style="font-size:19px;font-weight:800">New Booking</span>
+      <button onclick="closeForm()" class="closebtn" data-ic="x" aria-label="Close"></button>
     </div>
 
     <span class="lbl">Type</span>
     <div class="g2" style="margin-bottom:4px">
-      <button id="t-delivery" onclick="setType('delivery')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📦 Material Delivery</button>
-      <button id="t-pickup" onclick="setType('pickup')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🔧 Tool Pickup</button>
-      <button id="t-tool-delivery" onclick="setType('tool-delivery')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚚 Tool Delivery</button>
-      <button id="t-misc" onclick="setType('misc')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📝 Misc Task</button>
+      <button id="t-delivery" onclick="setType('delivery')" class="seg on"><span data-ic="package" data-s="15"></span>Material Delivery</button>
+      <button id="t-pickup" onclick="setType('pickup')" class="seg"><span data-ic="wrench" data-s="15"></span>Tool Pickup</button>
+      <button id="t-tool-delivery" onclick="setType('tool-delivery')" class="seg"><span data-ic="truck" data-s="15"></span>Tool Delivery</button>
+      <button id="t-misc" onclick="setType('misc')" class="seg"><span data-ic="file" data-s="15"></span>Misc Task</button>
     </div>
 
     <span class="lbl">Requested By *</span>
@@ -150,15 +251,15 @@ h2{font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-
 
     <span class="lbl">Priority</span>
     <div class="g2" style="margin-bottom:4px">
-      <button id="p-urgent" onclick="setPri('urgent')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">🚨 Urgent</button>
-      <button id="p-normal" onclick="setPri('normal')" style="padding:11px;border-radius:12px;border:2px solid #0ea5e9;background:#f0f9ff;font-weight:700;font-size:12px;cursor:pointer;color:#0284c7;font-family:inherit">📋 Normal</button>
-      <button id="p-scheduled" onclick="setPri('scheduled')" style="padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-weight:600;font-size:12px;cursor:pointer;color:#64748b;font-family:inherit">📅 Planned</button>
+      <button id="p-urgent" onclick="setPri('urgent')" class="seg"><span data-ic="alert" data-s="15"></span>Urgent</button>
+      <button id="p-normal" onclick="setPri('normal')" class="seg on"><span data-ic="clipboard" data-s="15"></span>Normal</button>
+      <button id="p-scheduled" onclick="setPri('scheduled')" class="seg"><span data-ic="calendar" data-s="15"></span>Planned</button>
     </div>
 
     <span class="lbl">Notes</span>
     <textarea id="fNotes" class="field" placeholder="Access codes, contacts, special instructions..."></textarea>
 
-    <button id="fSubmit" onclick="submitBooking()" class="btn-blue" style="width:100%;margin-top:16px;padding:16px;font-size:16px">Submit Booking Request</button>
+    <button id="fSubmit" onclick="submitBooking()" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Submit Booking Request</button>
     <button onclick="closeForm()" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
   </div>
 </div>
@@ -180,6 +281,49 @@ var curPri = 'normal';
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
 function today(){ return new Date().toISOString().split('T')[0]; }
 function el(id){ return document.getElementById(id); }
+
+/* escape user-entered content before injecting into HTML */
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ---- inline SVG icon registry (Lucide-style, 2px stroke) ---- */
+var ICONS = {
+  truck:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+  package:'<path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+  wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+  clipboard:'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  hardhat:'<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>',
+  refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  trash:'<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+  alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  calendar:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  play:'<polygon points="6 3 20 12 6 21 6 3"/>',
+  checkcircle:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+  inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
+};
+function ico(name,size,color){
+  return '<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="'+(color||'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';
+}
+/* hydrate any element carrying data-ic */
+function hydrateIcons(root){
+  var nodes=(root||document).querySelectorAll('[data-ic]');
+  for(var i=0;i<nodes.length;i++){
+    var n=nodes[i];
+    n.innerHTML=ico(n.getAttribute('data-ic'), n.getAttribute('data-s')||18, n.getAttribute('data-c')||'currentColor');
+  }
+}
+
+function emptyState(icon,msg){
+  return '<div class="empty">'+ico(icon,26,'currentColor').replace('<svg','<svg style="margin:0 auto 10px;opacity:.5"')+'<div>'+msg+'</div></div>';
+}
 
 function fmtD(d){
   if(!d) return '—';
@@ -208,7 +352,7 @@ function loadData(){
 
 function renderAll(){
   var now=new Date();
-  el('todayTxt').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  el('todayTxt').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   var pend=bookings.filter(function(b){ return b.status==='pending'; });
   var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'; });
   var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'; });
@@ -218,45 +362,55 @@ function renderAll(){
   el('brentTxt').textContent=act.length>0?'Brent has '+act.length+' active job'+(act.length>1?'s':''):'Brent is available';
   el('brentCnt').textContent=pend.length>0?pend.length+' job'+(pend.length>1?'s':'')+' need approval':'All clear';
   var up=bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
-  el('homeList').innerHTML=up.length?up.map(cardHTML).join(''):'<div style="text-align:center;color:#94a3b8;padding:30px 0;font-size:14px">No upcoming bookings</div>';
+  el('homeList').innerHTML=up.length?up.map(cardHTML).join(''):emptyState('inbox','No upcoming bookings');
   var all=bookings.slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
-  el('allList').innerHTML=all.length?all.map(cardHTML).join(''):'<div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:14px">No bookings yet</div>';
+  el('allList').innerHTML=all.length?all.map(cardHTML).join(''):emptyState('inbox','No bookings yet');
   var bTod=bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); });
   var bUp=bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
-  el('bPending').innerHTML=pend.length?pend.map(cardHTML).join(''):'<div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No pending requests</div>';
-  el('bToday').innerHTML=bTod.length?bTod.map(cardHTML).join(''):'<div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No jobs today</div>';
-  el('bUpcoming').innerHTML=bUp.length?bUp.map(cardHTML).join(''):'<div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:14px">No upcoming jobs</div>';
+  el('bPending').innerHTML=pend.length?pend.map(cardHTML).join(''):emptyState('checkcircle','No pending requests');
+  el('bToday').innerHTML=bTod.length?bTod.map(cardHTML).join(''):emptyState('calendar','No jobs today');
+  el('bUpcoming').innerHTML=bUp.length?bUp.map(cardHTML).join(''):emptyState('calendar','No upcoming jobs');
 }
 
 function cardHTML(b){
-  var ic={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
+  var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
-  var sc={pending:'background:#fef3c7;color:#92400e',approved:'background:#d1fae5;color:#065f46',declined:'background:#fee2e2;color:#991b1b',completed:'background:#dbeafe;color:#1e40af','in-progress':'background:#ede9fe;color:#5b21b6'};
-  var sl={pending:'⏳ Pending',approved:'✅ Approved',declined:'❌ Declined',completed:'🏁 Done','in-progress':'🔄 In Progress'};
-  var bc=b.priority==='urgent'?'#ef4444':b.status==='approved'?'#10b981':b.status==='completed'?'#3b82f6':'#0ea5e9';
+  var sl={pending:'Pending',approved:'Approved',declined:'Declined',completed:'Done','in-progress':'In Progress'};
+  var scls={pending:'b-pending',approved:'b-approved',declined:'b-declined',completed:'b-completed','in-progress':'b-in-progress'};
+  var bc=b.priority==='urgent'?'var(--red)':b.status==='approved'?'var(--green)':b.status==='completed'?'var(--blue)':'var(--yellow)';
   var desc=(b.description||'').slice(0,80)+((b.description||'').length>80?'...':'');
-  return '<div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:10px;border-left:4px solid '+bc+';box-shadow:0 1px 4px rgba(0,0,0,0.07);cursor:pointer" onclick="openDetail(\''+b.id+'\')"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px"><div style="flex:1;padding-right:8px"><div style="font-size:15px;font-weight:700;color:#0f172a">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</div><div style="font-size:13px;color:#64748b;margin-top:3px">'+(b.requester||'')+(b.site?' · '+b.site:'')+'</div></div><span style="display:inline-flex;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;'+(sc[b.status]||sc.pending)+'">'+(sl[b.status]||b.status)+'</span></div><div style="font-size:13px;color:#475569;margin-bottom:6px;line-height:1.5">'+desc+'</div><div style="font-size:13px;color:#0ea5e9;font-weight:600">'+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
+  return '<div class="bcard" style="--bc:'+bc+'" onclick="openDetail(\''+esc(b.id)+'\')">'
+    +'<div class="row"><div style="flex:1;padding-right:8px">'
+    +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+'</div>'
+    +'<div class="sub">'+esc(b.requester||'')+(b.site?' · '+esc(b.site):'')+'</div></div>'
+    +'<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span></div>'
+    +'<div class="desc">'+esc(desc)+'</div>'
+    +'<div class="when">'+ico('calendar',13,'currentColor')+fmtD(b.date)+(b.time?' · '+fmtT(b.time):'')+'</div></div>';
 }
 
 function openDetail(id){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
-  var ic={delivery:'📦',pickup:'🔧','tool-delivery':'🚚',misc:'📝'};
+  var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
-  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800;color:#0f172a">'+(ic[b.type]||'📋')+' '+(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" style="background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#64748b;font-size:15px">✕</button></div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px"><div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px">From</div><div style="font-size:14px;font-weight:600;color:#334155">'+(b.requester||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px">Site</div><div style="font-size:14px;font-weight:600;color:#334155">'+(b.site||'—')+'</div></div><div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px">Date</div><div style="font-size:14px;font-weight:600;color:#0ea5e9">'+fmtD(b.date)+'</div></div><div><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px">Time</div><div style="font-size:14px;font-weight:600;color:#334155">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div>';
-  html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px">Description</div><div style="font-size:14px;color:#475569;line-height:1.6;background:#f8fafc;border-radius:12px;padding:12px">'+(b.description||'')+'</div></div>';
-  if(b.notes) html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px">Notes</div><div style="font-size:14px;color:#475569;line-height:1.6;background:#f8fafc;border-radius:12px;padding:12px">'+b.notes+'</div></div>';
-  if(b.brentNotes) html+='<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px">Brent\'s Notes</div><div style="font-size:14px;color:#0284c7;line-height:1.6;background:#f0f9ff;border-radius:12px;padding:12px">'+b.brentNotes+'</div></div>';
-  html+='<hr style="border:none;border-top:1px solid #e2e8f0;margin:14px 0"/>';
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:9px">'+ico(ic[b.type]||'clipboard',19,'var(--yellow)')+esc(lb[b.type]||b.type)+'</span><button onclick="closeDetail()" class="closebtn">'+ico('x',15)+'</button></div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
+    +'<div><div class="dl">From</div><div class="dv">'+esc(b.requester||'—')+'</div></div>'
+    +'<div><div class="dl">Site</div><div class="dv">'+esc(b.site||'—')+'</div></div>'
+    +'<div><div class="dl">Date</div><div class="dv" style="color:var(--yellow)">'+fmtD(b.date)+'</div></div>'
+    +'<div><div class="dl">Time</div><div class="dv">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div>';
+  html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Description</div><div class="dbox">'+esc(b.description||'')+'</div></div>';
+  if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
+  if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
+  html+='<hr/>';
   if(b.status==='pending'){
     html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'approved\')" class="btn-green" style="width:100%">✅ Approve</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-red" style="width:100%">❌ Decline</button></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'approved\')" class="btn-green">'+ico('check',16)+'Approve</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-red">'+ico('x',16)+'Decline</button></div>';
   } else if(b.status==='approved'){
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+b.id+'\',\'in-progress\')" class="btn-blue" style="width:100%">🔄 Start Job</button><button onclick="doStatus(\''+b.id+'\',\'declined\')" class="btn-outline" style="width:100%">Cancel</button></div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button onclick="doStatus(\''+esc(b.id)+'\',\'in-progress\')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button onclick="doStatus(\''+esc(b.id)+'\',\'declined\')" class="btn-outline">Cancel</button></div>';
   } else if(b.status==='in-progress'){
-    html+='<button onclick="doStatus(\''+b.id+'\',\'completed\')" class="btn-green" style="width:100%">🏁 Mark Complete</button>';
+    html+='<button onclick="doStatus(\''+esc(b.id)+'\',\'completed\')" class="btn-green" style="width:100%">'+ico('checkcircle',16)+'Mark Complete</button>';
   }
-  html+='<button onclick="doDelete(\''+b.id+'\')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600">🗑️ Delete Booking</button>';
+  html+='<button onclick="doDelete(\''+esc(b.id)+'\')" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('trash',15)+'Delete Booking</button>';
   el('detailContent').innerHTML=html;
   el('detailOverlay').classList.add('show');
 }
@@ -280,11 +434,7 @@ function setType(t){
   curType=t;
   ['delivery','pickup','tool-delivery','misc'].forEach(function(x){
     var btn=el('t-'+x); if(!btn) return;
-    var on=x===t;
-    btn.style.border=on?'2px solid #0ea5e9':'1.5px solid #e2e8f0';
-    btn.style.background=on?'#f0f9ff':'#fff';
-    btn.style.color=on?'#0284c7':'#64748b';
-    btn.style.fontWeight=on?'700':'600';
+    btn.className='seg'+(x===t?' on':'');
   });
   el('fPickupWrap').className=(t==='pickup'||t==='tool-delivery')?'':'hidden';
 }
@@ -293,17 +443,13 @@ function setPri(p){
   curPri=p;
   ['urgent','normal','scheduled'].forEach(function(x){
     var btn=el('p-'+x); if(!btn) return;
-    var on=x===p;
-    btn.style.border=on?'2px solid #0ea5e9':'1.5px solid #e2e8f0';
-    btn.style.background=on?'#f0f9ff':'#fff';
-    btn.style.color=on?'#0284c7':'#64748b';
-    btn.style.fontWeight=on?'700':'600';
+    btn.className='seg'+(x===p?' on':'');
   });
 }
 
 function openForm(type){
   curType=type||'delivery'; curPri='normal';
-  var titles={delivery:'📦 Material Delivery',pickup:'🔧 Tool Pickup','tool-delivery':'🚚 Tool Delivery',misc:'📝 Misc Task'};
+  var titles={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   el('fTitle').textContent=titles[type]||'New Booking';
   el('fWho').value=''; el('fDesc').value=''; el('fNotes').value='';
   if(el('fPickup')) el('fPickup').value='';
@@ -344,12 +490,16 @@ function showPage(p){
 // Global error catcher
 window.onerror = function(msg, src, line){
   var bt = document.getElementById('brentTxt');
-  if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = '#dc2626'; }
+  if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = 'var(--red)'; }
   return false;
 };
 
 // Init
-el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+el('logoIc').innerHTML=ico('truck',19,'#0d0d0f');
+el('brentIc').innerHTML=ico('hardhat',24,'#0d0d0f');
+el('refreshIc').innerHTML=ico('refresh',16);
+hydrateIcons(document);
+el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
 
 setTimeout(function(){
   var bt = document.getElementById('brentTxt');
