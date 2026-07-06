@@ -85,9 +85,21 @@ select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;flex-direction:column;justify-content:flex-end}
 .overlay.show{display:flex}
+#detailOverlay{z-index:220} /* always layers above the day-detail sheet so you can drill in without losing your place */
 .sheet{background:#131318;border:1px solid var(--border-soft);border-bottom:none;border-radius:20px 20px 0 0;padding:18px 18px 36px;max-height:92vh;overflow-y:auto}
 .handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
 .closebtn{background:var(--card2);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center}
+
+.calnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.calgrid-head{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calday{aspect-ratio:1;border-radius:10px;background:var(--card);border:1px solid var(--border-soft);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:5px 2px;cursor:pointer}
+.calday.other{opacity:0.28;cursor:default}
+.calday.today{border-color:var(--yellow);border-width:1.5px}
+.calday .dnum{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text)}
+.caldots{display:flex;gap:2px;margin-top:5px;flex-wrap:wrap;justify-content:center;max-width:100%}
+.caldot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.calmore{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--faint);margin-top:2px}
 
 .bottomnav{position:fixed;bottom:0;left:0;right:0;background:#111114;border-top:1px solid var(--border-soft);display:flex;padding-bottom:env(safe-area-inset-bottom,0);z-index:50}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 8px;background:none;border:none;cursor:pointer;color:var(--faint);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase}
@@ -222,10 +234,23 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
   </div>
 </div>
 
+<!-- CALENDAR PAGE -->
+<div id="pg-calendar" class="page hidden">
+  <div class="calnav">
+    <button onclick="calShiftMonth(-1)" class="iconbtn" data-ic="chevronleft" aria-label="Previous month"></button>
+    <div id="calMonthLabel" class="mono" style="font-size:15px;font-weight:800;letter-spacing:0.04em"></div>
+    <button onclick="calShiftMonth(1)" class="iconbtn" data-ic="chevronright" aria-label="Next month"></button>
+  </div>
+  <div class="calgrid-head"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+  <div id="calGrid" class="calgrid"></div>
+  <button onclick="calGoToday()" class="btn-outline" style="width:100%;margin-top:16px;padding:12px;font-size:13px">Jump to Today</button>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottomnav">
   <button class="nb on" id="nb-home" onclick="showPage('home')"><span data-ic="home"></span>Home</button>
   <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span data-ic="clipboard"></span>Bookings</button>
+  <button class="nb" id="nb-calendar" onclick="showPage('calendar')"><span data-ic="calendar"></span>Calendar</button>
   <button class="nb" id="nb-brent" onclick="showPage('brent')"><span data-ic="hardhat"></span>Brent</button>
 </div>
 
@@ -326,6 +351,14 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
   </div>
 </div>
 
+<!-- DAY DETAIL OVERLAY -->
+<div id="dayOverlay" class="overlay">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div id="dayContent"></div>
+  </div>
+</div>
+
 <div id="toasts"></div>
 
 <script>
@@ -357,9 +390,14 @@ var curType = 'delivery';
 var curPri = 'normal';
 var curPhoto = null;
 var editId = null;
+var calDate = new Date(); // month currently shown on the Calendar tab
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
-function today(){ return new Date().toISOString().split('T')[0]; }
+function toISODate(d){
+  var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function today(){ return toISODate(new Date()); }
 function el(id){ return document.getElementById(id); }
 
 function esc(s){
@@ -393,7 +431,9 @@ var ICONS = {
   unlock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
   mappin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>',
   dollarsign:'<line x1="12" x2="12" y1="1" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
-  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>'
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+  chevronleft:'<path d="m15 18-6-6 6-6"/>',
+  chevronright:'<path d="m9 18 6-6-6-6"/>'
 };
 function ico(name,size,color){
   return '<svg width="'+(size||18)+'" height="'+(size||18)+'" viewBox="0 0 24 24" fill="none" stroke="'+(color||'currentColor')+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';
@@ -726,6 +766,7 @@ function renderAll(){
   el('bToday').innerHTML=bTod.length?bTod.map(function(b){ return cardHTML(b,true); }).join(''):emptyState('calendar','No jobs today');
   el('bUpcoming').innerHTML=bUp.length?bUp.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('calendar','No upcoming jobs');
   renderMetrics();
+  renderCalendar();
 }
 
 function cardHTML(b,runsheet){
@@ -755,6 +796,68 @@ function cardHTML(b,runsheet){
     +'<div class="desc">'+esc(desc)+'</div>'
     +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div>';
 }
+
+/* ---- calendar ---- */
+function calShiftMonth(delta){
+  calDate=new Date(calDate.getFullYear(), calDate.getMonth()+delta, 1);
+  renderCalendar();
+}
+function calGoToday(){ calDate=new Date(); renderCalendar(); }
+
+function calDotColor(b){
+  if(b.status==='declined') return 'var(--faint)';
+  if(b.priority==='urgent') return 'var(--red)';
+  if(b.status==='completed') return 'var(--blue)';
+  if(b.status==='approved'||b.status==='in-progress') return 'var(--green)';
+  return 'var(--amber)'; // pending
+}
+
+function renderCalendar(){
+  var label=el('calMonthLabel'); if(!label) return;
+  var year=calDate.getFullYear(), month=calDate.getMonth();
+  label.textContent=calDate.toLocaleDateString('en-US',{month:'long',year:'numeric'}).toUpperCase();
+
+  var startWeekday=new Date(year,month,1).getDay();
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var daysInPrevMonth=new Date(year,month,0).getDate();
+
+  var byDate={};
+  bookings.forEach(function(b){ if(b.date) (byDate[b.date]=byDate[b.date]||[]).push(b); });
+
+  var cells=[];
+  for(var i=startWeekday-1;i>=0;i--) cells.push({day:daysInPrevMonth-i, other:true});
+  for(var d=1;d<=daysInMonth;d++) cells.push({day:d, other:false, dateObj:new Date(year,month,d)});
+  var trailing=(7-(cells.length%7))%7;
+  for(var t=1;t<=trailing;t++) cells.push({day:t, other:true});
+
+  var todayISO=today();
+  el('calGrid').innerHTML=cells.map(function(c){
+    if(c.other) return '<div class="calday other"><div class="dnum">'+c.day+'</div></div>';
+    var iso=toISODate(c.dateObj);
+    var list=byDate[iso]||[];
+    var dots='';
+    if(list.length){
+      var shown=list.slice(0,4);
+      dots='<div class="caldots">'+shown.map(function(b){ return '<span class="caldot" style="background:'+calDotColor(b)+'"></span>'; }).join('')+'</div>';
+      if(list.length>4) dots+='<div class="calmore">+'+(list.length-4)+'</div>';
+    }
+    return '<div class="calday'+(iso===todayISO?' today':'')+'" onclick="openDay(\''+iso+'\')"><div class="dnum">'+c.day+'</div>'+dots+'</div>';
+  }).join('');
+}
+
+function openDay(iso){
+  var list=bookings.filter(function(b){ return b.date===iso; })
+    .sort(function(a,b){ return (a.time||'99:99').localeCompare(b.time||'99:99'); });
+  var label=new Date(iso+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
+    +'<span style="font-size:18px;font-weight:800">'+esc(label)+'</span>'
+    +'<button onclick="closeDay()" class="closebtn">'+ico('x',15)+'</button></div>';
+  html+=list.length ? list.map(function(b){ return cardHTML(b,false); }).join('') : emptyState('inbox','No bookings this day');
+  html+='<button onclick="closeDay(); openForm(\'delivery\'); el(\'fDate\').value=\''+iso+'\';" class="btn-outline" style="width:100%;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('plus',15)+'New Booking This Day</button>';
+  el('dayContent').innerHTML=html;
+  el('dayOverlay').classList.add('show');
+}
+function closeDay(){ el('dayOverlay').classList.remove('show'); }
 
 /* ---- detail ---- */
 function openDetail(id){
@@ -990,12 +1093,13 @@ function submitBooking(){
 }
 
 function showPage(p){
-  ['home','bookings','brent'].forEach(function(x){
+  ['home','bookings','brent','calendar'].forEach(function(x){
     var pg=el('pg-'+x); var nb=el('nb-'+x);
     if(pg) pg.className='page'+(x===p?'':' hidden');
     if(nb) nb.className='nb'+(x===p?' on':'');
   });
   window.scrollTo(0,0);
+  if(p==='calendar') renderCalendar();
 }
 
 // Global error catcher
