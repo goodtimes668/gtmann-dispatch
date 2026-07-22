@@ -246,12 +246,45 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
   <button onclick="calGoToday()" class="btn-outline" style="width:100%;margin-top:16px;padding:12px;font-size:13px">Jump to Today</button>
 </div>
 
+<!-- MANAGER PAGE -->
+<div id="pg-manager" class="page hidden">
+  <div id="managerLocked">
+    <h1>Manager Summary</h1>
+    <div class="card">
+      <span class="lbl">Manager PIN</span>
+      <input id="mgrPinInput" class="field" type="password" inputmode="numeric" placeholder="Enter PIN" onkeydown="if(event.key==='Enter')unlockManager()"/>
+      <button onclick="unlockManager()" class="btn-primary" style="width:100%;margin-top:14px">Unlock</button>
+    </div>
+    <div style="font-size:11px;color:var(--faint);line-height:1.5">Separate from the dispatcher PIN — Brent's unlock does not grant access here.</div>
+  </div>
+
+  <div id="managerUnlocked" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h1 style="margin:0">Manager Summary</h1>
+      <button onclick="lockManager()" class="iconbtn" data-ic="lock" aria-label="Lock"></button>
+    </div>
+
+    <div class="card">
+      <div class="g2">
+        <div><span class="lbl">From</span><input id="mgrFrom" class="field" type="date" onchange="renderManagerSummary()"/></div>
+        <div><span class="lbl">To</span><input id="mgrTo" class="field" type="date" onchange="renderManagerSummary()"/></div>
+      </div>
+    </div>
+
+    <div id="mgrTotalCard"></div>
+
+    <h2>By Site</h2>
+    <div id="mgrSiteList"></div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <div class="bottomnav">
   <button class="nb on" id="nb-home" onclick="showPage('home')"><span data-ic="home"></span>Home</button>
   <button class="nb" id="nb-bookings" onclick="showPage('bookings')"><span data-ic="clipboard"></span>Bookings</button>
   <button class="nb" id="nb-calendar" onclick="showPage('calendar')"><span data-ic="calendar"></span>Calendar</button>
   <button class="nb" id="nb-brent" onclick="showPage('brent')"><span data-ic="hardhat"></span>Brent</button>
+  <button class="nb" id="nb-manager" onclick="showPage('manager')"><span data-ic="dollarsign"></span>Manager</button>
 </div>
 
 <!-- BOOKING FORM OVERLAY -->
@@ -345,6 +378,13 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
     </div>
     <div style="font-size:11px;color:var(--faint);margin-top:10px;line-height:1.5">Drive time and distance for a round trip from Brent's usual start point to this site — feeds the dispatch cost estimate.</div>
 
+    <span class="lbl">Coordinates (optional)</span>
+    <div class="g2">
+      <div><input id="sfLat" class="field" type="number" step="0.000001" placeholder="Latitude e.g. 48.4284"/></div>
+      <div><input id="sfLng" class="field" type="number" step="0.000001" placeholder="Longitude e.g. -123.3656"/></div>
+    </div>
+    <div style="font-size:11px;color:var(--faint);margin-top:8px;line-height:1.5">Add this site's coordinates to enable a live, real-road-driving estimate when Brent has location services on — otherwise the typical numbers above are always used.</div>
+
     <button onclick="saveSite()" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Save Site</button>
     <button id="sfDelete" onclick="deleteSite()" class="hidden" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px"><span data-ic="trash" data-s="15"></span>Delete Site</button>
     <button onclick="closeSiteForm()" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
@@ -364,12 +404,20 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 <script>
 var API = 'https://toolvault-slack-backend-production.up.railway.app/api';
 var DISPATCH_PIN = '4718'; // CHANGE THIS — give it to Brent + office only
+var MANAGER_PIN = '9271';  // CHANGE THIS — management only, separate from DISPATCH_PIN on purpose
+
+/* ---- Mapbox live-route estimate (optional) ----
+   Paste your Mapbox public token below (starts with pk.) to enable
+   real driving-route estimates when Brent has location services on.
+   Leave blank to keep using typical-route estimates only — nothing
+   breaks either way. Free tier covers 100,000 requests/month, far
+   more than this crew will ever use. */
+var MAPBOX_TOKEN = '';
 
 /* ---- dispatch cost model ----
-   No live GPS on Brent, no geocoding API — every estimate below is a
-   typical-route figure, not a real-time one. Job sites (with their
-   route time/km) are managed from Brent tab → dispatcher mode →
-   Job Sites, not hardcoded here. Update BRENT_WAGE if it changes. */
+   Job sites (with their route time/km, and optionally coordinates)
+   are managed from Brent tab → dispatcher mode → Job Sites, not
+   hardcoded here. Update BRENT_WAGE if it changes. */
 var BRENT_WAGE = 40;          // $/hr
 var MILEAGE_RATE = 0.70;      // $/km all-in — fuel + wear
 var OVERHEAD_MIN = 15;        // parking + loading/unloading, every dispatch
@@ -538,8 +586,7 @@ function flushQueue(){
    Tries the Railway API first (GET/POST/PUT/DELETE /sites). If that
    endpoint doesn't exist yet, falls back to localStorage — which
    only syncs on this device. The badge in the Job Sites section
-   always tells the truth about which mode you're in. See the reply
-   in chat for the Express/lowdb snippet that adds real sync. */
+   always tells the truth about which mode you're in. */
 function loadLocalSites(){
   try{
     var raw=localStorage.getItem('gtd_sites');
@@ -596,9 +643,10 @@ function renderSiteOptions(){
 }
 
 function siteRowHTML(s,idx){
+  var liveTag=(typeof s.lat==='number'&&typeof s.lng==='number')?' · <span style="color:var(--green)">GPS-ready</span>':'';
   return '<div class="bcard" style="--bc:var(--border);cursor:pointer" onclick="openSiteForm('+idx+')">'
     +'<div class="row" style="margin-bottom:0"><div><div class="ttl" style="font-size:14px">'+esc(s.name)+'</div>'
-    +'<div class="sub mono">'+s.min+' min · '+s.km+' km round trip</div></div>'
+    +'<div class="sub mono">'+s.min+' min · '+s.km+' km round trip'+liveTag+'</div></div>'
     +ico('edit',15,'var(--faint)')+'</div></div>';
 }
 
@@ -643,6 +691,8 @@ function openSiteForm(idx){
   el('sfName').value=s?s.name:'';
   el('sfMin').value=s?s.min:'';
   el('sfKm').value=s?s.km:'';
+  el('sfLat').value=(s&&typeof s.lat==='number')?s.lat:'';
+  el('sfLng').value=(s&&typeof s.lng==='number')?s.lng:'';
   el('sfDelete').className=s?'':'hidden';
   el('siteFormOverlay').classList.add('show');
 }
@@ -652,10 +702,16 @@ function saveSite(){
   var name=el('sfName').value.trim();
   var min=parseFloat(el('sfMin').value);
   var km=parseFloat(el('sfKm').value);
+  var latRaw=el('sfLat').value.trim();
+  var lngRaw=el('sfLng').value.trim();
   if(!name||isNaN(min)||isNaN(km)||min<0||km<0){ toast('Enter a name and non-negative min/km','err'); return; }
   var dup=sites.some(function(s,i){ return i!==editSiteIdx && s.name.toLowerCase()===name.toLowerCase(); });
   if(dup){ toast('That site already exists','err'); return; }
   var rec={name:name,min:min,km:km};
+  if(latRaw!==''&&lngRaw!==''){
+    var lat=parseFloat(latRaw), lng=parseFloat(lngRaw);
+    if(!isNaN(lat)&&!isNaN(lng)){ rec.lat=lat; rec.lng=lng; }
+  }
   if(editSiteIdx!==null){
     var oldName=sites[editSiteIdx].name;
     sites[editSiteIdx]=rec;
@@ -968,17 +1024,78 @@ function estimateDispatch(){
   return {min:totalMin, km:totalKm, labor:labor, mileage:mileage, cost:labor+mileage};
 }
 
-function renderCostEstimate(){
+/* ---- live location (optional) ----
+   Only fires when: MAPBOX_TOKEN is set, dispatcher mode is on (this
+   is Brent's session), the selected site has saved coordinates, and
+   the browser grants location permission. Falls back to the typical-
+   route estimate silently in every other case — never blocks or
+   breaks the form. Location is fetched once per form-open (not on
+   every keystroke) and cached for that session; only the route gets
+   re-fetched when site/type changes. */
+var brentLiveLocation = null;
+var brentLocationChecked = false;
+
+function getBrentLocation(){
+  if(brentLocationChecked) return Promise.resolve(brentLiveLocation);
+  return new Promise(function(resolve){
+    if(!navigator.geolocation){ brentLocationChecked=true; resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        brentLiveLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+        brentLocationChecked=true;
+        resolve(brentLiveLocation);
+      },
+      function(){ brentLocationChecked=true; brentLiveLocation=null; resolve(null); },
+      {enableHighAccuracy:false, timeout:5000, maximumAge:60000}
+    );
+  });
+}
+
+function fetchLiveRoute(originLat,originLng,destLat,destLng){
+  var url='https://api.mapbox.com/directions/v5/mapbox/driving/'
+    +originLng+','+originLat+';'+destLng+','+destLat
+    +'?access_token='+encodeURIComponent(MAPBOX_TOKEN);
+  return fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    if(data&&data.routes&&data.routes[0]) return {min:data.routes[0].duration/60, km:data.routes[0].distance/1000};
+    return null;
+  }).catch(function(){ return null; });
+}
+
+function maybeGetLiveEstimate(){
+  if(!MAPBOX_TOKEN||!isDispatcher()) return Promise.resolve(null);
+  var name=currentSiteName();
+  var rec=sites.find(function(s){ return s.name===name; });
+  if(!rec||typeof rec.lat!=='number'||typeof rec.lng!=='number') return Promise.resolve(null);
+  return getBrentLocation().then(function(loc){
+    if(!loc) return null;
+    return fetchLiveRoute(loc.lat,loc.lng,rec.lat,rec.lng).then(function(route){
+      if(!route) return null;
+      var needsPickupLeg=(curType==='pickup'||curType==='tool-delivery');
+      var totalMin=route.min+OVERHEAD_MIN+(needsPickupLeg?PICKUP_LEG.min:0);
+      var totalKm=route.km+(needsPickupLeg?PICKUP_LEG.km:0);
+      var labor=(totalMin/60)*BRENT_WAGE;
+      var mileage=totalKm*MILEAGE_RATE;
+      return {min:totalMin, km:totalKm, labor:labor, mileage:mileage, cost:labor+mileage};
+    });
+  });
+}
+
+var costEstimateEpoch = 0;
+
+function renderCostEstimateBox(est,isLive){
   var box=el('costEstimate'); if(!box) return;
-  var est=estimateDispatch();
   var flag=est.cost>=LOW_VALUE_THRESHOLD && curPri==='normal';
+  var liveTag=isLive?' <span style="color:var(--green);font-size:9px;letter-spacing:0.1em;vertical-align:middle">● LIVE</span>':'';
+  var caption=isLive
+    ? "Live route from Brent's current location, via real roads."
+    : "Typical route estimate — actual cost varies with Brent's location at dispatch time.";
   var html='<div style="display:flex;align-items:center;gap:10px">'
     +ico('dollarsign',18,flag?'var(--amber)':'var(--dim)')
-    +'<div style="flex:1"><div class="dl" style="margin-bottom:2px">Estimated Dispatch Cost</div>'
+    +'<div style="flex:1"><div class="dl" style="margin-bottom:2px">Estimated Dispatch Cost'+liveTag+'</div>'
     +'<div class="mono" style="font-size:20px;font-weight:800;color:'+(flag?'var(--amber)':'var(--text)')+'">$'+est.cost.toFixed(0)+'</div></div>'
     +'<div class="mono" style="text-align:right;font-size:11px;color:var(--faint)">'+Math.round(est.min)+' min<br>'+est.km.toFixed(0)+' km</div>'
     +'</div>'
-    +'<div style="font-size:10px;color:var(--faint);margin-top:8px">Typical route estimate — actual cost varies with Brent\'s location at dispatch time.</div>';
+    +'<div style="font-size:10px;color:var(--faint);margin-top:8px">'+caption+'</div>';
   if(flag){
     html+='<div style="font-size:12px;color:var(--dim);line-height:1.5;padding-top:10px;margin-top:10px;border-top:1px solid var(--border-soft)">'
       +'Labor $'+est.labor.toFixed(0)+' + mileage $'+est.mileage.toFixed(0)+'. If this can wait, bundling it into Brent\'s next run to this site skips the dedicated trip.'
@@ -987,6 +1104,17 @@ function renderCostEstimate(){
   }
   box.innerHTML=html;
   box.style.borderColor=flag?'rgba(245,158,11,0.4)':'var(--border-soft)';
+}
+
+function renderCostEstimate(){
+  var myEpoch=++costEstimateEpoch;
+  var est=estimateDispatch();
+  renderCostEstimateBox(est,false);
+
+  maybeGetLiveEstimate().then(function(liveEst){
+    if(myEpoch!==costEstimateEpoch) return; // a newer render superseded this one — discard stale result
+    if(liveEst) renderCostEstimateBox(liveEst,true);
+  });
 }
 
 function bundleInstead(){
@@ -1019,6 +1147,7 @@ function setPri(p){
 
 function openForm(type){
   editId=null; curType=type||'delivery'; curPri='normal'; curPhoto=null;
+  brentLiveLocation=null; brentLocationChecked=false;
   var titles={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   el('fTitle').textContent=titles[type]||'New Booking';
   el('fWho').value=''; el('fDesc').value=''; el('fNotes').value='';
@@ -1034,6 +1163,7 @@ function startEdit(id){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   closeDetail();
   editId=id; curType=b.type||'delivery'; curPri=b.priority||'normal'; curPhoto=b.photo||null;
+  brentLiveLocation=null; brentLocationChecked=false;
   el('fTitle').textContent='Edit Booking';
   el('fWho').value=b.requester||'';
   setSiteField(b.site||'');
@@ -1093,13 +1223,95 @@ function submitBooking(){
 }
 
 function showPage(p){
-  ['home','bookings','brent','calendar'].forEach(function(x){
+  ['home','bookings','brent','calendar','manager'].forEach(function(x){
     var pg=el('pg-'+x); var nb=el('nb-'+x);
     if(pg) pg.className='page'+(x===p?'':' hidden');
     if(nb) nb.className='nb'+(x===p?' on':'');
   });
   window.scrollTo(0,0);
   if(p==='calendar') renderCalendar();
+  if(p==='manager') renderManagerView();
+}
+
+/* ---- manager summary ----
+   Separate PIN, separate localStorage key from dispatcher mode —
+   Brent's unlock never grants access here, and vice versa. Same
+   "not real security, just a friction gate" caveat as DISPATCH_PIN:
+   both PINs sit in this file's source, visible to anyone who looks. */
+function isManager(){ return localStorage.getItem('gtd_manager')==='unlocked'; }
+
+function unlockManager(){
+  var pin=el('mgrPinInput').value;
+  if(pin===MANAGER_PIN){
+    localStorage.setItem('gtd_manager','unlocked');
+    el('mgrPinInput').value='';
+    renderManagerView();
+    toast('Manager unlocked','ok');
+  } else {
+    toast('Wrong PIN','err');
+  }
+}
+function lockManager(){
+  localStorage.removeItem('gtd_manager');
+  renderManagerView();
+  toast('Manager locked','warn');
+}
+
+function renderManagerView(){
+  var locked=el('managerLocked'), unlocked=el('managerUnlocked');
+  if(!locked||!unlocked) return;
+  if(isManager()){
+    locked.className='hidden'; unlocked.className='';
+    if(!el('mgrFrom').value){
+      var toD=new Date(), fromD=new Date(); fromD.setDate(fromD.getDate()-30);
+      el('mgrFrom').value=toISODate(fromD);
+      el('mgrTo').value=toISODate(toD);
+    }
+    renderManagerSummary();
+  } else {
+    locked.className=''; unlocked.className='hidden';
+  }
+}
+
+function renderManagerSummary(){
+  var fromV=el('mgrFrom').value, toV=el('mgrTo').value;
+  var inRange=bookings.filter(function(b){
+    if(!b.date) return false;
+    if(fromV&&b.date<fromV) return false;
+    if(toV&&b.date>toV) return false;
+    return true;
+  });
+
+  var bySite={};
+  inRange.forEach(function(b){
+    var key=b.site||'(No Site)';
+    if(!bySite[key]) bySite[key]={count:0, cost:0, declined:0};
+    bySite[key].count++;
+    if(b.status==='declined') bySite[key].declined++;
+    else bySite[key].cost+=(typeof b.estCost==='number'?b.estCost:0);
+  });
+
+  var siteKeys=Object.keys(bySite);
+  var totalCost=siteKeys.reduce(function(s,k){ return s+bySite[k].cost; },0);
+  var totalDeclined=siteKeys.reduce(function(s,k){ return s+bySite[k].declined; },0);
+
+  el('mgrTotalCard').innerHTML=
+    '<div class="card" style="display:flex;justify-content:space-between;gap:10px;text-align:center">'
+    +'<div style="flex:1"><div class="dl">Bookings</div><div class="mono" style="font-size:22px;font-weight:800">'+inRange.length+'</div></div>'
+    +'<div style="flex:1"><div class="dl">Est. Cost</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--amber)">$'+Math.round(totalCost)+'</div></div>'
+    +'<div style="flex:1"><div class="dl">Declined</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--faint)">'+totalDeclined+'</div></div>'
+    +'</div>';
+
+  var rows=siteKeys.map(function(k){ return {name:k, count:bySite[k].count, cost:bySite[k].cost, declined:bySite[k].declined}; });
+  rows.sort(function(a,b){ return b.cost-a.cost; });
+
+  el('mgrSiteList').innerHTML=rows.length ? rows.map(function(r){
+    return '<div class="bcard" style="--bc:var(--amber);cursor:default">'
+      +'<div class="row"><div><div class="ttl" style="font-size:15px">'+esc(r.name)+'</div>'
+      +'<div class="sub">'+r.count+' booking'+(r.count!==1?'s':'')+(r.declined?' · '+r.declined+' declined':'')+'</div></div>'
+      +'<div class="mono" style="font-size:18px;font-weight:800;color:var(--amber)">$'+Math.round(r.cost)+'</div></div>'
+      +'</div>';
+  }).join('') : emptyState('inbox','No bookings in this range');
 }
 
 // Global error catcher
