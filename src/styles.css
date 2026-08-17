@@ -26,6 +26,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 .page{padding:16px 16px 96px;max-width:640px;margin:0 auto}
 .hidden{display:none!important}
+[hidden]{display:none!important}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 svg{display:block;flex-shrink:0}
 
