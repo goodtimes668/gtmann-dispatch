@@ -10,7 +10,8 @@ const handler: Handler = async (event) => {
     body: JSON.stringify({
       app_metadata: {
         ...(user?.app_metadata || {}),
-        roles: isBootstrapManager ? ["manager"] : user?.app_metadata?.roles?.length ? user.app_metadata.roles : ["member"],
+        // Public signup can create requester accounts only. Elevated access is assigned by a manager later.
+        roles: isBootstrapManager ? ["manager"] : ["member"],
       },
     }),
   };

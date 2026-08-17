@@ -147,7 +147,10 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 .authcard{width:min(100%,420px);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
 .authlogo{margin-bottom:18px;width:48px;height:48px;border-radius:13px}
 .authcopy{font-size:13px;color:var(--dim);line-height:1.5;margin:8px 0 20px}
-.authlink{display:block;margin:14px auto 0;background:none;border:0;color:var(--yellow);font:600 13px inherit;cursor:pointer;padding:8px}
+.authactions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px 14px;margin-top:10px}
+.authlink{display:block;background:none;border:0;color:var(--yellow);font:600 13px inherit;cursor:pointer;padding:8px}
+.authlink-muted{color:var(--dim)}
+.authlink:hover,.authlink:focus-visible{text-decoration:underline;text-underline-offset:3px}
 .authmessage{font-size:13px;line-height:1.5;color:var(--dim);margin-top:14px;min-height:20px}
 .authmessage.err{color:var(--red)}
 .authmessage.ok{color:var(--green)}

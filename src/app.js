@@ -2,18 +2,23 @@
 import {
   acceptInvite,
   AuthError,
+  getSettings,
   getUser,
   handleAuthCallback,
   login,
   logout,
   requestPasswordRecovery,
+  signup,
   updateUser,
 } from '@netlify/identity';
 import { dispatchBreakdown } from '../netlify/functions/_shared/cost';
+import { validateSignup } from './auth';
 
 var API = '/api';
 var currentUser = null;
 var authCallback = null;
+var authMode = 'login';
+var signupEnabled = true;
 
 var LOW_VALUE_THRESHOLD = 25; // $ — flag non-urgent dispatches above this
 var sites = [];
@@ -134,19 +139,47 @@ function setAuthMessage(message,kind){
 }
 
 function setAuthMode(mode){
+  authMode=mode;
   var email=el('authEmail'), password=el('authPassword'), submit=el('authSubmit');
+  var name=el('authName'), confirmPassword=el('authPasswordConfirm');
   var emailLabel=email.previousElementSibling;
-  var forgot=document.querySelector('.authlink');
+  var nameWrap=el('authNameWrap'), confirmWrap=el('authPasswordConfirmWrap');
+  var forgot=el('authForgot'), toggle=el('authModeToggle');
   var special=mode==='invite'||mode==='recovery';
-  email.hidden=special; emailLabel.hidden=special; forgot.hidden=special;
-  password.autocomplete=special?'new-password':'current-password';
-  submit.textContent=mode==='invite'?'Accept Invite':mode==='recovery'?'Set New Password':'Sign In';
+  var signingUp=mode==='signup';
+  email.hidden=special; emailLabel.hidden=special; email.required=!special;
+  nameWrap.classList.toggle('hidden',!signingUp); name.required=signingUp;
+  confirmWrap.classList.toggle('hidden',!signingUp); confirmPassword.required=signingUp;
+  forgot.hidden=special||signingUp;
+  toggle.hidden=special||!signupEnabled;
+  toggle.textContent=signingUp?'Already have an account? Sign in':'Need an account? Sign up';
+  password.autocomplete=(special||signingUp)?'new-password':'current-password';
+  submit.textContent=mode==='invite'?'Accept Invite':mode==='recovery'?'Set New Password':signingUp?'Create Account':'Sign In';
   document.querySelector('.authcopy').textContent=mode==='invite'
     ?'Choose a password to activate your GT Mann account.'
-    :mode==='recovery'?'Enter a new password for your account.':'Sign in with your GT Mann account.';
+    :mode==='recovery'?'Enter a new password for your account.'
+    :signingUp?'Create a requester account. You will confirm your email before signing in.'
+    :'Sign in with your GT Mann account.';
 }
 
-async function submitLogin(event){
+async function loadSignupAvailability(){
+  try{
+    var settings=await getSettings();
+    signupEnabled=!settings.disableSignup;
+  }catch(error){
+    // Keep the form available if settings cannot be fetched; signup will return a useful error if disabled.
+    signupEnabled=true;
+  }
+  setAuthMode(authMode);
+}
+
+function toggleAuthMode(){
+  setAuthMessage('');
+  setAuthMode(authMode==='signup'?'login':'signup');
+  (authMode==='signup'?el('authName'):el('authEmail')).focus();
+}
+
+async function submitAuth(event){
   event.preventDefault();
   var button=el('authSubmit');
   button.disabled=true; setAuthMessage('Working…');
@@ -154,10 +187,31 @@ async function submitLogin(event){
     var user;
     if(authCallback&&authCallback.type==='invite') user=await acceptInvite(authCallback.token,el('authPassword').value);
     else if(authCallback&&authCallback.type==='recovery') user=await updateUser({password:el('authPassword').value});
-    else user=await login(el('authEmail').value.trim(),el('authPassword').value);
+    else if(authMode==='signup'){
+      var validationError=validateSignup({
+        name:el('authName').value,
+        password:el('authPassword').value,
+        confirmation:el('authPasswordConfirm').value,
+      });
+      if(validationError){ setAuthMessage(validationError,'err'); return false; }
+      var email=el('authEmail').value.trim();
+      user=await signup(email,el('authPassword').value,{full_name:el('authName').value.trim()});
+      if(!user.confirmedAt){
+        el('authPassword').value=''; el('authPasswordConfirm').value='';
+        setAuthMode('login');
+        setAuthMessage('Account created. Check your email to confirm it, then sign in.','ok');
+        return false;
+      }
+    } else user=await login(el('authEmail').value.trim(),el('authPassword').value);
     await startAuthenticated(user);
   }catch(error){
-    var message=error instanceof AuthError&&error.status===401?'Invalid email or password.':(error.message||'Unable to sign in.');
+    var raw=(error.message||'').toLowerCase();
+    var message=error instanceof AuthError&&error.status===401?'Invalid email or password.'
+      :authMode==='signup'&&(error.status===403||raw.indexOf('signup')!==-1&&raw.indexOf('disable')!==-1)
+        ?'New account signup is temporarily unavailable. Ask a manager for access.'
+        :authMode==='signup'&&(raw.indexOf('already')!==-1||raw.indexOf('registered')!==-1)
+          ?'An account already exists for that email. Sign in or reset your password.'
+          :(error.message||'Unable to continue.');
     setAuthMessage(message,'err');
   }finally{ button.disabled=false; }
   return false;
@@ -1004,7 +1058,7 @@ document.querySelectorAll('.overlay').forEach(function(overlay){
   overlay.addEventListener('click',function(event){ if(event.target===overlay) closeTopOverlay(); });
 });
 
-el('authForm').addEventListener('submit',submitLogin);
+el('authForm').addEventListener('submit',submitAuth);
 document.addEventListener('change',function(event){
   if(event.target.id==='fSite') onSiteChange();
   else if(event.target.id==='fPhoto') handlePhoto(event.target);
@@ -1014,7 +1068,8 @@ document.addEventListener('input',function(event){ if(event.target.id==='fSiteOt
 document.addEventListener('click',function(event){
   var target=event.target.closest('[data-action]'); if(!target) return;
   var action=target.dataset.action;
-  if(action==='forgot-password') forgotPassword();
+  if(action==='toggle-auth-mode') toggleAuthMode();
+  else if(action==='forgot-password') forgotPassword();
   else if(action==='sign-out') signOut();
   else if(action==='refresh') manualRefresh();
   else if(action==='open-form') openForm(target.dataset.type);
@@ -1059,6 +1114,7 @@ async function init(){
   el('refreshIc').innerHTML=ico('refresh',16);
   hydrateIcons(document);
   el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+  loadSignupAvailability();
   try{
     authCallback=await handleAuthCallback();
     if(authCallback&&authCallback.type==='invite'){

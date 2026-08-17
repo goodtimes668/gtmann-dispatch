@@ -18,14 +18,25 @@
     <div class="apptitle" style="font-size:16px">GT MANN DISPATCH</div>
     <p class="authcopy">Sign in with your GT Mann account.</p>
     <form id="authForm">
+      <div id="authNameWrap" class="hidden">
+        <label class="lbl" for="authName">Full Name</label>
+        <input id="authName" class="field" type="text" autocomplete="name" minlength="2" maxlength="80"/>
+      </div>
       <label class="lbl" for="authEmail">Email</label>
       <input id="authEmail" class="field" type="email" autocomplete="username" required/>
       <label class="lbl" for="authPassword">Password</label>
       <input id="authPassword" class="field" type="password" autocomplete="current-password" minlength="8" required/>
+      <div id="authPasswordConfirmWrap" class="hidden">
+        <label class="lbl" for="authPasswordConfirm">Confirm Password</label>
+        <input id="authPasswordConfirm" class="field" type="password" autocomplete="new-password" minlength="8"/>
+      </div>
       <button id="authSubmit" class="btn-primary" type="submit" style="width:100%;margin-top:16px">Sign In</button>
-      <button class="authlink" type="button" data-action="forgot-password">Forgot password?</button>
+      <div class="authactions">
+        <button id="authModeToggle" class="authlink" type="button" data-action="toggle-auth-mode">Need an account? Sign up</button>
+        <button id="authForgot" class="authlink authlink-muted" type="button" data-action="forgot-password">Forgot password?</button>
+      </div>
     </form>
-    <div id="authMessage" class="authmessage"></div>
+    <div id="authMessage" class="authmessage" role="status"></div>
   </div>
 </div>
 

@@ -5,7 +5,7 @@ Authenticated internal dispatch scheduling for material deliveries, tool pickups
 ## Production architecture
 
 - **Frontend:** Vite on Netlify
-- **Authentication:** `@netlify/identity` with invite-only users
+- **Authentication:** `@netlify/identity` with email-confirmed self-service signup
 - **Authorization:** `member`, `dispatcher`, and `manager` roles enforced in every server function
 - **Data:** strongly consistent Netlify Blobs stores for bookings, sites, photos, idempotency records, and rate limits
 - **API:** same-origin Netlify Functions under `/api/*`
@@ -20,6 +20,8 @@ The old browser PINs and the unauthenticated Railway dispatch API are not used b
 | `member` | Create bookings; edit their own pending bookings; see team schedule |
 | `dispatcher` | Approve, decline, start, complete, edit, and delete bookings; manage job sites |
 | `manager` | All dispatcher permissions plus cost summaries and user-role administration |
+
+New signups always start as `member`. Only an existing manager can grant dispatcher or manager access.
 
 ## Local verification
 
@@ -36,7 +38,7 @@ Use `npx netlify dev` when testing Identity, Functions, and Blobs locally. Plain
 ## First production deployment
 
 1. Push this repository to GitHub and connect it to the existing Netlify site.
-2. In Netlify, enable Identity and set registration to **Invite only**.
+2. In Netlify, enable Identity, set registration to **Open**, and leave email confirmation enabled.
 3. Before inviting the first user, set `BOOTSTRAP_MANAGER_EMAIL` to that person's exact email address.
 4. Deploy the site, then invite that email as the first user. The signup event assigns the `manager` role.
 5. Sign in. The Manager tab can assign future users as Member, Dispatcher, or Manager.
@@ -76,7 +78,7 @@ npm run build
 
 Then verify on a Netlify deploy preview with one account of each role:
 
-- Invite acceptance, sign-in, sign-out, and password recovery
+- Signup and email confirmation, invite acceptance, sign-in, sign-out, and password recovery
 - Create/edit a booking, including conditional pickup/site validation
 - Dispatcher status transitions and conflict refresh
 - Photo upload/view/delete
