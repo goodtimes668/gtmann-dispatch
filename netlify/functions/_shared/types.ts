@@ -1,0 +1,52 @@
+export type DispatchRole = "member" | "dispatcher" | "manager";
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  roles: DispatchRole[];
+};
+
+export type Site = {
+  name: string;
+  min: number;
+  km: number;
+  lat?: number;
+  lng?: number;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BookingStatus = "pending" | "approved" | "declined" | "in-progress" | "completed";
+export type BookingType = "delivery" | "pickup" | "tool-delivery" | "misc";
+export type BookingPriority = "urgent" | "normal" | "scheduled";
+
+export type Booking = {
+  id: string;
+  version: number;
+  status: BookingStatus;
+  type: BookingType;
+  priority: BookingPriority;
+  requester: string;
+  requesterEmail: string;
+  requesterId: string;
+  site: string;
+  pickupLocation: string;
+  description: string;
+  date: string;
+  time: string;
+  notes: string;
+  brentNotes: string;
+  photoId: string | null;
+  estCost: number;
+  estMinutes: number;
+  estKm: number;
+  bundleRequested: boolean;
+  bundleStatus: "none" | "queued" | "matched";
+  bundleWithId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  approvedAt?: string;
+  completedAt?: string;
+};
