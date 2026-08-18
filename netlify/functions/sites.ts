@@ -3,8 +3,15 @@ import { requireSameOrigin, requireUser } from "./_shared/auth";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
+import { routeFromFaithwood } from "./_shared/route";
 import { deleteSiteRecord, listSites, saveSite } from "./_shared/stores";
 import { idempotencyKey, validateSiteInput, validateVersion } from "./_shared/validation";
+
+async function calculateRoute(input: ReturnType<typeof validateSiteInput>) {
+  if (typeof input.lat !== "number" || typeof input.lng !== "number") return { ...input, routeSource: "manual" as const };
+  const route = await routeFromFaithwood(input.lat, input.lng);
+  return { ...input, min: route.roundTripMinutes, km: route.roundTripKm, routeSource: route.source };
+}
 
 export default async (req: Request, context: Context) => {
   try {
@@ -27,7 +34,7 @@ export default async (req: Request, context: Context) => {
     if (req.method === "POST") {
       const result = await once(`site-create/${user.id}`, key, async () => {
         const sites = await listSites();
-        const input = validateSiteInput(await readJson(req));
+        const input = await calculateRoute(validateSiteInput(await readJson(req)));
         if (sites.some((site) => site.name.toLowerCase() === input.name.toLowerCase())) throw new HttpError(409, "That site already exists");
         const now = new Date().toISOString();
         const site = { ...input, version: 1, createdAt: now, updatedAt: now };
@@ -46,7 +53,7 @@ export default async (req: Request, context: Context) => {
         if (!current) throw new HttpError(404, "Site not found");
         const body = await readJson(req) as Record<string, unknown>;
         if (validateVersion(body.version) !== current.version) throw new HttpError(409, "This site changed on another device. Refresh and try again.");
-        const input = validateSiteInput(body);
+        const input = await calculateRoute(validateSiteInput(body));
         if (sites.some((site) => site.name.toLowerCase() === input.name.toLowerCase() && site.name.toLowerCase() !== current.name.toLowerCase())) {
           throw new HttpError(409, "That site already exists");
         }

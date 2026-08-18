@@ -262,22 +262,24 @@
     </div>
 
     <label class="lbl" for="sfName">Site Name *</label>
-    <input id="sfName" class="field" placeholder="e.g. Grand & Fir" type="text"/>
+    <input id="sfName" class="field" placeholder="e.g. Grand & Fir" type="text" maxlength="120" required/>
+
+    <label class="lbl" for="sfAddress">Site Address *</label>
+    <div class="address-picker">
+      <input id="sfAddress" class="field" placeholder="Start typing a street address" type="text" maxlength="240" autocomplete="off" required role="combobox" aria-autocomplete="list" aria-controls="sfAddressResults" aria-expanded="false"/>
+      <div id="sfAddressResults" class="address-results hidden" role="listbox" aria-label="Address suggestions"></div>
+    </div>
+    <div class="address-credit">Address results © OpenStreetMap contributors</div>
 
     <div class="g2">
-      <div><label class="lbl" for="sfMin">Round Trip Minutes *</label><input id="sfMin" class="field" type="number" min="0" max="600" step="1" placeholder="20"/></div>
-      <div><label class="lbl" for="sfKm">Round Trip Km *</label><input id="sfKm" class="field" type="number" min="0" max="1000" step="0.5" placeholder="14"/></div>
+      <div><label class="lbl" for="sfMin">Round Trip Minutes</label><input id="sfMin" class="field" type="number" min="0" max="600" step="1" placeholder="—" readonly/></div>
+      <div><label class="lbl" for="sfKm">Round Trip Km</label><input id="sfKm" class="field" type="number" min="0" max="1000" step="0.1" placeholder="—" readonly/></div>
     </div>
-    <div style="font-size:11px;color:var(--faint);margin-top:10px;line-height:1.5">Drive time and distance for a round trip from Brent's usual start point to this site — feeds the dispatch cost estimate.</div>
+    <input id="sfLat" type="hidden"/>
+    <input id="sfLng" type="hidden"/>
+    <div id="sfRouteStatus" class="route-status">Select an address to calculate the round trip from Faithwood Farms, 4368 Lochside Drive.</div>
 
-    <div class="lbl">Coordinates (optional)</div>
-    <div class="g2">
-      <div><label class="sr-only" for="sfLat">Latitude</label><input id="sfLat" class="field" type="number" min="-90" max="90" step="0.000001" placeholder="Latitude e.g. 48.4284"/></div>
-      <div><label class="sr-only" for="sfLng">Longitude</label><input id="sfLng" class="field" type="number" min="-180" max="180" step="0.000001" placeholder="Longitude e.g. -123.3656"/></div>
-    </div>
-    <div style="font-size:11px;color:var(--faint);margin-top:8px;line-height:1.5">Coordinates are optional reference data. Dispatch estimates use the saved round-trip minutes and kilometres.</div>
-
-    <button data-action="save-site" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Save Site</button>
+    <button id="sfSave" data-action="save-site" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Save Site</button>
     <button id="sfDelete" data-action="delete-site" class="hidden" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px"><span data-ic="trash" data-s="15"></span>Delete Site</button>
     <button data-action="close-site" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
   </div>

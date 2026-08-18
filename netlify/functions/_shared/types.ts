@@ -9,10 +9,12 @@ export type AuthUser = {
 
 export type Site = {
   name: string;
+  address?: string;
   min: number;
   km: number;
   lat?: number;
   lng?: number;
+  routeSource?: "mapbox" | "estimated" | "manual";
   version: number;
   createdAt: string;
   updatedAt: string;

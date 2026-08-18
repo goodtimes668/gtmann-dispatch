@@ -24,6 +24,11 @@ var LOW_VALUE_THRESHOLD = 25; // $ — flag non-urgent dispatches above this
 var sites = [];
 var sitesSynced = false;
 var editSiteIdx = null;
+var siteAddressSuggestions = [];
+var siteAddressTimer = null;
+var siteAddressEpoch = 0;
+var selectedSiteAddress = '';
+var siteRoutePending = false;
 
 var bookings = [];
 var curType = 'delivery';
@@ -389,7 +394,7 @@ function renderSiteOptions(){
   var current=sel.value;
   var html='<option value="">— Select job site —</option>';
   sites.slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(s){
-    html+='<option value="'+esc(s.name)+'">'+esc(s.name)+'</option>';
+    html+='<option value="'+esc(s.name)+'">'+esc(s.name)+(s.address?' — '+esc(s.address):'')+'</option>';
   });
   html+='<option value="__other__">Other / Not Listed</option>';
   sel.innerHTML=html;
@@ -398,10 +403,11 @@ function renderSiteOptions(){
 }
 
 function siteRowHTML(s,idx){
-  var liveTag=(typeof s.lat==='number'&&typeof s.lng==='number')?' · <span style="color:var(--green)">GPS-ready</span>':'';
+  var routeTag=s.routeSource==='mapbox'?' · <span style="color:var(--green)">live road route</span>':s.routeSource==='estimated'?' · <span style="color:var(--amber)">estimated route</span>':'';
   return '<div class="bcard" role="button" tabindex="0" aria-label="Edit '+esc(s.name)+'" style="--bc:var(--border);cursor:pointer" data-action="open-site" data-site-index="'+idx+'">'
     +'<div class="row" style="margin-bottom:0"><div><div class="ttl" style="font-size:14px">'+esc(s.name)+'</div>'
-    +'<div class="sub mono">'+s.min+' min · '+s.km+' km round trip'+liveTag+'</div></div>'
+    +(s.address?'<div class="sub">'+esc(s.address)+'</div>':'')
+    +'<div class="sub mono">'+s.min+' min · '+s.km+' km round trip'+routeTag+'</div></div>'
     +ico('edit',15,'var(--faint)')+'</div></div>';
 }
 
@@ -444,25 +450,111 @@ function openSiteForm(idx){
   var s=editSiteIdx!==null?sites[editSiteIdx]:null;
   el('sfTitle').textContent=s?'Edit Site':'Add Site';
   el('sfName').value=s?s.name:'';
+  el('sfAddress').value=s&&s.address?s.address:'';
   el('sfMin').value=s?s.min:'';
   el('sfKm').value=s?s.km:'';
   el('sfLat').value=(s&&typeof s.lat==='number')?s.lat:'';
   el('sfLng').value=(s&&typeof s.lng==='number')?s.lng:'';
+  selectedSiteAddress=s&&s.address?s.address:'';
+  siteAddressSuggestions=[];
+  hideAddressSuggestions();
+  setRouteStatus(s&&s.routeSource==='mapbox'?'Live road round trip from Faithwood Farms.':s&&s.routeSource==='estimated'?'Approximate road round trip from Faithwood Farms. Add a Mapbox token for live roads.':'Select an address to calculate the round trip from Faithwood Farms, 4368 Lochside Drive.',s&&s.routeSource==='mapbox'?'ok':s&&s.routeSource==='estimated'?'warn':'');
   el('sfDelete').className=s?'':'hidden';
   showOverlay('siteFormOverlay');
 }
-function closeSiteForm(){ hideOverlay('siteFormOverlay'); editSiteIdx=null; }
+function closeSiteForm(){
+  if(siteAddressTimer) clearTimeout(siteAddressTimer);
+  siteAddressEpoch++;
+  hideAddressSuggestions();
+  hideOverlay('siteFormOverlay'); editSiteIdx=null;
+}
+
+function setRouteStatus(message,kind){
+  var status=el('sfRouteStatus');
+  status.textContent=message;
+  status.className='route-status'+(kind?' '+kind:'');
+}
+
+function hideAddressSuggestions(){
+  var list=el('sfAddressResults');
+  if(!list) return;
+  list.classList.add('hidden');
+  el('sfAddress').setAttribute('aria-expanded','false');
+}
+
+function renderAddressSuggestions(message){
+  var list=el('sfAddressResults');
+  if(message){
+    list.innerHTML='<div class="address-message">'+esc(message)+'</div>';
+  } else {
+    list.innerHTML=siteAddressSuggestions.map(function(suggestion,index){
+      return '<button type="button" class="address-option" role="option" data-action="choose-site-address" data-address-index="'+index+'">'+esc(suggestion.label)+'</button>';
+    }).join('');
+  }
+  list.classList.remove('hidden');
+  el('sfAddress').setAttribute('aria-expanded','true');
+}
+
+function onSiteAddressInput(){
+  var query=el('sfAddress').value.trim();
+  selectedSiteAddress='';
+  el('sfLat').value=''; el('sfLng').value=''; el('sfMin').value=''; el('sfKm').value='';
+  setRouteStatus('Choose a matching address from the suggestions to calculate the route.');
+  if(siteAddressTimer) clearTimeout(siteAddressTimer);
+  var epoch=++siteAddressEpoch;
+  if(query.length<3){ hideAddressSuggestions(); return; }
+  renderAddressSuggestions('Searching addresses…');
+  siteAddressTimer=setTimeout(async function(){
+    try{
+      var result=await apiRequest('GET','/locations?q='+encodeURIComponent(query));
+      if(epoch!==siteAddressEpoch) return;
+      siteAddressSuggestions=Array.isArray(result.suggestions)?result.suggestions:[];
+      if(siteAddressSuggestions.length) renderAddressSuggestions();
+      else renderAddressSuggestions('No matching B.C. addresses found. Try adding the city or postal code.');
+    }catch(error){
+      if(epoch!==siteAddressEpoch) return;
+      renderAddressSuggestions('Address lookup is unavailable right now. Please try again.');
+    }
+  },350);
+}
+
+async function chooseSiteAddress(index){
+  var suggestion=siteAddressSuggestions[index]; if(!suggestion) return;
+  selectedSiteAddress=suggestion.address;
+  el('sfAddress').value=suggestion.address;
+  el('sfLat').value=suggestion.lat;
+  el('sfLng').value=suggestion.lng;
+  hideAddressSuggestions();
+  siteRoutePending=true; el('sfSave').disabled=true;
+  setRouteStatus('Calculating the round trip from Faithwood Farms…');
+  try{
+    var route=await apiRequest('GET','/route?lat='+encodeURIComponent(suggestion.lat)+'&lng='+encodeURIComponent(suggestion.lng));
+    el('sfMin').value=route.roundTripMinutes;
+    el('sfKm').value=route.roundTripKm;
+    if(route.source==='mapbox') setRouteStatus('Live road route from Faithwood Farms.','ok');
+    else setRouteStatus('Approximate road route from Faithwood Farms. Add a Mapbox token for live road distance.','warn');
+  }catch(error){
+    el('sfMin').value=''; el('sfKm').value='';
+    setRouteStatus('The route could not be calculated. Choose the address again or retry shortly.','err');
+  }finally{
+    siteRoutePending=false; el('sfSave').disabled=false;
+  }
+}
 
 async function saveSite(){
   var name=el('sfName').value.trim();
+  var address=el('sfAddress').value.trim();
   var min=parseFloat(el('sfMin').value);
   var km=parseFloat(el('sfKm').value);
   var latRaw=el('sfLat').value.trim();
   var lngRaw=el('sfLng').value.trim();
-  if(!name||isNaN(min)||isNaN(km)||min<0||km<0){ toast('Enter a name and non-negative min/km','err'); return; }
+  if(siteRoutePending){ toast('Wait for the route calculation to finish','warn'); return; }
+  if(!name){ toast('Enter a site name','err'); el('sfName').focus(); return; }
+  if(!address||address!==selectedSiteAddress||latRaw===''||lngRaw===''){ toast('Choose the site address from the suggestions','err'); el('sfAddress').focus(); return; }
+  if(isNaN(min)||isNaN(km)||min<0||km<0){ toast('The route needs to be calculated before saving','err'); return; }
   var dup=sites.some(function(s,i){ return i!==editSiteIdx && s.name.toLowerCase()===name.toLowerCase(); });
   if(dup){ toast('That site already exists','err'); return; }
-  var rec={name:name,min:min,km:km};
+  var rec={name:name,address:address,min:min,km:km};
   if(latRaw!==''&&lngRaw!==''){
     var lat=parseFloat(latRaw), lng=parseFloat(lngRaw);
     if(!isNaN(lat)&&!isNaN(lng)){ rec.lat=lat; rec.lng=lng; }
@@ -1041,6 +1133,12 @@ function closeTopOverlay(){
 }
 
 document.addEventListener('keydown',function(event){
+  if(event.target.id==='sfAddress'&&event.key==='ArrowDown'&&!el('sfAddressResults').classList.contains('hidden')){
+    var first=el('sfAddressResults').querySelector('button'); if(first){ event.preventDefault(); first.focus(); } return;
+  }
+  if(event.target.id==='sfAddress'&&event.key==='Escape'&&!el('sfAddressResults').classList.contains('hidden')){
+    event.preventDefault(); hideAddressSuggestions(); return;
+  }
   if(event.key==='Escape') return closeTopOverlay();
   if((event.key==='Enter'||event.key===' ')&&event.target.matches('[role="button"][data-action]')){
     event.preventDefault(); event.target.click(); return;
@@ -1064,7 +1162,10 @@ document.addEventListener('change',function(event){
   else if(event.target.id==='fPhoto') handlePhoto(event.target);
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
 });
-document.addEventListener('input',function(event){ if(event.target.id==='fSiteOther') renderCostEstimate(); });
+document.addEventListener('input',function(event){
+  if(event.target.id==='fSiteOther') renderCostEstimate();
+  else if(event.target.id==='sfAddress') onSiteAddressInput();
+});
 document.addEventListener('click',function(event){
   var target=event.target.closest('[data-action]'); if(!target) return;
   var action=target.dataset.action;
@@ -1084,6 +1185,7 @@ document.addEventListener('click',function(event){
   else if(action==='submit-booking') submitBooking();
   else if(action==='close-site') closeSiteForm();
   else if(action==='save-site') saveSite();
+  else if(action==='choose-site-address') chooseSiteAddress(Number(target.dataset.addressIndex));
   else if(action==='delete-site') deleteSite();
   else if(action==='save-role') saveUserRole(target.dataset.userId);
   else if(action==='clear-blocked') clearBlockedQueue();

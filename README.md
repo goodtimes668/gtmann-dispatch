@@ -2,6 +2,12 @@
 
 Authenticated internal dispatch scheduling for material deliveries, tool pickups, tool deliveries, and miscellaneous field tasks.
 
+## Address and route estimates
+
+Job-site addresses autocomplete from OpenStreetMap data and save the selected canonical address and coordinates. All site distance and drive-time calculations start at Faithwood Farms, 4368 Lochside Drive, Saanich (`48.4952, -123.3698`) and are stored as round trips.
+
+Set `MAPBOX_ACCESS_TOKEN` in Netlify to use live road routes. Without it, the app uses a clearly labelled coordinate-based approximation so it never represents a straight-line estimate as live routing.
+
 ## Production architecture
 
 - **Frontend:** Vite on Netlify

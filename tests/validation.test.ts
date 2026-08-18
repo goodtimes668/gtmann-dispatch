@@ -43,4 +43,16 @@ describe("site validation", () => {
     expect(() => validateSiteInput({ name: "Site", min: 10, km: 5, lat: 48 })).toThrow("provided together");
     expect(() => validateSiteInput({ name: "Site", min: 10, km: 5, lat: 95, lng: -123 })).toThrow("Latitude");
   });
+
+  it("requires a canonical address when coordinates are saved", () => {
+    expect(() => validateSiteInput({ name: "Site", min: 10, km: 5, lat: 48.49, lng: -123.37 })).toThrow("Site address is required");
+    expect(validateSiteInput({
+      name: "Site",
+      address: "4368 Lochside Drive, Saanich, British Columbia, Canada",
+      min: 10,
+      km: 5,
+      lat: 48.4952,
+      lng: -123.3698,
+    })).toMatchObject({ address: "4368 Lochside Drive, Saanich, British Columbia, Canada" });
+  });
 });

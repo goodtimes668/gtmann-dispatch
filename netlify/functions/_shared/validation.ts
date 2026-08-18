@@ -73,12 +73,16 @@ export function validateSiteInput(input: unknown): Omit<Site, "version" | "creat
   if (latPresent !== lngPresent) throw new HttpError(422, "Latitude and longitude must be provided together");
   const site: Omit<Site, "version" | "createdAt" | "updatedAt"> = {
     name: text(body.name, "Site name", 120, true),
+    address: text(body.address, "Site address", 240),
     min: number(body.min, "Round-trip minutes", 0, 600),
     km: number(body.km, "Round-trip kilometres", 0, 1000),
   };
   if (latPresent) {
-    site.lat = number(body.lat, "Latitude", -90, 90);
-    site.lng = number(body.lng, "Longitude", -180, 180);
+    const lat = number(body.lat, "Latitude", -90, 90);
+    const lng = number(body.lng, "Longitude", -180, 180);
+    if (!site.address) throw new HttpError(422, "Site address is required with coordinates");
+    site.lat = lat;
+    site.lng = lng;
   }
   return site;
 }
