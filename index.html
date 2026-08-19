@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0d0d0f"/>
+<title>GT Mann Dispatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/src/styles.css"/>
+</head>
+<body>
+
+<div id="authGate" class="authgate" aria-live="polite">
+  <div class="authcard">
+    <div class="logo authlogo" id="authLogo" aria-hidden="true"></div>
+    <div class="apptitle" style="font-size:16px">GT MANN DISPATCH</div>
+    <p class="authcopy">Sign in with your GT Mann account.</p>
+    <form id="authForm">
+      <div id="authNameWrap" class="hidden">
+        <label class="lbl" for="authName">Full Name</label>
+        <input id="authName" class="field" type="text" autocomplete="name" minlength="2" maxlength="80"/>
+      </div>
+      <label class="lbl" for="authEmail">Email</label>
+      <input id="authEmail" class="field" type="email" autocomplete="username" required/>
+      <label class="lbl" for="authPassword">Password</label>
+      <input id="authPassword" class="field" type="password" autocomplete="current-password" minlength="8" required/>
+      <div id="authPasswordConfirmWrap" class="hidden">
+        <label class="lbl" for="authPasswordConfirm">Confirm Password</label>
+        <input id="authPasswordConfirm" class="field" type="password" autocomplete="new-password" minlength="8"/>
+      </div>
+      <button id="authSubmit" class="btn-primary" type="submit" style="width:100%;margin-top:16px">Sign In</button>
+      <div class="authactions">
+        <button id="authModeToggle" class="authlink" type="button" data-action="toggle-auth-mode">Need an account? Sign up</button>
+        <button id="authForgot" class="authlink authlink-muted" type="button" data-action="forgot-password">Forgot password?</button>
+      </div>
+    </form>
+    <div id="authMessage" class="authmessage" role="status"></div>
+  </div>
+</div>
+
+<div id="appShell" class="hidden">
+
+<div class="hazard"></div>
+<div class="topbar">
+  <div class="logo" id="logoIc"></div>
+  <div>
+    <div class="apptitle">GT MANN DISPATCH</div>
+    <div class="appsub" id="userRole">Delivery &amp; Booking</div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button data-action="sign-out" class="iconbtn" id="lockBtn" aria-label="Sign out"></button>
+    <button data-action="refresh" class="iconbtn" id="refreshIc" aria-label="Refresh"></button>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div id="pg-home" class="page">
+  <div id="queueStatus"></div>
+  <div class="card" style="margin-top:4px">
+    <div id="todayTxt" class="mono" style="font-size:16px;font-weight:800;letter-spacing:0.04em"></div>
+    <div id="brentTxt" style="font-size:13px;color:var(--yellow);margin-top:6px;font-weight:600">Loading...</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:18px">
+    <div class="stat" style="--sc:var(--amber)"><div class="sic" data-ic="clock" data-c="var(--amber)"></div><div id="nP" class="num" style="color:var(--amber)">0</div><div class="slbl">Pending</div></div>
+    <div class="stat" style="--sc:var(--green)"><div class="sic" data-ic="calendar" data-c="var(--green)"></div><div id="nT" class="num" style="color:var(--green)">0</div><div class="slbl">Today</div></div>
+    <div class="stat" style="--sc:var(--blue)"><div class="sic" data-ic="clipboard" data-c="var(--blue)"></div><div id="nW" class="num" style="color:var(--blue)">0</div><div class="slbl">This Week</div></div>
+    <div class="stat" style="--sc:var(--red)"><div class="sic" data-ic="alert" data-c="var(--red)"></div><div id="nU" class="num" style="color:var(--red)">0</div><div class="slbl">Urgent</div></div>
+  </div>
+
+  <h2 style="margin-top:0">Quick Actions</h2>
+  <div class="g2" style="margin-bottom:20px">
+    <button data-action="open-form" data-type="delivery" class="qa qa-primary"><span class="qic" data-ic="package"></span><span>Material Delivery</span></button>
+    <button data-action="open-form" data-type="pickup" class="qa qa-dark"><span class="qic" data-ic="wrench"></span><span>Tool Pickup</span></button>
+    <button data-action="open-form" data-type="tool-delivery" class="qa qa-dark"><span class="qic" data-ic="truck"></span><span>Tool Delivery</span></button>
+    <button data-action="open-form" data-type="misc" class="qa qa-dark"><span class="qic" data-ic="file"></span><span>Misc Task</span></button>
+  </div>
+
+  <h2 style="margin-top:0">Upcoming</h2>
+  <div id="homeList"><div class="skel"></div><div class="skel"></div></div>
+</div>
+
+<!-- BOOKINGS PAGE -->
+<div id="pg-bookings" class="page hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <h1 style="margin:0">All Bookings</h1>
+    <button data-action="open-form" data-type="delivery" class="btn-primary" style="padding:10px 16px;font-size:13px">+ New</button>
+  </div>
+  <div id="allList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+</div>
+
+<!-- BRENT PAGE -->
+<div id="pg-brent" class="page hidden">
+  <h1>Brent's Jobs</h1>
+  <div class="card" style="display:flex;gap:14px;align-items:center;margin-bottom:4px">
+    <div class="logo" style="width:48px;height:48px;border-radius:13px" id="brentIc"></div>
+    <div>
+      <div style="font-size:17px;font-weight:700">Brent Van Dusen</div>
+      <div id="brentCnt" style="font-size:13px;color:var(--yellow);margin-top:3px;font-weight:600">Loading...</div>
+    </div>
+  </div>
+
+  <h2>Last 30 Days</h2>
+  <div class="g2" style="margin-bottom:6px">
+    <div class="stat" style="--sc:var(--green)"><div id="mDone" class="num sm" style="color:var(--green)">—</div><div class="slbl">Completed</div></div>
+    <div class="stat" style="--sc:var(--yellow)"><div id="mTurn" class="num sm" style="color:var(--yellow)">—</div><div class="slbl">Avg Days</div></div>
+    <div class="stat" style="--sc:var(--blue)"><div id="mSite" class="num sm" style="color:var(--blue);font-size:13px;line-height:1.3;padding-top:4px">—</div><div class="slbl">Top Site</div></div>
+    <div class="stat" style="--sc:var(--amber)"><div id="mSpend" class="num sm" style="color:var(--amber)">—</div><div class="slbl">Est. Dispatch Spend</div></div>
+  </div>
+
+  <h2>Needs Approval</h2>
+  <div id="bPending"><div class="skel"></div></div>
+  <h2>Today's Run Sheet</h2>
+  <div id="bToday"><div class="skel"></div></div>
+  <h2>Upcoming</h2>
+  <div id="bUpcoming"><div class="skel"></div></div>
+
+  <div id="sitesSection" class="hidden">
+    <h2>Job Sites <span id="sitesSyncBadge" style="text-transform:none;letter-spacing:normal;margin-left:4px"></span></h2>
+    <div id="sitesList"><div class="skel"></div></div>
+    <button data-action="open-site" class="btn-outline" style="width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px"><span data-ic="plus" data-s="15"></span>Add Site</button>
+  </div>
+</div>
+
+<!-- CALENDAR PAGE -->
+<div id="pg-calendar" class="page hidden">
+  <div class="calnav">
+    <button data-action="shift-month" data-delta="-1" class="iconbtn" data-ic="chevronleft" aria-label="Previous month"></button>
+    <div id="calMonthLabel" class="mono" style="font-size:15px;font-weight:800;letter-spacing:0.04em"></div>
+    <button data-action="shift-month" data-delta="1" class="iconbtn" data-ic="chevronright" aria-label="Next month"></button>
+  </div>
+  <div class="calgrid-head"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+  <div id="calGrid" class="calgrid"></div>
+  <button data-action="calendar-today" class="btn-outline" style="width:100%;margin-top:16px;padding:12px;font-size:13px">Jump to Today</button>
+</div>
+
+<!-- MANAGER PAGE -->
+<div id="pg-manager" class="page hidden">
+  <div id="managerLocked">
+    <h1>Manager Summary</h1>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Manager access required</div>
+      <div style="font-size:13px;color:var(--dim);line-height:1.55">Your account does not have the manager role. Ask a Netlify Identity administrator to update your role.</div>
+    </div>
+  </div>
+
+  <div id="managerUnlocked" class="hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <h1 style="margin:0">Manager Summary</h1>
+      <button data-action="sign-out" class="iconbtn" data-ic="lock" aria-label="Sign out"></button>
+    </div>
+
+    <div class="card">
+      <div class="g2">
+        <div><label class="lbl" for="mgrFrom">From</label><input id="mgrFrom" class="field" type="date"/></div>
+        <div><label class="lbl" for="mgrTo">To</label><input id="mgrTo" class="field" type="date"/></div>
+      </div>
+    </div>
+
+    <div id="mgrTotalCard"></div>
+
+    <h2>By Site</h2>
+    <div id="mgrSiteList"></div>
+
+    <h2>User Access</h2>
+    <div id="mgrUserList"><div class="skel"></div></div>
+
+    <h2>Backups & Recovery</h2>
+    <div class="card">
+      <div style="font-size:13px;color:var(--dim);line-height:1.5;margin-bottom:12px">A complete data and photo backup runs daily. Create and download a handover backup before major changes.</div>
+      <button type="button" class="btn-primary" data-action="create-backup" style="width:100%">Create Backup Now</button>
+    </div>
+    <div id="mgrBackupList"><div class="skel"></div></div>
+
+    <h2>Recent Audit Activity</h2>
+    <div id="mgrAuditList"><div class="skel"></div></div>
+
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottomnav">
+  <button class="nb on" id="nb-home" data-action="show-page" data-page="home"><span data-ic="home"></span>Home</button>
+  <button class="nb" id="nb-bookings" data-action="show-page" data-page="bookings"><span data-ic="clipboard"></span>Bookings</button>
+  <button class="nb" id="nb-calendar" data-action="show-page" data-page="calendar"><span data-ic="calendar"></span>Calendar</button>
+  <button class="nb" id="nb-brent" data-action="show-page" data-page="brent"><span data-ic="hardhat"></span>Brent</button>
+  <button class="nb" id="nb-manager" data-action="show-page" data-page="manager"><span data-ic="dollarsign"></span>Manager</button>
+</div>
+
+<!-- BOOKING FORM OVERLAY -->
+<div id="formOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="fTitle">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span id="fTitle" style="font-size:19px;font-weight:800">New Booking</span>
+      <button data-action="close-form" class="closebtn" data-ic="x" aria-label="Close"></button>
+    </div>
+
+    <div class="lbl">Type</div>
+    <div class="g2" style="margin-bottom:4px">
+      <button id="t-delivery" data-action="set-type" data-type="delivery" class="seg on"><span data-ic="package" data-s="15"></span>Material Delivery</button>
+      <button id="t-pickup" data-action="set-type" data-type="pickup" class="seg"><span data-ic="wrench" data-s="15"></span>Tool Pickup</button>
+      <button id="t-tool-delivery" data-action="set-type" data-type="tool-delivery" class="seg"><span data-ic="truck" data-s="15"></span>Tool Delivery</button>
+      <button id="t-misc" data-action="set-type" data-type="misc" class="seg"><span data-ic="file" data-s="15"></span>Misc Task</button>
+    </div>
+
+    <label class="lbl" for="fWho">Requested By</label>
+    <input id="fWho" class="field" placeholder="Your name" type="text" readonly/>
+
+    <label class="lbl" for="fSite">Job Site</label>
+    <select id="fSite" class="field">
+      <option value="">— Select job site —</option>
+    </select>
+
+    <div id="fSiteOtherWrap" class="hidden">
+      <label class="lbl" for="fSiteOther">Site Name</label>
+      <input id="fSiteOther" class="field" placeholder="Type the job site name" type="text"/>
+    </div>
+
+    <div id="fPickupWrap" class="hidden">
+      <label class="lbl" for="fPickup">Pickup Location</label>
+      <input id="fPickup" class="field" placeholder="Where to pick up from" type="text"/>
+    </div>
+
+    <label class="lbl" for="fDesc">Description *</label>
+    <textarea id="fDesc" class="field" maxlength="3000" required placeholder="What needs to be picked up or delivered? Include quantities, materials, tools..."></textarea>
+
+    <div class="g2">
+      <div><label class="lbl" for="fDate">Date *</label><input id="fDate" class="field" type="date" required/></div>
+      <div><label class="lbl" for="fTime">Time</label><input id="fTime" class="field" type="time"/></div>
+    </div>
+
+    <div class="lbl">Priority</div>
+    <div class="g2" style="margin-bottom:4px">
+      <button id="p-urgent" data-action="set-priority" data-priority="urgent" class="seg"><span data-ic="alert" data-s="15"></span>Urgent</button>
+      <button id="p-normal" data-action="set-priority" data-priority="normal" class="seg on"><span data-ic="clipboard" data-s="15"></span>Normal</button>
+      <button id="p-scheduled" data-action="set-priority" data-priority="scheduled" class="seg"><span data-ic="calendar" data-s="15"></span>Planned</button>
+    </div>
+
+    <div id="costEstimate" class="card" style="margin-top:16px;margin-bottom:0"></div>
+
+    <label class="lbl" for="fPhoto">Photo</label>
+    <input type="file" id="fPhoto" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none"/>
+    <button data-action="choose-photo" class="btn-outline photobtn" style="width:100%;padding:13px" id="photoBtn"><span data-ic="camera" data-s="16"></span>Attach Photo</button>
+    <div id="photoPrev"></div>
+
+    <label class="lbl" for="fNotes">Notes</label>
+    <textarea id="fNotes" class="field" maxlength="2000" placeholder="Access codes, contacts, special instructions..."></textarea>
+
+    <button id="fSubmit" data-action="submit-booking" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Submit Booking Request</button>
+    <button data-action="close-form" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div id="detailOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Booking details">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- SITE FORM OVERLAY -->
+<div id="siteFormOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="sfTitle">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span id="sfTitle" style="font-size:19px;font-weight:800">Add Site</span>
+      <button data-action="close-site" class="closebtn" data-ic="x" aria-label="Close"></button>
+    </div>
+
+    <label class="lbl" for="sfName">Site Name *</label>
+    <input id="sfName" class="field" placeholder="e.g. Grand & Fir" type="text" maxlength="120" required/>
+
+    <label class="lbl" for="sfAddress">Site Address *</label>
+    <div class="address-picker">
+      <input id="sfAddress" class="field" placeholder="Start typing a street address" type="text" maxlength="240" autocomplete="off" required role="combobox" aria-autocomplete="list" aria-controls="sfAddressResults" aria-expanded="false"/>
+      <div id="sfAddressResults" class="address-results hidden" role="listbox" aria-label="Address suggestions"></div>
+    </div>
+    <div class="address-credit">Address results © OpenStreetMap contributors</div>
+
+    <div class="g2">
+      <div><label class="lbl" for="sfMin">Round Trip Minutes</label><input id="sfMin" class="field" type="number" min="0" max="600" step="1" placeholder="—" readonly/></div>
+      <div><label class="lbl" for="sfKm">Round Trip Km</label><input id="sfKm" class="field" type="number" min="0" max="1000" step="0.1" placeholder="—" readonly/></div>
+    </div>
+    <input id="sfLat" type="hidden"/>
+    <input id="sfLng" type="hidden"/>
+    <div id="sfRouteStatus" class="route-status">Select an address to calculate the round trip from Faithwood Farms, 4368 Lochside Drive.</div>
+
+    <button id="sfSave" data-action="save-site" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Save Site</button>
+    <button id="sfDelete" data-action="delete-site" class="hidden" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px"><span data-ic="trash" data-s="15"></span>Delete Site</button>
+    <button data-action="close-site" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
+  </div>
+</div>
+
+<!-- DAY DETAIL OVERLAY -->
+<div id="dayOverlay" class="overlay" role="dialog" aria-modal="true" aria-label="Bookings for selected day">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div id="dayContent"></div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+</div>
+
+<script type="module" src="/src/app.js"></script>
+</body>
+</html>
