@@ -1,10 +1,11 @@
 import type { Config, Context } from "@netlify/functions";
 import { requireUser, canDispatch, requireSameOrigin } from "./_shared/auth";
+import { recordAudit } from "./_shared/audit";
 import { estimateDispatch } from "./_shared/cost";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
-import { createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch } from "./_shared/stores";
+import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
 import { notifyNewBooking, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
 import { idempotencyKey, isBookingId, validateBookingInput, validateStatus, validateVersion } from "./_shared/validation";
@@ -79,7 +80,9 @@ async function createBooking(req: Request, context: Context) {
     await matchBundles(booking, all);
     const created = await createBookingRecord(booking);
     if (!created.modified) throw new HttpError(409, "Booking ID collision. Please retry.");
+    if (booking.photoId) await bindPhotoToBooking(booking.photoId, booking.id);
     context.waitUntil(notifyNewBooking(booking));
+    context.waitUntil(recordAudit(user, "booking.created", "booking", booking.id, context, { status: booking.status, site: booking.site }));
     return { status: 201, value: booking };
   });
   return json(publicBooking(result.value, user), result.status, { "Idempotency-Replayed": String(result.replayed) });
@@ -131,8 +134,16 @@ async function updateBooking(req: Request, context: Context, id: string) {
     }
     const write = await saveBookingIfMatch(updated, record.etag);
     if (!write.modified) throw new HttpError(409, "This booking changed on another device. Refresh and try again.");
-    if (current.photoId && current.photoId !== updated.photoId) context.waitUntil(photosStore().delete(`photo/${current.photoId}`));
+    if (updated.photoId && updated.photoId !== current.photoId) await bindPhotoToBooking(updated.photoId, updated.id);
+    if (current.photoId && current.photoId !== updated.photoId) {
+      context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
+    }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
+    context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
+      fromStatus: current.status,
+      toStatus: updated.status,
+      version: updated.version,
+    }));
     return { status: 200, value: updated };
   });
   return json(publicBooking(result.value, user), result.status, { "Idempotency-Replayed": String(result.replayed) });
@@ -146,7 +157,8 @@ async function removeBooking(req: Request, context: Context, id: string) {
     const current = await getBooking(id);
     if (!current) throw new HttpError(404, "Booking not found");
     await deleteBookingRecord(id);
-    if (current.photoId) await photosStore().delete(`photo/${current.photoId}`);
+    if (current.photoId) await Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]);
+    context.waitUntil(recordAudit(user, "booking.deleted", "booking", id, context, { status: current.status, site: current.site }));
     return { status: 200, value: { deleted: true } };
   });
   return json(result.value, result.status, { "Idempotency-Replayed": String(result.replayed) });

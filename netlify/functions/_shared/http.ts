@@ -35,10 +35,19 @@ export async function readJson(req: Request, maxBytes = 64 * 1024) {
   try { return JSON.parse(source); } catch { throw new HttpError(400, "Invalid JSON body"); }
 }
 
-export function handleError(error: unknown) {
+export function handleError(error: unknown, requestId = crypto.randomUUID()) {
   if (error instanceof HttpError) return json({ error: error.message, details: error.details }, error.status);
-  console.error("dispatch function error", error);
-  return json({ error: "Internal server error" }, 500);
+  console.error(JSON.stringify({
+    level: "error",
+    service: "gtmann-dispatch",
+    event: "function_failure",
+    requestId,
+    occurredAt: new Date().toISOString(),
+    errorName: error instanceof Error ? error.name : "UnknownError",
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined,
+  }));
+  return json({ error: "Internal server error", requestId }, 500, { "X-Request-ID": requestId });
 }
 
 export function allowMethods(req: Request, allowed: string[]) {

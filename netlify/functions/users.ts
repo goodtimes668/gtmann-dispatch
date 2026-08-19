@@ -1,6 +1,7 @@
 import { admin } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
 import { requireSameOrigin, requireUser } from "./_shared/auth";
+import { recordAudit } from "./_shared/audit";
 import { handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
@@ -33,6 +34,7 @@ export default async (req: Request, context: Context) => {
       if (typeof body.role !== "string" || !roles.has(body.role)) throw new HttpError(422, "Invalid role");
       if (id === caller.id && body.role !== "manager") throw new HttpError(409, "You cannot remove your own manager access");
       const updated = await admin.updateUser(id, { role: body.role });
+      context.waitUntil(recordAudit(caller, "user.role_changed", "user", id, context, { role: body.role }));
       return { status: 200, value: safeUser(updated) };
     });
     return json(result.value, result.status, { "Idempotency-Replayed": String(result.replayed) });

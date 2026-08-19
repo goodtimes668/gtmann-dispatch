@@ -1,9 +1,10 @@
 import type { Config, Context } from "@netlify/functions";
 import { canDispatch, requireSameOrigin, requireUser } from "./_shared/auth";
+import { recordAudit } from "./_shared/audit";
 import { handleError, HttpError, json } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
-import { listBookings, photosStore } from "./_shared/stores";
+import { findBookingByPhotoId, photosStore } from "./_shared/stores";
 import { idempotencyKey, isUuid } from "./_shared/validation";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -17,7 +18,7 @@ export default async (req: Request, context: Context) => {
 
     if (req.method === "GET") {
       if (!id || !isUuid(id)) throw new HttpError(400, "Valid photo ID required");
-      const booking = (await listBookings()).find((item) => item.photoId === id);
+      const booking = await findBookingByPhotoId(id);
       if (!booking) throw new HttpError(404, "Photo not found");
       if (!canDispatch(user) && booking.requesterId !== user.id) throw new HttpError(403, "You do not have access to this photo");
       const result = await store.getWithMetadata(`photo/${id}`, { type: "arrayBuffer" });
@@ -58,6 +59,7 @@ export default async (req: Request, context: Context) => {
           uploadedAt: new Date().toISOString(),
         },
       });
+      context.waitUntil(recordAudit(user, "photo.uploaded", "photo", photoId, context, { size: file.size, contentType: file.type }));
       return { status: 201, value: { id: photoId, url: `/api/photos/${photoId}` } };
     });
     return json(result.value, result.status, { "Idempotency-Replayed": String(result.replayed) });

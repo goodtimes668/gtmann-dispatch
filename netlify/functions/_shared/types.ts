@@ -18,6 +18,7 @@ export type Site = {
   version: number;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 };
 
 export type BookingStatus = "pending" | "approved" | "declined" | "in-progress" | "completed";
@@ -51,4 +52,28 @@ export type Booking = {
   updatedAt: string;
   approvedAt?: string;
   completedAt?: string;
+};
+
+export type AuditEvent = {
+  id: string;
+  occurredAt: string;
+  actorId: string;
+  actorEmail: string;
+  actorRole: DispatchRole;
+  action: string;
+  targetType: "booking" | "site" | "user" | "photo" | "backup" | "system";
+  targetId: string;
+  requestId?: string;
+  details?: Record<string, string | number | boolean | null>;
+};
+
+export type BackupSnapshot = {
+  schemaVersion: 1;
+  id: string;
+  createdAt: string;
+  createdBy: "scheduled" | "manager";
+  bookings: Booking[];
+  sites: Site[];
+  audit: AuditEvent[];
+  photoIds: string[];
 };

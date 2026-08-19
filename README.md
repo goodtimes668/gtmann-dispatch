@@ -13,7 +13,7 @@ Set `MAPBOX_ACCESS_TOKEN` in Netlify to use live road routes. Without it, the ap
 - **Frontend:** Vite on Netlify
 - **Authentication:** `@netlify/identity` with email-confirmed self-service signup
 - **Authorization:** `member`, `dispatcher`, and `manager` roles enforced in every server function
-- **Data:** strongly consistent Netlify Blobs stores for bookings, sites, photos, idempotency records, and rate limits
+- **Data:** strongly consistent Netlify Blobs stores for bookings, sites, photos, audit events, backups, idempotency records, and rate limits
 - **API:** same-origin Netlify Functions under `/api/*`
 - **Offline support:** IndexedDB outbox with idempotency keys, conflict detection, retry isolation, and visible blocked-item handling
 
@@ -39,7 +39,7 @@ npm test
 npm run build
 ```
 
-Use `npx netlify dev` when testing Identity, Functions, and Blobs locally. Plain `npm run dev` starts only the browser frontend.
+Use `npm run dev` for browser-only development and `npx netlify dev` for local Functions and Blobs. Netlify Identity does **not** run locally; authentication acceptance tests must use a Netlify deploy preview.
 
 ## First production deployment
 
@@ -74,6 +74,22 @@ Slack messages deliberately contain only an **Open Dispatch** link. Approval and
 - API JSON bodies are limited and strictly validated.
 - The Content Security Policy blocks inline JavaScript, framing, plugins, and cross-origin form submissions.
 - User-generated text is escaped in both the web UI and Slack messages.
+- Site renames use conditional writes and create-before-delete ordering, preventing a failed rename from destroying the original record.
+- Photo authorization uses a direct booking link rather than scanning every booking; legacy links repair themselves on first access.
+- Managers have a downloadable backup inventory and audit activity view.
+- A complete booking, site, audit, and photo backup runs daily.
+- Unexpected server failures emit structured logs and return a support-safe request ID.
+
+## Operations
+
+- Health check: `GET /api/health`
+- Manager audit trail: `GET /api/admin/audit`
+- Backup inventory: `GET /api/admin/backups`
+- Create a backup: `POST /api/admin/backups`
+- Download a backup: `GET /api/admin/backups/:id`
+- Restore a backup: `PUT /api/admin/backups/:id` with `{ "confirmation": "RESTORE" }`
+
+See [`docs/OPERATIONS.md`](docs/OPERATIONS.md) for recovery, monitoring, access, and release procedures.
 
 ## Release checklist
 

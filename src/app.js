@@ -1060,6 +1060,8 @@ function renderManagerView(){
       el('mgrTo').value=toISODate(toD);
     }
     renderManagerSummary();
+    loadBackups();
+    loadAudit();
   } else {
     locked.className=''; unlocked.className='hidden';
   }
@@ -1109,6 +1111,46 @@ async function saveUserRole(id){
     toast('Access updated — that user should sign out and back in','ok');
     await loadUsers();
   }catch(error){}
+}
+
+async function loadBackups(){
+  var list=el('mgrBackupList'); if(!list||!isManager()) return;
+  try{
+    var backups=await apiRequest('GET','/admin/backups');
+    list.innerHTML=backups.length?backups.map(function(backup){
+      var when=backup.createdAt?new Date(backup.createdAt).toLocaleString():'Unknown date';
+      return '<div class="bcard" style="--bc:var(--green);cursor:default"><div class="row" style="margin-bottom:0"><div><div class="ttl" style="font-size:14px">'+esc(when)+'</div><div class="sub">'+esc(backup.createdBy||'backup')+' · schema '+esc(backup.schemaVersion||1)+'</div></div><button type="button" class="iconbtn" data-action="download-backup" data-backup-id="'+esc(backup.id)+'" aria-label="Download backup">'+ico('file',15)+'</button></div></div>';
+    }).join(''):emptyState('inbox','No backups have run yet');
+  }catch(error){ list.innerHTML=emptyState('alert','Backups could not be loaded'); }
+}
+
+async function createManagerBackup(){
+  try{
+    await apiCall('POST','/admin/backups',{},'Backup created',{queue:false,idempotencyKey:uid()});
+    await loadBackups();
+    await loadAudit();
+  }catch(error){}
+}
+
+async function downloadBackup(id){
+  try{
+    var response=await fetch(API+'/admin/backups/'+encodeURIComponent(id),{credentials:'same-origin'});
+    if(!response.ok) throw new Error('Download failed');
+    var blob=await response.blob();
+    var url=URL.createObjectURL(blob), link=document.createElement('a');
+    link.href=url; link.download='gtmann-dispatch-'+id+'.json'; document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  }catch(error){ toast('Backup download failed','err'); }
+}
+
+async function loadAudit(){
+  var list=el('mgrAuditList'); if(!list||!isManager()) return;
+  try{
+    var events=await apiRequest('GET','/admin/audit?limit=50');
+    list.innerHTML=events.length?events.map(function(event){
+      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail)+' · '+esc(event.targetType)+' '+esc(event.targetId)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
+    }).join(''):emptyState('inbox','No administrative activity recorded yet');
+  }catch(error){ list.innerHTML=emptyState('alert','Audit activity could not be loaded'); }
 }
 
 async function startAuthenticated(){
@@ -1188,6 +1230,8 @@ document.addEventListener('click',function(event){
   else if(action==='choose-site-address') chooseSiteAddress(Number(target.dataset.addressIndex));
   else if(action==='delete-site') deleteSite();
   else if(action==='save-role') saveUserRole(target.dataset.userId);
+  else if(action==='create-backup') createManagerBackup();
+  else if(action==='download-backup') downloadBackup(target.dataset.backupId);
   else if(action==='clear-blocked') clearBlockedQueue();
   else if(action==='open-detail') openDetail(target.dataset.bookingId);
   else if(action==='open-day') openDay(target.dataset.date);
