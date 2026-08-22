@@ -12,6 +12,7 @@ import {
   updateUser,
 } from '@netlify/identity';
 import { dispatchBreakdown } from '../netlify/functions/_shared/cost';
+import { outlookCalendarUrl } from '../netlify/functions/_shared/outlook';
 import { validateSignup } from './auth';
 
 var API = '/api';
@@ -29,6 +30,9 @@ var siteAddressTimer = null;
 var siteAddressEpoch = 0;
 var selectedSiteAddress = '';
 var siteRoutePending = false;
+var bookingAddressSuggestions = [];
+var bookingAddressTimer = null;
+var bookingAddressEpoch = 0;
 
 var bookings = [];
 var curType = 'delivery';
@@ -429,7 +433,10 @@ function currentSiteName(){
   return v;
 }
 function onSiteChange(){
-  el('fSiteOtherWrap').className=el('fSite').value==='__other__'?'':'hidden';
+  var isOther=el('fSite').value==='__other__';
+  el('fSiteOtherWrap').className=isOther?'':'hidden';
+  if(!isOther) hideBookingAddressSuggestions();
+  else setTimeout(function(){ el('fSiteOther').focus(); },0);
   renderCostEstimate();
 }
 function setSiteField(name){
@@ -443,6 +450,56 @@ function setSiteField(name){
     if(el('fSiteOther')) el('fSiteOther').value='';
     el('fSiteOtherWrap').className='hidden';
   }
+  bookingAddressSuggestions=[];
+  hideBookingAddressSuggestions();
+}
+
+function hideBookingAddressSuggestions(){
+  var list=el('fSiteOtherResults');
+  if(!list) return;
+  list.classList.add('hidden');
+  el('fSiteOther').setAttribute('aria-expanded','false');
+}
+
+function renderBookingAddressSuggestions(message){
+  var list=el('fSiteOtherResults');
+  if(message){
+    list.innerHTML='<div class="address-message">'+esc(message)+'</div>';
+  } else {
+    list.innerHTML=bookingAddressSuggestions.map(function(suggestion,index){
+      return '<button type="button" class="address-option" role="option" data-action="choose-booking-address" data-address-index="'+index+'">'+esc(suggestion.label)+'</button>';
+    }).join('');
+  }
+  list.classList.remove('hidden');
+  el('fSiteOther').setAttribute('aria-expanded','true');
+}
+
+function onBookingAddressInput(){
+  var query=el('fSiteOther').value.trim();
+  renderCostEstimate();
+  if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+  var epoch=++bookingAddressEpoch;
+  if(query.length<3){ bookingAddressSuggestions=[]; hideBookingAddressSuggestions(); return; }
+  renderBookingAddressSuggestions('Searching addresses…');
+  bookingAddressTimer=setTimeout(async function(){
+    try{
+      var result=await apiRequest('GET','/locations?q='+encodeURIComponent(query));
+      if(epoch!==bookingAddressEpoch) return;
+      bookingAddressSuggestions=Array.isArray(result.suggestions)?result.suggestions:[];
+      if(bookingAddressSuggestions.length) renderBookingAddressSuggestions();
+      else renderBookingAddressSuggestions('No matching B.C. addresses found. Try adding the city or postal code.');
+    }catch(error){
+      if(epoch!==bookingAddressEpoch) return;
+      renderBookingAddressSuggestions('Address lookup is unavailable right now. Please try again.');
+    }
+  },350);
+}
+
+function chooseBookingAddress(index){
+  var suggestion=bookingAddressSuggestions[index]; if(!suggestion) return;
+  el('fSiteOther').value=suggestion.address;
+  hideBookingAddressSuggestions();
+  renderCostEstimate();
 }
 
 function openSiteForm(idx){
@@ -817,6 +874,10 @@ function openDetail(id){
   if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
   html+='<hr/>';
 
+  if(b.status==='approved'||b.status==='in-progress'){
+    html+='<a href="'+esc(outlookCalendarUrl(b))+'" target="_blank" rel="noopener noreferrer" class="btn-outline" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">'+ico('calendar',16)+'Add to Outlook Calendar</a>';
+  }
+
   var canEdit=!b._queued&&(disp||b.canEdit===true);
   if(b._queued){
     html+='<div class="queue-alert" role="status">'+(b._queueBlocked?'This booking could not sync. Discard it and submit again after correcting the issue.':'This booking is stored safely on this device and will sync when the connection returns.')+'</div>';
@@ -852,7 +913,9 @@ async function doStatus(id,status){
     var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated');
     if(updated&&!updated._queued) Object.assign(b,updated);
     else { b.status=status; b._queued=true; }
-    closeDetail(); renderAll();
+    renderAll();
+    if(status==='approved'&&!b._queued) openDetail(id);
+    else closeDetail();
   }catch(error){ if(error.status===409) await loadData(); }
 }
 
@@ -1000,7 +1063,12 @@ function startEdit(id){
   showOverlay('formOverlay');
 }
 
-function closeForm(){ hideOverlay('formOverlay'); }
+function closeForm(){
+  if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+  bookingAddressEpoch++;
+  hideBookingAddressSuggestions();
+  hideOverlay('formOverlay');
+}
 function closeDetail(){ hideOverlay('detailOverlay'); }
 
 async function submitBooking(){
@@ -1175,6 +1243,14 @@ function closeTopOverlay(){
 }
 
 document.addEventListener('keydown',function(event){
+  if(event.target.id==='fSiteOther'&&event.key==='ArrowDown'&&!el('fSiteOtherResults').classList.contains('hidden')){
+    var firstBookingAddress=el('fSiteOtherResults').querySelector('button');
+    if(firstBookingAddress){ event.preventDefault(); firstBookingAddress.focus(); }
+    return;
+  }
+  if(event.target.id==='fSiteOther'&&event.key==='Escape'&&!el('fSiteOtherResults').classList.contains('hidden')){
+    event.preventDefault(); hideBookingAddressSuggestions(); return;
+  }
   if(event.target.id==='sfAddress'&&event.key==='ArrowDown'&&!el('sfAddressResults').classList.contains('hidden')){
     var first=el('sfAddressResults').querySelector('button'); if(first){ event.preventDefault(); first.focus(); } return;
   }
@@ -1205,7 +1281,7 @@ document.addEventListener('change',function(event){
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
 });
 document.addEventListener('input',function(event){
-  if(event.target.id==='fSiteOther') renderCostEstimate();
+  if(event.target.id==='fSiteOther') onBookingAddressInput();
   else if(event.target.id==='sfAddress') onSiteAddressInput();
 });
 document.addEventListener('click',function(event){
@@ -1228,6 +1304,7 @@ document.addEventListener('click',function(event){
   else if(action==='close-site') closeSiteForm();
   else if(action==='save-site') saveSite();
   else if(action==='choose-site-address') chooseSiteAddress(Number(target.dataset.addressIndex));
+  else if(action==='choose-booking-address') chooseBookingAddress(Number(target.dataset.addressIndex));
   else if(action==='delete-site') deleteSite();
   else if(action==='save-role') saveUserRole(target.dataset.userId);
   else if(action==='create-backup') createManagerBackup();

@@ -215,8 +215,12 @@
     </select>
 
     <div id="fSiteOtherWrap" class="hidden">
-      <label class="lbl" for="fSiteOther">Site Name</label>
-      <input id="fSiteOther" class="field" placeholder="Type the job site name" type="text"/>
+      <label class="lbl" for="fSiteOther">Job Site Address</label>
+      <div class="address-picker">
+        <input id="fSiteOther" class="field" placeholder="Start typing the job site address" type="text" maxlength="240" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="fSiteOtherResults" aria-expanded="false"/>
+        <div id="fSiteOtherResults" class="address-results hidden" role="listbox" aria-label="Job site address suggestions"></div>
+      </div>
+      <div class="address-credit">Address results © OpenStreetMap contributors</div>
     </div>
 
     <div id="fPickupWrap" class="hidden">

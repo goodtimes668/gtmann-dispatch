@@ -8,7 +8,8 @@ import { FAITHWOOD_ORIGIN } from "./_shared/route";
 export default async (req: Request, context: Context) => {
   try {
     allowMethods(req, ["GET"]);
-    const user = await requireUser(["dispatcher", "manager"]);
+    // Every signed-in requester can autocomplete an unlisted job-site address.
+    const user = await requireUser();
     await enforceRateLimit(`${user.id}:${context.ip}`, "location-search", 50);
 
     const query = new URL(req.url).searchParams.get("q")?.trim() || "";

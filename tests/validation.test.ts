@@ -29,6 +29,12 @@ describe("booking validation", () => {
     expect(() => validateBookingInput({ ...validBooking, type: "pickup", site: "", pickupLocation: "" })).toThrow("Pickup location is required");
   });
 
+  it("accepts a canonical address for an unlisted job site", () => {
+    const address = "1234 Example Road, Victoria, British Columbia, V8V 1V1, Canada";
+    expect(validateBookingInput({ ...validBooking, site: address }).site).toBe(address);
+    expect(() => validateBookingInput({ ...validBooking, site: "x".repeat(241) })).toThrow("Job site is too long");
+  });
+
   it("requires a site for bundle requests", () => {
     expect(() => validateBookingInput({ ...validBooking, type: "misc", site: "", bundleRequested: true })).toThrow("job site is required");
   });

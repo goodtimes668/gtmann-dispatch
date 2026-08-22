@@ -1,4 +1,5 @@
 import type { Booking } from "./types";
+import { outlookCalendarUrl } from "./outlook";
 
 const labels = {
   delivery: "Material Delivery",
@@ -73,5 +74,20 @@ export async function notifyStatus(booking: Booking) {
     completed: `Job completed: ${type} for ${booking.site}`,
   };
   const text = messages[booking.status];
-  if (text) await slackCall("chat.postMessage", { channel, text: mrkdwn(text) });
+  if (!text) return;
+  if (booking.status === "approved") {
+    await slackCall("chat.postMessage", {
+      channel,
+      text: mrkdwn(text),
+      blocks: [
+        { type: "section", text: { type: "mrkdwn", text: `*${mrkdwn(text)}*` } },
+        { type: "actions", elements: [
+          { type: "button", text: { type: "plain_text", text: "Add to Outlook Calendar" }, url: outlookCalendarUrl(booking), action_id: "add_dispatch_to_outlook" },
+          { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
+        ] },
+      ],
+    });
+    return;
+  }
+  await slackCall("chat.postMessage", { channel, text: mrkdwn(text) });
 }

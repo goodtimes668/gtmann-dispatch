@@ -42,7 +42,8 @@ export function validateBookingInput(input: unknown) {
   const time = text(body.time, "Time", 5);
   if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new HttpError(422, "Invalid time");
 
-  const site = text(body.site, "Job site", 120);
+  // Saved site names are short, while an unlisted site can be a full canonical address.
+  const site = text(body.site, "Job site", 240);
   const pickupLocation = text(body.pickupLocation, "Pickup location", 240);
   const type = body.type as BookingType;
   if ((type === "delivery" || type === "tool-delivery") && !site) throw new HttpError(422, "Job site is required for deliveries");
