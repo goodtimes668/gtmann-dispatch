@@ -797,9 +797,6 @@ function renderMetrics(){
   recent.forEach(function(b){ if(b.site) counts[b.site]=(counts[b.site]||0)+1; });
   var top=Object.keys(counts).sort(function(a,b){ return counts[b]-counts[a]; })[0];
   el('mSite').textContent=top||'—';
-  var spend=recent.filter(function(b){ return b.status!=='declined'; })
-    .reduce(function(s,b){ return s+(typeof b.estCost==='number'?b.estCost:0); },0);
-  el('mSpend').textContent=spend>0?'$'+Math.round(spend):'—';
 }
 
 /* ---- render ---- */
@@ -1128,21 +1125,20 @@ function renderCostEstimateBox(est){
   var box=el('costEstimate'); if(!box) return;
   var flag=est.cost>=LOW_VALUE_THRESHOLD && curPri==='normal';
   var canBundle=flag&&Boolean(currentSiteName());
-  var html='<div style="display:flex;align-items:center;gap:10px">'
-    +ico('dollarsign',18,flag?'var(--amber)':'var(--dim)')
-    +'<div style="flex:1"><div class="dl" style="margin-bottom:2px">Estimated Dispatch Cost</div>'
-    +'<div class="mono" style="font-size:20px;font-weight:800;color:'+(flag?'var(--amber)':'var(--text)')+'">$'+est.cost.toFixed(0)+'</div></div>'
-    +'<div class="mono" style="text-align:right;font-size:11px;color:var(--faint)">'+Math.round(est.min)+' min<br>'+est.km.toFixed(0)+' km</div>'
-    +'</div>'
-    +'<div style="font-size:10px;color:var(--faint);margin-top:8px">Typical route estimate. The server recalculates and stores the final estimate.</div>';
-  if(flag){
-    html+='<div style="font-size:12px;color:var(--dim);line-height:1.5;padding-top:10px;margin-top:10px;border-top:1px solid var(--border-soft)">'
-      +'Labor $'+est.labor.toFixed(0)+' + mileage $'+est.mileage.toFixed(0)+'. If this can wait, bundling it into Brent\'s next run to this site skips the dedicated trip.'
-      +'</div>';
-    if(canBundle) html+='<button type="button" data-action="bundle" class="btn-outline" style="width:100%;margin-top:10px;padding:11px;font-size:13px">Queue for Next Run Instead</button>';
+  if(!canBundle){
+    box.innerHTML='';
+    box.classList.add('hidden');
+    return;
   }
+  box.classList.remove('hidden');
+  var html='<div style="display:flex;align-items:flex-start;gap:10px">'
+    +ico('package',18,'var(--amber)')
+    +'<div><div class="dl" style="margin-bottom:4px;color:var(--amber)">Bundling Recommended</div>'
+    +'<div style="font-size:12px;color:var(--dim);line-height:1.5">This request may not be cost-effective as a dedicated trip. If timing allows, bundle it with Brent\'s next run to this site.</div></div>'
+    +'</div>'
+    +'<button type="button" data-action="bundle" class="btn-outline" style="width:100%;margin-top:10px;padding:11px;font-size:13px">Bundle with Next Run</button>';
   box.innerHTML=html;
-  box.style.borderColor=flag?'rgba(245,158,11,0.4)':'var(--border-soft)';
+  box.style.borderColor='rgba(245,158,11,0.4)';
 }
 
 function renderCostEstimate(){

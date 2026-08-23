@@ -18,14 +18,17 @@ async function assertPhotoOwner(photoId: string | null, userId: string) {
   if (!metadata || metadata.uploadedBy !== userId) throw new HttpError(422, "Photo was not uploaded by this account");
 }
 
-function publicBooking(booking: Booking, user: { id: string; roles: string[] }) {
+export function publicBooking(booking: Booking, user: { id: string; roles: string[] }) {
+  const manager = user.roles.includes("manager");
   const full = user.roles.includes("dispatcher") || user.roles.includes("manager");
   const photo = booking.photoId ? `/api/photos/${encodeURIComponent(booking.photoId)}` : null;
   const completionPhoto = booking.completionPhotoId ? `/api/photos/${encodeURIComponent(booking.completionPhotoId)}` : null;
   const owner = booking.requesterId === user.id;
   const canEdit = full || (owner && booking.status === "pending");
-  if (full) return { ...booking, photo, completionPhoto, canEdit, isMine: owner };
-  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estCost: _estCost, estMinutes: _estMinutes, estKm: _estKm, ...safe } = booking;
+  const { estCost: _estCost, actualCost: _actualCost, ...financiallySafe } = booking;
+  const visibleBooking = manager ? booking : financiallySafe;
+  if (full) return { ...visibleBooking, photo, completionPhoto, canEdit, isMine: owner };
+  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estMinutes: _estMinutes, estKm: _estKm, ...safe } = visibleBooking;
   if (owner) return { ...safe, photo, completionPhoto, canEdit, isMine: true };
   const { notes: _notes, photoId: _photoId, completionPhotoId: _completionPhotoId, ...teamSafe } = safe;
   return { ...teamSafe, photo: null, completionPhoto: null, canEdit, isMine: false };
