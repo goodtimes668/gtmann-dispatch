@@ -43,7 +43,7 @@ export type Booking = {
   supplier: string;
   poNumber: string;
   siteContact: string;
-  loadSize: "small" | "medium" | "large" | "oversize";
+  loadSize: "small" | "medium" | "large" | "flat-deck-truck" | "bin-truck" | "oversize";
   readyConfirmed: boolean;
   brentNotes: string;
   assignedTo: string;

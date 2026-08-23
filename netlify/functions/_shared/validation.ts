@@ -68,7 +68,7 @@ export function validateBookingInput(input: unknown) {
     supplier: text(body.supplier, "Supplier", 160),
     poNumber: text(body.poNumber, "PO or cost code", 100),
     siteContact: text(body.siteContact, "Site contact", 200),
-    loadSize: (["small", "medium", "large", "oversize"].includes(String(body.loadSize)) ? body.loadSize : "small") as "small" | "medium" | "large" | "oversize",
+    loadSize: (["small", "medium", "large", "flat-deck-truck", "bin-truck", "oversize"].includes(String(body.loadSize)) ? body.loadSize : "small") as "small" | "medium" | "large" | "flat-deck-truck" | "bin-truck" | "oversize",
     readyConfirmed: body.readyConfirmed === true,
     photoId,
     bundleRequested: body.bundleRequested === true,

@@ -89,6 +89,17 @@ function esc(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+function loadSizeLabel(value){
+  return ({
+    small:'Small — car/van',
+    medium:'Medium — pickup',
+    large:'Large — cube van/truck',
+    'flat-deck-truck':'Flat Deck Truck',
+    'bin-truck':'Bin Truck',
+    oversize:'Oversize / special handling'
+  })[value]||value;
+}
+
 /* ---- icons ---- */
 var ICONS = {
   truck:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
@@ -947,7 +958,7 @@ function openDetail(id){
       +(b.supplier?'<div><div class="dl">Supplier</div><div class="dv">'+esc(b.supplier)+'</div></div>':'')
       +(b.poNumber?'<div><div class="dl">PO / Cost Code</div><div class="dv">'+esc(b.poNumber)+'</div></div>':'')
       +(b.siteContact?'<div><div class="dl">Site Contact</div><div class="dv">'+esc(b.siteContact)+'</div></div>':'')
-      +(b.loadSize?'<div><div class="dl">Load</div><div class="dv">'+esc(b.loadSize)+(b.readyConfirmed?' · Ready confirmed':'')+'</div></div>':'')+'</div>';
+      +(b.loadSize?'<div><div class="dl">Load</div><div class="dv">'+esc(loadSizeLabel(b.loadSize))+(b.readyConfirmed?' · Ready confirmed':'')+'</div></div>':'')+'</div>';
   }
   if(b.assignedTo) html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px"><div><div class="dl">Assigned To</div><div class="dv">'+esc(b.assignedTo)+'</div></div><div><div class="dl">Vehicle / Duration</div><div class="dv">'+esc(b.vehicle||'Not set')+' · '+esc(b.durationMinutes||b.estMinutes||60)+' min</div></div></div>';
   if(conflictedBookingIds.has(b.id)) html+='<div class="conflict-alert"><strong>Schedule conflict:</strong> this dispatcher has another overlapping approved job.</div>';

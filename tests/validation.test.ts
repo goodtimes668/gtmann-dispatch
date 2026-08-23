@@ -40,6 +40,8 @@ describe("booking validation", () => {
   it("normalizes structured request and dispatch planning fields", () => {
     expect(validateBookingInput({ ...validBooking, supplier: " Slegg ", poNumber: " PO-44 ", loadSize: "large", readyConfirmed: true }))
       .toMatchObject({ supplier: "Slegg", poNumber: "PO-44", loadSize: "large", readyConfirmed: true });
+    expect(validateBookingInput({ ...validBooking, loadSize: "flat-deck-truck" })).toMatchObject({ loadSize: "flat-deck-truck" });
+    expect(validateBookingInput({ ...validBooking, loadSize: "bin-truck" })).toMatchObject({ loadSize: "bin-truck" });
     expect(validateDispatchPlan({ assignedTo: " Brent ", vehicle: "Van", durationMinutes: 90 }))
       .toEqual({ assignedTo: "Brent", vehicle: "Van", durationMinutes: 90 });
   });
