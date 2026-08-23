@@ -15,7 +15,14 @@ function mrkdwn(value: unknown) {
     .slice(0, 2500);
 }
 
-async function slackCall(method: string, body: Record<string, unknown>) {
+type SlackResult = {
+  ok?: boolean;
+  error?: string;
+  channel?: { id?: string };
+  user?: { id?: string };
+};
+
+async function slackCall(method: string, body: Record<string, unknown>): Promise<SlackResult | null> {
   const token = Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN");
   if (!token) return null;
   const response = await fetch(`https://slack.com/api/${method}`, {
@@ -23,7 +30,7 @@ async function slackCall(method: string, body: Record<string, unknown>) {
     headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  const result = await response.json() as { ok?: boolean; error?: string; channel?: { id?: string } };
+  const result = await response.json() as SlackResult;
   if (!result.ok) console.error(`Slack ${method} failed`, result.error);
   return result;
 }
@@ -74,4 +81,43 @@ export async function notifyStatus(booking: Booking) {
   };
   const text = messages[booking.status];
   if (text) await slackCall("chat.postMessage", { channel, text: mrkdwn(text) });
+}
+
+export function requesterArrivalText(booking: Pick<Booking, "type" | "site">) {
+  const type = labels[booking.type] || booking.type;
+  return `Your ${type.toLowerCase()} to ${booking.site || "the job site"} is approximately 10 minutes away.`;
+}
+
+export async function notifyRequesterTenMinutesAway(booking: Booking) {
+  if (!Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN")) {
+    return { ok: false, message: "Slack notifications are not configured" };
+  }
+  if (!booking.requesterEmail) {
+    return { ok: false, message: "This requester does not have an email address" };
+  }
+
+  const lookup = await slackCall("users.lookupByEmail", { email: booking.requesterEmail });
+  if (!lookup?.ok || !lookup.user?.id) {
+    return { ok: false, message: "Requester could not be found in Slack. Their app email must match their Slack email." };
+  }
+  const opened = await slackCall("conversations.open", { users: lookup.user.id });
+  if (!opened?.ok || !opened.channel?.id) {
+    return { ok: false, message: "Slack could not open a direct message with the requester" };
+  }
+
+  const text = requesterArrivalText(booking);
+  const sent = await slackCall("chat.postMessage", {
+    channel: opened.channel.id,
+    client_msg_id: booking.id,
+    text,
+    blocks: [
+      { type: "header", text: { type: "plain_text", text: "Delivery Nearly There" } },
+      { type: "section", text: { type: "mrkdwn", text: mrkdwn(text) } },
+      { type: "actions", elements: [
+        { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_arrival" },
+      ] },
+    ],
+  });
+  if (!sent?.ok) return { ok: false, message: "Slack could not send the arrival notification" };
+  return { ok: true, message: "Requester notified in Slack" };
 }

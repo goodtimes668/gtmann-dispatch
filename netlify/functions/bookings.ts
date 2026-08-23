@@ -6,7 +6,7 @@ import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
 import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
-import { notifyNewBooking, notifyStatus } from "./_shared/slack";
+import { notifyNewBooking, notifyRequesterTenMinutesAway, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
 import { idempotencyKey, isBookingId, validateBookingInput, validateCompletion, validateDispatchPlan, validateStatus, validateVersion } from "./_shared/validation";
 import { canTransition } from "./_shared/workflow";
@@ -28,7 +28,7 @@ export function publicBooking(booking: Booking, user: { id: string; roles: strin
   const { estCost: _estCost, actualCost: _actualCost, ...financiallySafe } = booking;
   const visibleBooking = manager ? booking : financiallySafe;
   if (full) return { ...visibleBooking, photo, completionPhoto, canEdit, isMine: owner };
-  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estMinutes: _estMinutes, estKm: _estKm, ...safe } = visibleBooking;
+  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estMinutes: _estMinutes, estKm: _estKm, arrivalNoticeSentBy: _arrivalNoticeSentBy, ...safe } = visibleBooking;
   if (owner) return { ...safe, photo, completionPhoto, canEdit, isMine: true };
   const { notes: _notes, photoId: _photoId, completionPhotoId: _completionPhotoId, ...teamSafe } = safe;
   return { ...teamSafe, photo: null, completionPhoto: null, canEdit, isMine: false };
@@ -114,7 +114,22 @@ async function updateBooking(req: Request, context: Context, id: string) {
     }
 
     let updated: Booking;
-    if (body.status !== undefined) {
+    const arrivalNotice = body.arrivalNotice === true;
+    if (arrivalNotice) {
+      if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
+      if (!["delivery", "tool-delivery"].includes(current.type)) throw new HttpError(409, "Arrival alerts apply only to deliveries");
+      if (current.status !== "in-progress") throw new HttpError(409, "Start the delivery before sending an arrival alert");
+      if (current.arrivalNoticeSentAt) throw new HttpError(409, "The requester has already received the 10-minute arrival alert");
+      const notification = await notifyRequesterTenMinutesAway(current);
+      if (!notification.ok) throw new HttpError(502, notification.message);
+      updated = {
+        ...current,
+        arrivalNoticeSentAt: new Date().toISOString(),
+        arrivalNoticeSentBy: user.id,
+        version: current.version + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    } else if (body.status !== undefined) {
       if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
       const status = validateStatus(body.status);
       if (!canTransition(current.status, status)) throw new HttpError(409, `Cannot change ${current.status} to ${status}`);
@@ -165,7 +180,7 @@ async function updateBooking(req: Request, context: Context, id: string) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
-    context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
+    context.waitUntil(recordAudit(user, arrivalNotice ? "booking.arrival_notice_sent" : body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
       fromStatus: current.status,
       toStatus: updated.status,
       version: updated.version,

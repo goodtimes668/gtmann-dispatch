@@ -76,6 +76,8 @@ Optional Slack notifications use:
 
 Slack messages deliberately contain only an **Open Dispatch** link. Approval and status changes happen inside the authenticated app.
 
+The Slack app needs `chat:write`, `im:write`, `users:read`, and `users:read.email` bot-token scopes. While a material or tool delivery is in progress, a dispatcher can send the requester a direct **10 minutes away** message. The requester is resolved by the email on their booking, so their GT Mann Dispatch and Slack email addresses must match.
+
 ## Operational safeguards
 
 - IDs, requester identity, status defaults, timestamps, and cost estimates are owned by the server.

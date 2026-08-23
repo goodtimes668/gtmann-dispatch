@@ -120,6 +120,7 @@ var ICONS = {
   checkcircle:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
   inbox:'<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  bell:'<path d="M10.27 21a2 2 0 0 0 3.46 0"/><path d="M3.26 15.33A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.67C19.41 13.84 18 12.1 18 8A6 6 0 0 0 6 8c0 4.1-1.41 5.84-2.74 7.33"/>',
   edit:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
   lock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   unlock:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
@@ -983,6 +984,11 @@ function openDetail(id){
     } else if(b.status==='approved'){
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="in-progress" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-outline">Cancel</button></div>';
     } else if(b.status==='in-progress'){
+      if((b.type==='delivery'||b.type==='tool-delivery')&&!b.arrivalNoticeSentAt){
+        html+='<button data-action="arrival-notice" data-booking-id="'+esc(b.id)+'" class="btn-primary" style="width:100%;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('bell',16)+'Notify Requester — 10 Min Away</button>';
+      } else if(b.arrivalNoticeSentAt){
+        html+='<div class="queue-alert" role="status">Requester notified in Slack at '+esc(new Date(b.arrivalNoticeSentAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}))+'.</div>';
+      }
       html+='<div class="g2" style="margin-bottom:10px"><div><label class="lbl" for="cActualMinutes" style="margin-top:0">Actual Minutes</label><input id="cActualMinutes" class="field" type="number" min="0" max="1440" value="'+esc(b.actualMinutes||b.estMinutes||0)+'"/></div><div><label class="lbl" for="cActualKm" style="margin-top:0">Actual Km</label><input id="cActualKm" class="field" type="number" min="0" max="2000" step="0.1" value="'+esc(b.actualKm||b.estKm||0)+'"/></div></div>';
       html+='<label class="lbl" for="cReceivedBy">Received By</label><input id="cReceivedBy" class="field" maxlength="160" placeholder="Name or crew"/>';
       html+='<label class="lbl" for="cCompletionNotes">Completion Notes</label><textarea id="cCompletionNotes" class="field" maxlength="2000" placeholder="Delivered, unavailable, returned items, follow-up required..."></textarea>';
@@ -1027,6 +1033,15 @@ async function doStatus(id,status){
     if(updated&&!updated._queued) Object.assign(b,updated);
     else { b.status=status; b._queued=true; }
     closeDetail(); clearCompletionPhoto(); renderAll();
+  }catch(error){ if(error.status===409) await loadData(); }
+}
+
+async function sendArrivalNotice(id){
+  var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+  try{
+    var updated=await apiCall('PUT','/bookings/'+id,{arrivalNotice:true,version:b.version},'Requester notified in Slack',{queue:false});
+    if(updated&&!updated._queued) Object.assign(b,updated);
+    closeDetail(); renderAll();
   }catch(error){ if(error.status===409) await loadData(); }
 }
 
@@ -1489,6 +1504,7 @@ document.addEventListener('click',function(event){
   else if(action==='close-detail') closeDetail();
   else if(action==='discard-queued') discardQueued(target.dataset.bookingId);
   else if(action==='set-status') doStatus(target.dataset.bookingId,target.dataset.status);
+  else if(action==='arrival-notice') sendArrivalNotice(target.dataset.bookingId);
   else if(action==='edit-booking') startEdit(target.dataset.bookingId);
   else if(action==='duplicate-booking') duplicateBooking(target.dataset.bookingId);
   else if(action==='delete-booking') doDelete(target.dataset.bookingId);

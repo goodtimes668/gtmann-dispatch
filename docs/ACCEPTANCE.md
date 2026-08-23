@@ -16,6 +16,7 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 - [ ] Member creates and edits their own pending request.
 - [ ] Duplicate offline submission is prevented by idempotency.
 - [ ] Dispatcher approves, starts, and completes the request.
+- [ ] During an in-progress delivery, the dispatcher sends the requester a Slack DM using **Notify Requester — 10 Min Away**; a second alert is prevented.
 - [ ] Dispatcher assigns a person, vehicle, and duration; overlapping approved jobs show a conflict warning.
 - [ ] Completion captures actual minutes, kilometres, receiving contact, notes, and actual cost.
 - [ ] Search and filters return the expected bookings by site, status, type, date, requester, supplier and PO/cost code.

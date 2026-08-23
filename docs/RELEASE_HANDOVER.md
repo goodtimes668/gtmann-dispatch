@@ -27,6 +27,8 @@
 - Optional `BRENT_SLACK_ID`
 - Optional `SLACK_MANAGER_CHANNEL_ID`
 
+The Slack bot requires `chat:write`, `im:write`, `users:read`, and `users:read.email` scopes so dispatchers can send requesters direct 10-minute arrival notices using the booking email address.
+
 ## Acceptance evidence
 
 - Automated tests: _record count and date_

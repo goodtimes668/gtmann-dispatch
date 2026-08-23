@@ -66,6 +66,8 @@ export type Booking = {
   actualCost?: number;
   completionNotes?: string;
   receivedBy?: string;
+  arrivalNoticeSentAt?: string;
+  arrivalNoticeSentBy?: string;
 };
 
 export type AuditEvent = {
