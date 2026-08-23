@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HttpError } from "../netlify/functions/_shared/http";
-import { isISODate, validateBookingInput, validateSiteInput } from "../netlify/functions/_shared/validation";
+import { isISODate, validateBookingInput, validateCompletion, validateDispatchPlan, validateSiteInput } from "../netlify/functions/_shared/validation";
 
 const validBooking = {
   type: "delivery",
@@ -35,6 +35,18 @@ describe("booking validation", () => {
 
   it("rejects forged photo identifiers", () => {
     expect(() => validateBookingInput({ ...validBooking, photoId: "../../another-record" })).toThrow("Invalid photo ID");
+  });
+
+  it("normalizes structured request and dispatch planning fields", () => {
+    expect(validateBookingInput({ ...validBooking, supplier: " Slegg ", poNumber: " PO-44 ", loadSize: "large", readyConfirmed: true }))
+      .toMatchObject({ supplier: "Slegg", poNumber: "PO-44", loadSize: "large", readyConfirmed: true });
+    expect(validateDispatchPlan({ assignedTo: " Brent ", vehicle: "Van", durationMinutes: 90 }))
+      .toEqual({ assignedTo: "Brent", vehicle: "Van", durationMinutes: 90 });
+  });
+
+  it("validates actual completion measurements", () => {
+    expect(validateCompletion({ actualMinutes: 52, actualKm: 18.44, completionNotes: "Delivered", receivedBy: "Sam" }, { actualMinutes: 60, actualKm: 20 }))
+      .toEqual({ actualMinutes: 52, actualKm: 18.4, completionNotes: "Delivered", receivedBy: "Sam", completionPhotoId: null });
   });
 });
 

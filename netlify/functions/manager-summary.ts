@@ -14,13 +14,18 @@ export default async (req: Request, _context: Context) => {
       throw new HttpError(422, "Invalid date range");
     }
     const bookings = (await listBookings()).filter((booking) => (!from || booking.date >= from) && (!to || booking.date <= to));
-    const sites: Record<string, { count: number; cost: number; declined: number }> = {};
+    const sites: Record<string, { count: number; cost: number; actualCost: number; actualMinutes: number; actualKm: number; declined: number }> = {};
     for (const booking of bookings) {
       const key = booking.site || "(No Site)";
-      sites[key] ||= { count: 0, cost: 0, declined: 0 };
+      sites[key] ||= { count: 0, cost: 0, actualCost: 0, actualMinutes: 0, actualKm: 0, declined: 0 };
       sites[key].count += 1;
       if (booking.status === "declined") sites[key].declined += 1;
-      else sites[key].cost += booking.estCost;
+      else {
+        sites[key].cost += booking.estCost;
+        sites[key].actualCost += booking.actualCost || 0;
+        sites[key].actualMinutes += booking.actualMinutes || 0;
+        sites[key].actualKm += booking.actualKm || 0;
+      }
     }
     const bySite = Object.entries(sites)
       .map(([name, value]) => ({ name, ...value, cost: Math.round(value.cost * 100) / 100 }))
@@ -28,6 +33,9 @@ export default async (req: Request, _context: Context) => {
     return json({
       bookings: bookings.length,
       cost: Math.round(bySite.reduce((sum, site) => sum + site.cost, 0) * 100) / 100,
+      actualCost: Math.round(bySite.reduce((sum, site) => sum + site.actualCost, 0) * 100) / 100,
+      actualMinutes: bySite.reduce((sum, site) => sum + site.actualMinutes, 0),
+      actualKm: Math.round(bySite.reduce((sum, site) => sum + site.actualKm, 0) * 10) / 10,
       declined: bySite.reduce((sum, site) => sum + site.declined, 0),
       bySite,
     });

@@ -32,6 +32,11 @@ function number(value: unknown, name: string, min: number, max: number) {
   return value;
 }
 
+function optionalNumber(value: unknown, name: string, min: number, max: number, fallback: number) {
+  if (value === undefined || value === null || value === "") return fallback;
+  return number(value, name, min, max);
+}
+
 export function validateBookingInput(input: unknown) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "Invalid booking");
   const body = input as Record<string, unknown>;
@@ -60,8 +65,33 @@ export function validateBookingInput(input: unknown) {
     date,
     time,
     notes: text(body.notes, "Notes", 2000),
+    supplier: text(body.supplier, "Supplier", 160),
+    poNumber: text(body.poNumber, "PO or cost code", 100),
+    siteContact: text(body.siteContact, "Site contact", 200),
+    loadSize: (["small", "medium", "large", "oversize"].includes(String(body.loadSize)) ? body.loadSize : "small") as "small" | "medium" | "large" | "oversize",
+    readyConfirmed: body.readyConfirmed === true,
     photoId,
     bundleRequested: body.bundleRequested === true,
+  };
+}
+
+export function validateDispatchPlan(input: Record<string, unknown>, defaults: { assignedTo?: string; vehicle?: string; durationMinutes?: number } = {}) {
+  return {
+    assignedTo: text(input.assignedTo ?? defaults.assignedTo ?? "Brent Van Dusen", "Assigned dispatcher", 120, true),
+    vehicle: text(input.vehicle ?? defaults.vehicle ?? "", "Vehicle", 120),
+    durationMinutes: Math.round(optionalNumber(input.durationMinutes, "Scheduled duration", 15, 600, defaults.durationMinutes || 60)),
+  };
+}
+
+export function validateCompletion(input: Record<string, unknown>, defaults: { actualMinutes: number; actualKm: number }) {
+  const completionPhotoId = input.completionPhotoId == null || input.completionPhotoId === "" ? null : text(input.completionPhotoId, "Completion photo", 100, true);
+  if (completionPhotoId && !isUuid(completionPhotoId)) throw new HttpError(422, "Invalid completion photo ID");
+  return {
+    actualMinutes: Math.round(optionalNumber(input.actualMinutes, "Actual minutes", 0, 1440, defaults.actualMinutes)),
+    actualKm: Math.round(optionalNumber(input.actualKm, "Actual kilometres", 0, 2000, defaults.actualKm) * 10) / 10,
+    completionNotes: text(input.completionNotes, "Completion notes", 2000),
+    receivedBy: text(input.receivedBy, "Received by", 160),
+    completionPhotoId,
   };
 }
 

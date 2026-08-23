@@ -2,6 +2,16 @@
 
 Authenticated internal dispatch scheduling for material deliveries, tool pickups, tool deliveries, and miscellaneous field tasks.
 
+## v3.2 workflow controls
+
+- New self-service accounts remain `pending` and cannot see company data until a manager approves them.
+- Booking search and filters cover requester, site, status, type, supplier, PO/cost code, and date.
+- Dispatchers assign a person, vehicle, and scheduled duration while approving a request.
+- Overlapping approved jobs for the same dispatcher are visibly flagged.
+- Completed jobs capture actual minutes, kilometres, receiving contact, completion notes, photo proof, and actual cost.
+- Approved work can be added to Outlook Calendar; ad-hoc B.C. job-site addresses autocomplete while typing.
+- The installable PWA shell can reopen in weak-service conditions while the existing IndexedDB outbox safely queues writes.
+
 ## Address and route estimates
 
 Job-site addresses autocomplete from OpenStreetMap data and save the selected canonical address and coordinates. All site distance and drive-time calculations start at Faithwood Farms, 4368 Lochside Drive, Saanich (`48.4952, -123.3698`) and are stored as round trips.
@@ -23,6 +33,7 @@ The old browser PINs and the unauthenticated Railway dispatch API are not used b
 
 | Role | Access |
 |---|---|
+| `pending` | Account exists but no company schedules or dispatch details are accessible |
 | `member` | Create bookings; edit their own pending bookings; see team schedule |
 | `dispatcher` | Approve, decline, start, complete, edit, and delete bookings; manage job sites |
 | `manager` | All dispatcher permissions plus cost summaries and user-role administration |

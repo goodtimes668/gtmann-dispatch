@@ -5,7 +5,8 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 ## Account access
 
 - [ ] Public signup is visible and registration is open.
-- [ ] A new account receives a confirmation email and signs in as `member`.
+- [ ] A new account receives a confirmation email and signs in as `pending` with no access to company data.
+- [ ] A manager approves the pending account as `member`; access takes effect after sign-out/sign-in.
 - [ ] Password recovery completes successfully.
 - [ ] A manager changes a member to dispatcher; the role takes effect after sign-out/sign-in.
 - [ ] A member cannot access dispatcher or manager mutations.
@@ -15,6 +16,9 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 - [ ] Member creates and edits their own pending request.
 - [ ] Duplicate offline submission is prevented by idempotency.
 - [ ] Dispatcher approves, starts, and completes the request.
+- [ ] Dispatcher assigns a person, vehicle, and duration; overlapping approved jobs show a conflict warning.
+- [ ] Completion captures actual minutes, kilometres, receiving contact, notes, and actual cost.
+- [ ] Search and filters return the expected bookings by site, status, type, date, requester, supplier and PO/cost code.
 - [ ] Conflicting edits return 409 and refresh safely.
 - [ ] Dispatcher deletes a test request and its photo.
 
@@ -39,6 +43,7 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 ## Quality
 
 - [ ] iPhone/mobile layout works without horizontal scrolling.
+- [ ] The app installs to the home screen and reopens its cached shell without reception.
 - [ ] Keyboard-only navigation can operate forms and dialogs.
 - [ ] Health endpoint returns HTTP 200.
 - [ ] No unexpected browser-console or function-log errors remain.

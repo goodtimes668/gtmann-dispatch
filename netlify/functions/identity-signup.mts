@@ -10,8 +10,8 @@ const handler: Handler = async (event) => {
     body: JSON.stringify({
       app_metadata: {
         ...(user?.app_metadata || {}),
-        // Public signup can create requester accounts only. Elevated access is assigned by a manager later.
-        roles: isBootstrapManager ? ["manager"] : ["member"],
+        // Public signup creates an inert account. A manager must approve it before any company data is visible.
+        roles: isBootstrapManager ? ["manager"] : ["pending"],
       },
     }),
   };

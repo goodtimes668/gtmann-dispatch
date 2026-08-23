@@ -1,4 +1,4 @@
-export type DispatchRole = "member" | "dispatcher" | "manager";
+export type DispatchRole = "pending" | "member" | "dispatcher" | "manager";
 
 export type AuthUser = {
   id: string;
@@ -40,8 +40,17 @@ export type Booking = {
   date: string;
   time: string;
   notes: string;
+  supplier: string;
+  poNumber: string;
+  siteContact: string;
+  loadSize: "small" | "medium" | "large" | "oversize";
+  readyConfirmed: boolean;
   brentNotes: string;
+  assignedTo: string;
+  vehicle: string;
+  durationMinutes: number;
   photoId: string | null;
+  completionPhotoId?: string | null;
   estCost: number;
   estMinutes: number;
   estKm: number;
@@ -52,6 +61,11 @@ export type Booking = {
   updatedAt: string;
   approvedAt?: string;
   completedAt?: string;
+  actualMinutes?: number;
+  actualKm?: number;
+  actualCost?: number;
+  completionNotes?: string;
+  receivedBy?: string;
 };
 
 export type AuditEvent = {
@@ -68,7 +82,7 @@ export type AuditEvent = {
 };
 
 export type BackupSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   id: string;
   createdAt: string;
   createdBy: "scheduled" | "manager";

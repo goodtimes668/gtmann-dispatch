@@ -16,7 +16,7 @@ export async function createBackup(createdBy: BackupSnapshot["createdBy"]) {
     listPhotoIds(),
   ]);
   const snapshot: BackupSnapshot = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id,
     createdAt: new Date().toISOString(),
     createdBy,
@@ -40,7 +40,7 @@ export async function createBackup(createdBy: BackupSnapshot["createdBy"]) {
 
 export async function restoreBackup(id: string) {
   const snapshot = await getBackupSnapshot(id);
-  if (!snapshot || snapshot.schemaVersion !== 1) throw new Error("Backup not found or unsupported");
+  if (!snapshot || ![1, 2].includes(snapshot.schemaVersion)) throw new Error("Backup not found or unsupported");
 
   await inBatches(snapshot.bookings, async (booking) => {
     await bookingsStore().setJSON(`booking/${booking.id}`, booking);

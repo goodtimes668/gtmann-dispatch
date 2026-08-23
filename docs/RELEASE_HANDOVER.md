@@ -3,7 +3,7 @@
 ## Product
 
 - Product: GT Mann Dispatch
-- Release: `v3.1.0`
+- Release: `v3.2.0`
 - Production URL: `https://gtmann-dispatch.netlify.app/`
 - Source repository: `https://github.com/goodtimes668/gtmann-dispatch`
 - Accepted production branch: `main`

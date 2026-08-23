@@ -27,6 +27,12 @@ describe("server authorization", () => {
     await expect(requireUser(["dispatcher", "manager"])).rejects.toMatchObject({ status: 403 });
   });
 
+  it("blocks pending accounts from company data but allows the account-status endpoint", async () => {
+    getUser.mockResolvedValue({ id: "pending-1", email: "pending@example.com", roles: ["pending"] });
+    await expect(requireUser()).rejects.toMatchObject({ status: 403 });
+    await expect(requireUser([], { allowPending: true })).resolves.toMatchObject({ roles: ["pending"] });
+  });
+
   it("gives managers dispatcher capability", async () => {
     getUser.mockResolvedValue({ id: "manager-1", email: "manager@example.com", roles: ["manager"] });
     await expect(requireUser(["dispatcher"])).resolves.toMatchObject({ roles: ["manager", "dispatcher"] });

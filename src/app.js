@@ -13,6 +13,7 @@ import {
 } from '@netlify/identity';
 import { dispatchBreakdown } from '../netlify/functions/_shared/cost';
 import { validateSignup } from './auth';
+import { findDispatchConflicts } from './dispatch-planning';
 
 var API = '/api';
 var currentUser = null;
@@ -29,6 +30,9 @@ var siteAddressTimer = null;
 var siteAddressEpoch = 0;
 var selectedSiteAddress = '';
 var siteRoutePending = false;
+var bookingAddressSuggestions = [];
+var bookingAddressTimer = null;
+var bookingAddressEpoch = 0;
 
 var bookings = [];
 var curType = 'delivery';
@@ -36,10 +40,13 @@ var curPri = 'normal';
 var curPhoto = null;
 var curPhotoFile = null;
 var curPhotoPreviewUrl = null;
+var completionPhotoFile = null;
+var completionPhotoPreviewUrl = null;
 var bundleRequested = false;
 var editId = null;
 var calDate = new Date(); // month currently shown on the Calendar tab
 var overlayFocusStack = [];
+var conflictedBookingIds = new Set();
 
 function uid(){ return crypto.randomUUID(); }
 function toISODate(d){
@@ -48,6 +55,33 @@ function toISODate(d){
 }
 function today(){ return toISODate(new Date()); }
 function el(id){ return document.getElementById(id); }
+
+function outlookCalendarUrl(booking){
+  var hasTime=Boolean(booking.time);
+  var start, end;
+  if(hasTime){
+    var startDate=new Date(booking.date+'T'+booking.time+':00');
+    var minutes=Number(booking.estMinutes)||60;
+    start=startDate.toISOString();
+    end=new Date(startDate.getTime()+minutes*60000).toISOString();
+  } else {
+    var day=new Date(booking.date+'T12:00:00');
+    start=booking.date;
+    day.setDate(day.getDate()+1);
+    end=toISODate(day);
+  }
+  var labels={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
+  var url=new URL('https://outlook.office.com/calendar/0/deeplink/compose');
+  url.searchParams.set('path','/calendar/action/compose');
+  url.searchParams.set('rru','addevent');
+  url.searchParams.set('subject','Dispatch – '+(labels[booking.type]||booking.type)+' – '+(booking.site||'Site TBD'));
+  url.searchParams.set('startdt',start);
+  url.searchParams.set('enddt',end);
+  url.searchParams.set('allday',String(!hasTime));
+  url.searchParams.set('location',booking.site||booking.pickupLocation||'');
+  url.searchParams.set('body',(booking.description||'')+(booking.notes?'\n\nNotes: '+booking.notes:''));
+  return url.toString();
+}
 
 function esc(s){
   return String(s==null?'':s)
@@ -243,7 +277,9 @@ function endSession(){
   currentUser=null; bookings=[]; sites=[]; sitesSynced=false;
   if(curPhotoPreviewUrl) URL.revokeObjectURL(curPhotoPreviewUrl);
   curPhotoPreviewUrl=null; curPhotoFile=null; curPhoto=null; editId=null;
+  clearCompletionPhoto();
   el('appShell').classList.add('hidden');
+  el('approvalGate').classList.add('hidden');
   el('authGate').classList.remove('hidden');
 }
 
@@ -306,10 +342,11 @@ async function apiCall(method,path,body,okMsg,options){
   options=options||{};
   var actionId=options.idempotencyKey||uid();
   var queuedPhoto=options.photoFile||null;
+  var photoField=options.photoField||'photoId';
   try{
     if(options.photoFile){
       var uploaded=await uploadPhoto(options.photoFile,actionId+':photo');
-      body.photoId=uploaded.id;
+      body[photoField]=uploaded.id;
       queuedPhoto=null;
     }
     var headers=method!=='GET'?{'Idempotency-Key':actionId}:{};
@@ -323,7 +360,7 @@ async function apiCall(method,path,body,okMsg,options){
         await Promise.all(prior.map(function(item){ return outboxDelete(item.id); }));
       }
       try{
-        await outboxPut({id:actionId,userId:currentUser.id,method:method,path:path,body:body,photoFile:queuedPhoto,createdAt:Date.now(),state:'pending'});
+        await outboxPut({id:actionId,userId:currentUser.id,method:method,path:path,body:body,photoFile:queuedPhoto,photoField:photoField,createdAt:Date.now(),state:'pending'});
       }catch(storageError){
         toast('Could not save this change offline. Reconnect and try again.','err');
         throw new ApiError(507,'Offline storage is unavailable');
@@ -344,7 +381,7 @@ async function flushQueue(){
   for(var i=0;i<queue.length;i++){
     var item=queue[i];
     try{
-      if(item.photoFile){ var uploaded=await uploadPhoto(item.photoFile,item.id+':photo'); item.body.photoId=uploaded.id; }
+      if(item.photoFile){ var uploaded=await uploadPhoto(item.photoFile,item.id+':photo'); item.body[item.photoField||'photoId']=uploaded.id; }
       await apiRequest(item.method,item.path,item.body,{headers:{'Idempotency-Key':item.id}});
       await outboxDelete(item.id); synced++;
     }catch(error){
@@ -400,6 +437,12 @@ function renderSiteOptions(){
   sel.innerHTML=html;
   var stillExists=Array.prototype.some.call(sel.options,function(o){ return o.value===current; });
   sel.value=stillExists?current:'';
+  var filter=el('bookingSiteFilter');
+  if(filter){
+    var filterCurrent=filter.value;
+    filter.innerHTML='<option value="">All sites</option>'+sites.slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).map(function(s){ return '<option value="'+esc(s.name)+'">'+esc(s.name)+'</option>'; }).join('');
+    filter.value=Array.prototype.some.call(filter.options,function(o){ return o.value===filterCurrent; })?filterCurrent:'';
+  }
 }
 
 function siteRowHTML(s,idx){
@@ -430,6 +473,7 @@ function currentSiteName(){
 }
 function onSiteChange(){
   el('fSiteOtherWrap').className=el('fSite').value==='__other__'?'':'hidden';
+  if(el('fSite').value!=='__other__') hideBookingAddressSuggestions();
   renderCostEstimate();
 }
 function setSiteField(name){
@@ -443,6 +487,51 @@ function setSiteField(name){
     if(el('fSiteOther')) el('fSiteOther').value='';
     el('fSiteOtherWrap').className='hidden';
   }
+  bookingAddressSuggestions=[];
+  hideBookingAddressSuggestions();
+}
+
+function hideBookingAddressSuggestions(){
+  var list=el('fSiteOtherResults');
+  if(!list) return;
+  list.classList.add('hidden');
+  el('fSiteOther').setAttribute('aria-expanded','false');
+}
+function renderBookingAddressSuggestions(message){
+  var list=el('fSiteOtherResults');
+  list.innerHTML=message
+    ? '<div class="address-message">'+esc(message)+'</div>'
+    : bookingAddressSuggestions.map(function(suggestion,index){
+      return '<button type="button" class="address-option" role="option" data-action="choose-booking-address" data-address-index="'+index+'">'+esc(suggestion.label)+'</button>';
+    }).join('');
+  list.classList.remove('hidden');
+  el('fSiteOther').setAttribute('aria-expanded','true');
+}
+function onBookingAddressInput(){
+  var query=el('fSiteOther').value.trim();
+  renderCostEstimate();
+  if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+  var epoch=++bookingAddressEpoch;
+  if(query.length<3){ bookingAddressSuggestions=[]; hideBookingAddressSuggestions(); return; }
+  renderBookingAddressSuggestions('Searching addresses…');
+  bookingAddressTimer=setTimeout(async function(){
+    try{
+      var result=await apiRequest('GET','/locations?q='+encodeURIComponent(query));
+      if(epoch!==bookingAddressEpoch) return;
+      bookingAddressSuggestions=Array.isArray(result.suggestions)?result.suggestions:[];
+      if(bookingAddressSuggestions.length) renderBookingAddressSuggestions();
+      else renderBookingAddressSuggestions('No matching B.C. addresses found. Try adding the city or postal code.');
+    }catch(error){
+      if(epoch!==bookingAddressEpoch) return;
+      renderBookingAddressSuggestions('Address lookup is unavailable right now. Please try again.');
+    }
+  },350);
+}
+function chooseBookingAddress(index){
+  var suggestion=bookingAddressSuggestions[index]; if(!suggestion) return;
+  el('fSiteOther').value=suggestion.address;
+  hideBookingAddressSuggestions();
+  renderCostEstimate();
 }
 
 function openSiteForm(idx){
@@ -597,6 +686,12 @@ function fmtT(t){
   catch(e){ return t; }
 }
 function isToday(d){ return d===today(); }
+function isOverdue(booking){
+  if(booking.status==='completed'||booking.status==='declined') return false;
+  var stamp=booking.date+'T'+(booking.time||'23:59')+':00';
+  var due=Date.parse(stamp);
+  return !isNaN(due)&&due<Date.now();
+}
 function isThisWeek(d){
   var n=new Date(), s=new Date(n);
   s.setDate(n.getDate()-n.getDay());
@@ -609,9 +704,26 @@ function isThisWeek(d){
 async function loadData(){
   try{
     var data=await apiRequest('GET','/bookings');
+    notifyRequesterUpdates(Array.isArray(data)?data:[]);
     bookings=Array.isArray(data)?data:[];
   }catch(error){ toast('Bookings could not be refreshed','warn'); }
   await mergeQueued(); renderAll();
+}
+function notifyRequesterUpdates(remote){
+  if(!currentUser) return;
+  var key='gtmann-booking-statuses:'+currentUser.id;
+  var previous={};
+  try{ previous=JSON.parse(localStorage.getItem(key)||'{}')||{}; }catch(error){ previous={}; }
+  var next={};
+  var labels={approved:'approved',declined:'declined','in-progress':'started',completed:'completed'};
+  remote.forEach(function(booking){
+    if(!booking.isMine) return;
+    next[booking.id]=booking.status;
+    if(previous[booking.id]&&previous[booking.id]!==booking.status&&labels[booking.status]){
+      toast((booking.site||'Your dispatch request')+' was '+labels[booking.status],booking.status==='declined'?'warn':'ok');
+    }
+  });
+  try{ localStorage.setItem(key,JSON.stringify(next)); }catch(error){}
 }
 async function mergeQueued(){
   var queue=await getUserQueue();
@@ -681,6 +793,7 @@ function renderMetrics(){
 
 /* ---- render ---- */
 function renderAll(){
+  conflictedBookingIds=findDispatchConflicts(bookings);
   var now=new Date();
   el('todayTxt').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   var pend=bookings.filter(function(b){ return b.status==='pending'; });
@@ -696,7 +809,23 @@ function renderAll(){
   el('brentCnt').textContent=pend.length>0?pend.length+' job'+(pend.length>1?'s':'')+' need approval':'All clear';
   var up=bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
   el('homeList').innerHTML=up.length?up.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('inbox','No upcoming bookings');
-  var all=bookings.slice().sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+  var query=el('bookingSearch')?el('bookingSearch').value.trim().toLowerCase():'';
+  var statusFilter=el('bookingStatusFilter')?el('bookingStatusFilter').value:'';
+  var typeFilter=el('bookingTypeFilter')?el('bookingTypeFilter').value:'';
+  var siteFilter=el('bookingSiteFilter')?el('bookingSiteFilter').value:'';
+  var dateFilter=el('bookingDateFilter')?el('bookingDateFilter').value:'';
+  var all=bookings.filter(function(b){
+    if(statusFilter&&b.status!==statusFilter) return false;
+    if(typeFilter&&b.type!==typeFilter) return false;
+    if(siteFilter&&b.site!==siteFilter) return false;
+    if(dateFilter&&b.date!==dateFilter) return false;
+    if(query){
+      var haystack=[b.requester,b.requesterEmail,b.site,b.pickupLocation,b.description,b.notes,b.supplier,b.poNumber,b.assignedTo,b.vehicle].join(' ').toLowerCase();
+      if(haystack.indexOf(query)===-1) return false;
+    }
+    return true;
+  }).sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+  if(el('bookingResultCount')) el('bookingResultCount').textContent=all.length+' of '+bookings.length+' bookings';
   el('allList').innerHTML=all.length?all.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('inbox','No bookings yet');
   var bTod=bookings.filter(function(b){ return isToday(b.date)&&(b.status==='approved'||b.status==='in-progress'); })
     .sort(function(a,b){ return (a.time||'99:99').localeCompare(b.time||'99:99'); });
@@ -723,6 +852,8 @@ function cardHTML(b,runsheet){
     : fmtD(b.date)+(b.time?' · '+fmtT(b.time):'');
   var extras='';
   if(b.photo||b.photoId) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
+  if(conflictedBookingIds.has(b.id)) extras+=' <span class="badge b-declined" style="margin-left:5px">Conflict</span>';
+  if(isOverdue(b)) extras+=' <span class="badge b-pending" style="margin-left:5px">Overdue</span>';
   var loc='';
   if(runsheet&&(b.pickupLocation||b.site)){
     loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
@@ -730,7 +861,7 @@ function cardHTML(b,runsheet){
   return '<div class="bcard'+(runsheet?' runsheet':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" style="--bc:'+bc+'" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
     +'<div class="row"><div style="flex:1;padding-right:8px">'
     +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+extras+'</div>'
-    +'<div class="sub">'+esc(b.requester||'')+(b.site&&!runsheet?' · '+esc(b.site):'')+'</div>'+loc+'</div>'
+    +'<div class="sub">'+esc(b.requester||'')+(b.site&&!runsheet?' · '+esc(b.site):'')+(b.assignedTo?' · '+esc(b.assignedTo):'')+'</div>'+loc+'</div>'
     +badge+'</div>'
     +'<div class="desc">'+esc(desc)+'</div>'
     +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div>';
@@ -811,11 +942,25 @@ function openDetail(id){
     +'<div><div class="dl">Date</div><div class="dv" style="color:var(--yellow)">'+fmtD(b.date)+'</div></div>'
     +'<div><div class="dl">Time</div><div class="dv">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div>';
   if(b.pickupLocation) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Pickup Location</div><div class="dbox">'+esc(b.pickupLocation)+'</div></div>';
+  if(b.supplier||b.poNumber||b.siteContact||b.loadSize){
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
+      +(b.supplier?'<div><div class="dl">Supplier</div><div class="dv">'+esc(b.supplier)+'</div></div>':'')
+      +(b.poNumber?'<div><div class="dl">PO / Cost Code</div><div class="dv">'+esc(b.poNumber)+'</div></div>':'')
+      +(b.siteContact?'<div><div class="dl">Site Contact</div><div class="dv">'+esc(b.siteContact)+'</div></div>':'')
+      +(b.loadSize?'<div><div class="dl">Load</div><div class="dv">'+esc(b.loadSize)+(b.readyConfirmed?' · Ready confirmed':'')+'</div></div>':'')+'</div>';
+  }
+  if(b.assignedTo) html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px"><div><div class="dl">Assigned To</div><div class="dv">'+esc(b.assignedTo)+'</div></div><div><div class="dl">Vehicle / Duration</div><div class="dv">'+esc(b.vehicle||'Not set')+' · '+esc(b.durationMinutes||b.estMinutes||60)+' min</div></div></div>';
+  if(conflictedBookingIds.has(b.id)) html+='<div class="conflict-alert"><strong>Schedule conflict:</strong> this dispatcher has another overlapping approved job.</div>';
   html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Description</div><div class="dbox">'+esc(b.description||'')+'</div></div>';
   if(b.photo) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Photo</div><img class="dphoto" src="'+esc(b.photo)+'" alt="Booking photo"/></div>';
+  if(b.completionPhoto) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Completion Photo</div><img class="dphoto" src="'+esc(b.completionPhoto)+'" alt="Completion proof"/></div>';
   if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
   if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
   html+='<hr/>';
+
+  if(b.status==='approved'||b.status==='in-progress'){
+    html+='<a href="'+esc(outlookCalendarUrl(b))+'" target="_blank" rel="noopener noreferrer" class="btn-outline" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none">'+ico('calendar',16)+'Add to Outlook Calendar</a>';
+  }
 
   var canEdit=!b._queued&&(disp||b.canEdit===true);
   if(b._queued){
@@ -824,10 +969,16 @@ function openDetail(id){
   } else if(disp){
     if(b.status==='pending'){
       html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
+      html+='<div class="g2" style="margin-bottom:10px"><div><label class="lbl" for="dAssignedTo" style="margin-top:0">Assign To</label><input id="dAssignedTo" class="field" value="'+esc(b.assignedTo||'Brent Van Dusen')+'"/></div><div><label class="lbl" for="dVehicle" style="margin-top:0">Vehicle</label><input id="dVehicle" class="field" value="'+esc(b.vehicle||'')+'" placeholder="Pickup / van"/></div></div>';
+      html+='<label class="lbl" for="dDuration" style="margin-top:0">Scheduled Minutes</label><input id="dDuration" class="field" type="number" min="15" max="600" value="'+esc(b.durationMinutes||b.estMinutes||60)+'" style="margin-bottom:12px"/>';
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="approved" class="btn-green">'+ico('check',16)+'Approve</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-red">'+ico('x',16)+'Decline</button></div>';
     } else if(b.status==='approved'){
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="in-progress" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-outline">Cancel</button></div>';
     } else if(b.status==='in-progress'){
+      html+='<div class="g2" style="margin-bottom:10px"><div><label class="lbl" for="cActualMinutes" style="margin-top:0">Actual Minutes</label><input id="cActualMinutes" class="field" type="number" min="0" max="1440" value="'+esc(b.actualMinutes||b.estMinutes||0)+'"/></div><div><label class="lbl" for="cActualKm" style="margin-top:0">Actual Km</label><input id="cActualKm" class="field" type="number" min="0" max="2000" step="0.1" value="'+esc(b.actualKm||b.estKm||0)+'"/></div></div>';
+      html+='<label class="lbl" for="cReceivedBy">Received By</label><input id="cReceivedBy" class="field" maxlength="160" placeholder="Name or crew"/>';
+      html+='<label class="lbl" for="cCompletionNotes">Completion Notes</label><textarea id="cCompletionNotes" class="field" maxlength="2000" placeholder="Delivered, unavailable, returned items, follow-up required..."></textarea>';
+      html+='<input type="file" id="cCompletionPhoto" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none"/><button data-action="choose-completion-photo" class="btn-outline photobtn" style="width:100%;margin:12px 0" id="completionPhotoBtn">'+ico('camera',16)+'Attach Completion Photo</button><div id="completionPhotoPrev"></div>';
       html+='<button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="completed" class="btn-green" style="width:100%">'+ico('checkcircle',16)+'Mark Complete</button>';
     }
   } else if(b.status==='pending'){
@@ -836,10 +987,14 @@ function openDetail(id){
   if(canEdit){
     html+='<button data-action="edit-booking" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('edit',15)+'Edit Booking</button>';
   }
+  if(!b._queued){
+    html+='<button data-action="duplicate-booking" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('plus',15)+'Duplicate as New Request</button>';
+  }
   if(disp){
     html+='<button data-action="delete-booking" data-booking-id="'+esc(b.id)+'" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('trash',15)+'Delete Booking</button>';
   }
   el('detailContent').innerHTML=html;
+  if(b.status==='in-progress') renderCompletionPhotoPrev();
   showOverlay('detailOverlay');
 }
 
@@ -847,12 +1002,23 @@ async function doStatus(id,status){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   var n=el('dNotes'); var notes=n?n.value:'';
   var payload={status:status,brentNotes:notes,version:b.version};
+  if(status==='approved'){
+    payload.assignedTo=el('dAssignedTo')?el('dAssignedTo').value.trim():'Brent Van Dusen';
+    payload.vehicle=el('dVehicle')?el('dVehicle').value.trim():'';
+    payload.durationMinutes=el('dDuration')?Number(el('dDuration').value):(b.estMinutes||60);
+  }
+  if(status==='completed'){
+    payload.actualMinutes=el('cActualMinutes')?Number(el('cActualMinutes').value):(b.estMinutes||0);
+    payload.actualKm=el('cActualKm')?Number(el('cActualKm').value):(b.estKm||0);
+    payload.receivedBy=el('cReceivedBy')?el('cReceivedBy').value.trim():'';
+    payload.completionNotes=el('cCompletionNotes')?el('cCompletionNotes').value.trim():'';
+  }
   var msgs={approved:'Approved',declined:'Declined','in-progress':'Job started',completed:'Marked complete'};
   try{
-    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated');
+    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated',status==='completed'?{photoFile:completionPhotoFile,photoField:'completionPhotoId'}:undefined);
     if(updated&&!updated._queued) Object.assign(b,updated);
     else { b.status=status; b._queued=true; }
-    closeDetail(); renderAll();
+    closeDetail(); clearCompletionPhoto(); renderAll();
   }catch(error){ if(error.status===409) await loadData(); }
 }
 
@@ -904,6 +1070,39 @@ function renderPhotoPrev(){
 function removePhoto(){
   if(curPhotoPreviewUrl) URL.revokeObjectURL(curPhotoPreviewUrl);
   curPhotoPreviewUrl=null; curPhotoFile=null; curPhoto=null; renderPhotoPrev();
+}
+
+function handleCompletionPhoto(input){
+  var file=input.files&&input.files[0]; if(!file) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)){ toast('Use a JPEG, PNG, or WebP photo','err'); input.value=''; return; }
+  var reader=new FileReader();
+  reader.onload=function(event){
+    var image=new Image();
+    image.onload=function(){
+      var max=1600, width=image.width, height=image.height;
+      if(width>max||height>max){ var scale=Math.min(max/width,max/height); width=Math.round(width*scale); height=Math.round(height*scale); }
+      var canvas=document.createElement('canvas'); canvas.width=width; canvas.height=height;
+      canvas.getContext('2d').drawImage(image,0,0,width,height);
+      canvas.toBlob(function(blob){
+        if(!blob||blob.size>5*1024*1024){ toast('Photo is larger than 5MB after compression','err'); return; }
+        clearCompletionPhoto();
+        completionPhotoFile=new File([blob],'completion-'+Date.now()+'.jpg',{type:'image/jpeg'});
+        completionPhotoPreviewUrl=URL.createObjectURL(completionPhotoFile);
+        renderCompletionPhotoPrev();
+      },'image/jpeg',0.82);
+    };
+    image.src=event.target.result;
+  };
+  reader.readAsDataURL(file); input.value='';
+}
+function renderCompletionPhotoPrev(){
+  var preview=el('completionPhotoPrev'); if(!preview) return;
+  preview.innerHTML=completionPhotoPreviewUrl?'<div class="photoprev"><img src="'+completionPhotoPreviewUrl+'" alt="Completion photo preview"/><button data-action="remove-completion-photo" aria-label="Remove completion photo">'+ico('x',14)+'</button></div>':'';
+  if(el('completionPhotoBtn')) el('completionPhotoBtn').classList.toggle('hidden',Boolean(completionPhotoPreviewUrl));
+}
+function clearCompletionPhoto(){
+  if(completionPhotoPreviewUrl) URL.revokeObjectURL(completionPhotoPreviewUrl);
+  completionPhotoPreviewUrl=null; completionPhotoFile=null; renderCompletionPhotoPrev();
 }
 
 /* ---- cost estimate ---- */
@@ -975,6 +1174,7 @@ function openForm(type){
   el('fWho').value=currentUser?currentUser.name:''; el('fWho').readOnly=true; el('fDesc').value=''; el('fNotes').value='';
   if(el('fPickup')) el('fPickup').value='';
   if(el('fTime')) el('fTime').value='';
+  el('fSupplier').value=''; el('fPoNumber').value=''; el('fSiteContact').value=''; el('fLoadSize').value='small'; el('fReadyConfirmed').checked=false;
   el('fDate').min=today(); el('fDate').value=today(); setSiteField('');
   el('fSubmit').textContent='Submit Booking Request';
   setType(curType); setPri('normal'); renderPhotoPrev(); renderCostEstimate();
@@ -994,14 +1194,33 @@ function startEdit(id){
   el('fDate').min=''; el('fDate').value=b.date||today();
   el('fTime').value=b.time||'';
   el('fNotes').value=b.notes||'';
+  el('fSupplier').value=b.supplier||''; el('fPoNumber').value=b.poNumber||''; el('fSiteContact').value=b.siteContact||''; el('fLoadSize').value=b.loadSize||'small'; el('fReadyConfirmed').checked=b.readyConfirmed===true;
   if(el('fPickup')) el('fPickup').value=b.pickupLocation||'';
   el('fSubmit').textContent='Save Changes';
   setType(curType); setPri(curPri); renderPhotoPrev(); renderCostEstimate();
   showOverlay('formOverlay');
 }
 
+function duplicateBooking(id){
+  var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+  closeDetail(); openForm(b.type||'delivery');
+  el('fTitle').textContent='Duplicate Booking';
+  setSiteField(b.site||'');
+  el('fDesc').value=b.description||'';
+  el('fDate').value=b.date>=today()?b.date:today();
+  el('fTime').value=b.time||'';
+  el('fNotes').value=b.notes||'';
+  el('fPickup').value=b.pickupLocation||'';
+  el('fSupplier').value=b.supplier||'';
+  el('fPoNumber').value=b.poNumber||'';
+  el('fSiteContact').value=b.siteContact||'';
+  el('fLoadSize').value=b.loadSize||'small';
+  el('fReadyConfirmed').checked=false;
+  setPri(b.priority||'normal'); renderCostEstimate();
+}
+
 function closeForm(){ hideOverlay('formOverlay'); }
-function closeDetail(){ hideOverlay('detailOverlay'); }
+function closeDetail(){ hideOverlay('detailOverlay'); clearCompletionPhoto(); }
 
 async function submitBooking(){
   var desc=el('fDesc').value.trim();
@@ -1016,7 +1235,7 @@ async function submitBooking(){
   var editing=!!editId;
   btn.textContent=editing?'Saving...':'Submitting...'; btn.disabled=true;
 
-  var fields={type:curType,site:siteName,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested};
+  var fields={type:curType,site:siteName,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested,supplier:el('fSupplier').value,poNumber:el('fPoNumber').value,siteContact:el('fSiteContact').value,loadSize:el('fLoadSize').value,readyConfirmed:el('fReadyConfirmed').checked};
 
   try{
     if(editing){
@@ -1081,6 +1300,12 @@ async function renderManagerSummary(){
     +'<div style="flex:1"><div class="dl">Est. Cost</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--amber)">$'+Math.round(summary.cost)+'</div></div>'
     +'<div style="flex:1"><div class="dl">Declined</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--faint)">'+summary.declined+'</div></div>'
     +'</div>';
+  if(summary.actualMinutes||summary.actualKm||summary.actualCost){
+    el('mgrTotalCard').innerHTML+='<div class="card" style="display:flex;justify-content:space-between;gap:10px;text-align:center">'
+      +'<div style="flex:1"><div class="dl">Actual Cost</div><div class="mono" style="font-size:20px;font-weight:800;color:var(--green)">$'+Math.round(summary.actualCost||0)+'</div></div>'
+      +'<div style="flex:1"><div class="dl">Actual Time</div><div class="mono" style="font-size:20px;font-weight:800">'+Math.round(summary.actualMinutes||0)+'m</div></div>'
+      +'<div style="flex:1"><div class="dl">Actual Km</div><div class="mono" style="font-size:20px;font-weight:800">'+Math.round(summary.actualKm||0)+'</div></div></div>';
+  }
   el('mgrSiteList').innerHTML=summary.bySite.length ? summary.bySite.map(function(r){
     return '<div class="bcard" style="--bc:var(--amber);cursor:default">'
       +'<div class="row"><div><div class="ttl" style="font-size:15px">'+esc(r.name)+'</div>'
@@ -1096,7 +1321,7 @@ async function loadUsers(){
     var users=await apiRequest('GET','/admin/users');
     list.innerHTML=users.length?users.map(function(user){
       var own=user.id===currentUser.id;
-      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="row" style="margin-bottom:0"><div style="min-width:0"><div class="ttl" style="font-size:14px">'+esc(user.name)+'</div><div class="sub" style="overflow-wrap:anywhere">'+esc(user.email)+'</div></div>'
+      return '<div class="bcard" style="--bc:'+(user.role==='pending'?'var(--amber)':'var(--violet)')+';cursor:default"><div class="row" style="margin-bottom:0"><div style="min-width:0"><div class="ttl" style="font-size:14px">'+esc(user.name)+(user.role==='pending'?' <span class="badge b-pending">Needs approval</span>':'')+'</div><div class="sub" style="overflow-wrap:anywhere">'+esc(user.email)+'</div></div>'
         +'<div style="display:flex;align-items:center;gap:6px"><label class="sr-only" for="role-'+esc(user.id)+'">Role for '+esc(user.name)+'</label><select id="role-'+esc(user.id)+'" class="field user-role" data-user-role="'+esc(user.id)+'" '+(own?'disabled':'')+'>'
         +['member','dispatcher','manager'].map(function(role){ return '<option value="'+role+'" '+(user.role===role?'selected':'')+'>'+role.charAt(0).toUpperCase()+role.slice(1)+'</option>'; }).join('')
         +'</select>'+(own?'':'<button type="button" class="iconbtn" data-action="save-role" data-user-id="'+esc(user.id)+'" aria-label="Save role">'+ico('check',15)+'</button>')+'</div></div></div>';
@@ -1157,6 +1382,13 @@ async function startAuthenticated(){
   currentUser=await apiRequest('GET','/me');
   authCallback=null;
   el('authGate').classList.add('hidden');
+  if(currentUser.roles&&currentUser.roles.indexOf('pending')!==-1){
+    el('approvalGate').classList.remove('hidden');
+    el('appShell').classList.add('hidden');
+    setAuthMessage('');
+    return;
+  }
+  el('approvalGate').classList.add('hidden');
   el('appShell').classList.remove('hidden');
   setAuthMessage('');
   renderLock();
@@ -1175,6 +1407,12 @@ function closeTopOverlay(){
 }
 
 document.addEventListener('keydown',function(event){
+  if(event.target.id==='fSiteOther'&&event.key==='ArrowDown'&&!el('fSiteOtherResults').classList.contains('hidden')){
+    var addressFirst=el('fSiteOtherResults').querySelector('button'); if(addressFirst){ event.preventDefault(); addressFirst.focus(); } return;
+  }
+  if(event.target.id==='fSiteOther'&&event.key==='Escape'&&!el('fSiteOtherResults').classList.contains('hidden')){
+    event.preventDefault(); hideBookingAddressSuggestions(); return;
+  }
   if(event.target.id==='sfAddress'&&event.key==='ArrowDown'&&!el('sfAddressResults').classList.contains('hidden')){
     var first=el('sfAddressResults').querySelector('button'); if(first){ event.preventDefault(); first.focus(); } return;
   }
@@ -1202,11 +1440,14 @@ el('authForm').addEventListener('submit',submitAuth);
 document.addEventListener('change',function(event){
   if(event.target.id==='fSite') onSiteChange();
   else if(event.target.id==='fPhoto') handlePhoto(event.target);
+  else if(event.target.id==='cCompletionPhoto') handleCompletionPhoto(event.target);
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
+  else if(event.target.id==='bookingStatusFilter'||event.target.id==='bookingTypeFilter'||event.target.id==='bookingSiteFilter'||event.target.id==='bookingDateFilter') renderAll();
 });
 document.addEventListener('input',function(event){
-  if(event.target.id==='fSiteOther') renderCostEstimate();
+  if(event.target.id==='fSiteOther') onBookingAddressInput();
   else if(event.target.id==='sfAddress') onSiteAddressInput();
+  else if(event.target.id==='bookingSearch') renderAll();
 });
 document.addEventListener('click',function(event){
   var target=event.target.closest('[data-action]'); if(!target) return;
@@ -1228,6 +1469,7 @@ document.addEventListener('click',function(event){
   else if(action==='close-site') closeSiteForm();
   else if(action==='save-site') saveSite();
   else if(action==='choose-site-address') chooseSiteAddress(Number(target.dataset.addressIndex));
+  else if(action==='choose-booking-address') chooseBookingAddress(Number(target.dataset.addressIndex));
   else if(action==='delete-site') deleteSite();
   else if(action==='save-role') saveUserRole(target.dataset.userId);
   else if(action==='create-backup') createManagerBackup();
@@ -1241,8 +1483,11 @@ document.addEventListener('click',function(event){
   else if(action==='discard-queued') discardQueued(target.dataset.bookingId);
   else if(action==='set-status') doStatus(target.dataset.bookingId,target.dataset.status);
   else if(action==='edit-booking') startEdit(target.dataset.bookingId);
+  else if(action==='duplicate-booking') duplicateBooking(target.dataset.bookingId);
   else if(action==='delete-booking') doDelete(target.dataset.bookingId);
   else if(action==='remove-photo') removePhoto();
+  else if(action==='choose-completion-photo') el('cCompletionPhoto').click();
+  else if(action==='remove-completion-photo') clearCompletionPhoto();
   else if(action==='bundle') bundleInstead();
 });
 
@@ -1261,6 +1506,9 @@ async function init(){
   hydrateIcons(document);
   el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   loadSignupAvailability();
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js').catch(function(){ /* Online operation remains available. */ });
+  }
   try{
     authCallback=await handleAuthCallback();
     if(authCallback&&authCallback.type==='invite'){

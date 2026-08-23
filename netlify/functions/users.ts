@@ -7,12 +7,14 @@ import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
 import { idempotencyKey } from "./_shared/validation";
 
-const roles = new Set(["member", "dispatcher", "manager"]);
+const assignableRoles = new Set(["member", "dispatcher", "manager"]);
+const knownRoles = new Set(["pending", ...assignableRoles]);
 
 function safeUser(user: { id: string; email?: string; name?: string; roles?: string[]; role?: string }) {
   const role = user.roles?.includes("manager") ? "manager"
     : user.roles?.includes("dispatcher") ? "dispatcher"
-      : roles.has(user.role || "") ? user.role : "member";
+      : user.roles?.includes("pending") ? "pending"
+        : knownRoles.has(user.role || "") ? user.role : "member";
   return { id: user.id, email: user.email || "", name: user.name || user.email || "Team member", role };
 }
 
@@ -31,7 +33,7 @@ export default async (req: Request, context: Context) => {
     const key = idempotencyKey(req);
     const result = await once(`user-role/${caller.id}/${id}`, key, async () => {
       const body = await readJson(req) as Record<string, unknown>;
-      if (typeof body.role !== "string" || !roles.has(body.role)) throw new HttpError(422, "Invalid role");
+      if (typeof body.role !== "string" || !assignableRoles.has(body.role)) throw new HttpError(422, "Invalid role");
       if (id === caller.id && body.role !== "manager") throw new HttpError(409, "You cannot remove your own manager access");
       const updated = await admin.updateUser(id, { role: body.role });
       context.waitUntil(recordAudit(caller, "user.role_changed", "user", id, context, { role: body.role }));

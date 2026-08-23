@@ -4,7 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
 <meta name="theme-color" content="#0d0d0f"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>GT Mann Dispatch</title>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<link rel="icon" href="/icon.svg" type="image/svg+xml"/>
+<link rel="apple-touch-icon" href="/icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet"/>
@@ -37,6 +42,18 @@
       </div>
     </form>
     <div id="authMessage" class="authmessage" role="status"></div>
+  </div>
+</div>
+
+<div id="approvalGate" class="authgate hidden" aria-live="polite">
+  <div class="authcard">
+    <div class="logo authlogo" aria-hidden="true"></div>
+    <div class="apptitle" style="font-size:16px">ACCOUNT RECEIVED</div>
+    <p class="authcopy">A GT Mann manager must approve your account before company schedules or dispatch details are shown.</p>
+    <div class="card" style="text-align:left;margin:16px 0">
+      <div style="font-size:13px;color:var(--dim);line-height:1.55">You can safely close this page. Sign in again after your manager confirms access.</div>
+    </div>
+    <button data-action="sign-out" class="btn-outline" type="button" style="width:100%">Sign Out</button>
   </div>
 </div>
 
@@ -87,6 +104,17 @@
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
     <h1 style="margin:0">All Bookings</h1>
     <button data-action="open-form" data-type="delivery" class="btn-primary" style="padding:10px 16px;font-size:13px">+ New</button>
+  </div>
+  <div class="card booking-filters">
+    <label class="sr-only" for="bookingSearch">Search bookings</label>
+    <input id="bookingSearch" class="field" type="search" placeholder="Search requester, site, supplier, PO or description"/>
+    <div class="g2" style="margin-top:10px">
+      <div><label class="sr-only" for="bookingStatusFilter">Filter by status</label><select id="bookingStatusFilter" class="field"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="in-progress">In progress</option><option value="completed">Completed</option><option value="declined">Declined</option></select></div>
+      <div><label class="sr-only" for="bookingTypeFilter">Filter by type</label><select id="bookingTypeFilter" class="field"><option value="">All types</option><option value="delivery">Material delivery</option><option value="pickup">Tool pickup</option><option value="tool-delivery">Tool delivery</option><option value="misc">Misc task</option></select></div>
+      <div><label class="sr-only" for="bookingSiteFilter">Filter by site</label><select id="bookingSiteFilter" class="field"><option value="">All sites</option></select></div>
+      <div><label class="sr-only" for="bookingDateFilter">Filter by date</label><input id="bookingDateFilter" class="field" type="date"/></div>
+    </div>
+    <div id="bookingResultCount" class="filter-count" aria-live="polite"></div>
   </div>
   <div id="allList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
 </div>
@@ -215,14 +243,28 @@
     </select>
 
     <div id="fSiteOtherWrap" class="hidden">
-      <label class="lbl" for="fSiteOther">Site Name</label>
-      <input id="fSiteOther" class="field" placeholder="Type the job site name" type="text"/>
+      <label class="lbl" for="fSiteOther">Job Site Address</label>
+      <div class="address-picker">
+        <input id="fSiteOther" class="field" placeholder="Start typing the job site address" type="text" maxlength="240" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="fSiteOtherResults" aria-expanded="false"/>
+        <div id="fSiteOtherResults" class="address-results hidden" role="listbox" aria-label="Job site address suggestions"></div>
+      </div>
+      <div class="address-credit">Address results © OpenStreetMap contributors</div>
     </div>
 
     <div id="fPickupWrap" class="hidden">
       <label class="lbl" for="fPickup">Pickup Location</label>
       <input id="fPickup" class="field" placeholder="Where to pick up from" type="text"/>
     </div>
+
+    <div class="g2">
+      <div><label class="lbl" for="fSupplier">Supplier / Vendor</label><input id="fSupplier" class="field" type="text" maxlength="160" placeholder="e.g. Slegg Lumber"/></div>
+      <div><label class="lbl" for="fPoNumber">PO / Cost Code</label><input id="fPoNumber" class="field" type="text" maxlength="100" placeholder="Optional"/></div>
+    </div>
+    <label class="lbl" for="fSiteContact">Site Contact</label>
+    <input id="fSiteContact" class="field" type="text" maxlength="200" placeholder="Name and phone number"/>
+    <label class="lbl" for="fLoadSize">Load Size</label>
+    <select id="fLoadSize" class="field"><option value="small">Small — car/van</option><option value="medium">Medium — pickup</option><option value="large">Large — cube van/truck</option><option value="oversize">Oversize / special handling</option></select>
+    <label class="ready-check"><input id="fReadyConfirmed" type="checkbox"/> <span>Supplier has confirmed the order is ready</span></label>
 
     <label class="lbl" for="fDesc">Description *</label>
     <textarea id="fDesc" class="field" maxlength="3000" required placeholder="What needs to be picked up or delivered? Include quantities, materials, tools..."></textarea>

@@ -59,7 +59,7 @@ Restore overwrites matching records from the snapshot and does not silently dele
 3. Complete every item in `docs/ACCEPTANCE.md` with member, dispatcher, and manager accounts.
 4. Create and download a backup.
 5. Merge the reviewed release into `main`.
-6. Tag the accepted commit as `v3.1.0`.
+6. Tag the accepted commit as `v3.2.0`.
 7. Verify production assets and `GET /api/health` after deployment.
 8. Record the exact commit and deploy ID in `docs/RELEASE_HANDOVER.md`.
 
