@@ -1,6 +1,7 @@
 import type { Config, Context } from "@netlify/functions";
 import { requireUser, canDispatch, requireSameOrigin } from "./_shared/auth";
 import { recordAudit } from "./_shared/audit";
+import { notifyApprovalCalendar } from "./_shared/calendar-email";
 import { estimateDispatch } from "./_shared/cost";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
@@ -139,6 +140,12 @@ async function updateBooking(req: Request, context: Context, id: string) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
+    if (body.status !== undefined && updated.status === "approved") {
+      context.waitUntil(notifyApprovalCalendar(updated).catch((error) => {
+        console.error("Approval calendar email failed", error);
+        return false;
+      }));
+    }
     context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
       fromStatus: current.status,
       toStatus: updated.status,
