@@ -1,7 +1,7 @@
 import type { Config, Context } from "@netlify/functions";
 import { requireUser, canDispatch, requireSameOrigin } from "./_shared/auth";
 import { recordAudit } from "./_shared/audit";
-import { notifyApprovalCalendar } from "./_shared/calendar-email";
+import { buildApprovalCalendar } from "./_shared/calendar-email";
 import { estimateDispatch } from "./_shared/cost";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
@@ -140,12 +140,6 @@ async function updateBooking(req: Request, context: Context, id: string) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
-    if (body.status !== undefined && updated.status === "approved") {
-      context.waitUntil(notifyApprovalCalendar(updated).catch((error) => {
-        console.error("Approval calendar email failed", error);
-        return false;
-      }));
-    }
     context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
       fromStatus: current.status,
       toStatus: updated.status,
@@ -178,6 +172,24 @@ export default async (req: Request, context: Context) => {
     const id = context.params.id;
     if (req.method === "GET") {
       const user = await requireUser();
+      if (id) {
+        if (!isBookingId(id)) throw new HttpError(400, "Valid booking ID required");
+        if (!canDispatch(user)) throw new HttpError(403, "Dispatcher access required");
+        const booking = await getBooking(id);
+        if (!booking) throw new HttpError(404, "Booking not found");
+        if (!["approved", "in-progress", "completed"].includes(booking.status)) {
+          throw new HttpError(409, "Calendar file is available after approval");
+        }
+        return new Response(buildApprovalCalendar(booking), {
+          status: 200,
+          headers: {
+            "Content-Type": "text/calendar; charset=utf-8",
+            "Content-Disposition": `attachment; filename="gtmann-dispatch-${booking.date}.ics"`,
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+          },
+        });
+      }
       const bookings = await listBookings();
       bookings.sort((a, b) => `${b.createdAt}`.localeCompare(`${a.createdAt}`));
       return json(bookings.map((booking) => publicBooking(booking, user)));
@@ -193,5 +205,5 @@ export default async (req: Request, context: Context) => {
 };
 
 export const config: Config = {
-  path: ["/api/bookings", "/api/bookings/:id"],
+  path: ["/api/bookings", "/api/bookings/:id", "/api/bookings/:id/calendar"],
 };
