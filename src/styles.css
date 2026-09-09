@@ -145,8 +145,11 @@ h2{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:v
 hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 
 :focus-visible{outline:3px solid rgba(245,197,24,.75);outline-offset:2px}
-.authgate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,rgba(245,197,24,.08),transparent 42%),var(--bg)}
-.authcard{width:min(100%,420px);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
+.authgate{position:relative;isolation:isolate;overflow:hidden;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,rgba(245,197,24,.08),transparent 42%),var(--bg)}
+.authgate::before,.authgate::after{content:"";position:absolute;z-index:0;top:50%;left:50%;width:min(900px,150vw);aspect-ratio:198.213/29.234;background:url('./assets/gt-mann-logo.svg') center/contain no-repeat;pointer-events:none}
+.authgate::before{opacity:.58;transform:translate(calc(-50% + 2px),calc(-50% + 2px))}
+.authgate::after{opacity:.035;filter:invert(1);transform:translate(calc(-50% - 1px),calc(-50% - 1px))}
+.authcard{position:relative;z-index:1;width:min(100%,420px);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.45)}
 .authlogo{margin-bottom:18px;width:48px;height:48px;border-radius:13px}
 .authcopy{font-size:13px;color:var(--dim);line-height:1.5;margin:8px 0 20px}
 .authactions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px 14px;margin-top:10px}
