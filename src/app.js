@@ -799,6 +799,17 @@ function openDay(iso){
 function closeDay(){ hideOverlay('dayOverlay'); }
 
 /* ---- detail ---- */
+function downloadCalendar(id){
+  var b=bookings.find(function(x){ return x.id===id; });
+  if(!b||b._queued) return toast('Calendar file is available after the booking syncs.','warn');
+  var link=document.createElement('a');
+  link.href=API+'/bookings/'+encodeURIComponent(id)+'/calendar';
+  link.download='gtmann-dispatch-'+b.date+'.ics';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
 function openDetail(id){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
@@ -816,6 +827,10 @@ function openDetail(id){
   if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
   if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
   html+='<hr/>';
+
+  if(disp&&!b._queued&&(b.status==='approved'||b.status==='in-progress'||b.status==='completed')){
+    html+='<button data-action="download-calendar" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('calendar',15)+'Add to Outlook</button>';
+  }
 
   var canEdit=!b._queued&&(disp||b.canEdit===true);
   if(b._queued){
@@ -853,6 +868,7 @@ async function doStatus(id,status){
     if(updated&&!updated._queued) Object.assign(b,updated);
     else { b.status=status; b._queued=true; }
     closeDetail(); renderAll();
+    if(status==='approved'&&!b._queued) openDetail(id);
   }catch(error){ if(error.status===409) await loadData(); }
 }
 
@@ -1240,6 +1256,7 @@ document.addEventListener('click',function(event){
   else if(action==='close-detail') closeDetail();
   else if(action==='discard-queued') discardQueued(target.dataset.bookingId);
   else if(action==='set-status') doStatus(target.dataset.bookingId,target.dataset.status);
+  else if(action==='download-calendar') downloadCalendar(target.dataset.bookingId);
   else if(action==='edit-booking') startEdit(target.dataset.bookingId);
   else if(action==='delete-booking') doDelete(target.dataset.bookingId);
   else if(action==='remove-photo') removePhoto();

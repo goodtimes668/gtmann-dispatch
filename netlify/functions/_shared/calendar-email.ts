@@ -1,6 +1,5 @@
 import type { Booking } from "./types";
 
-const APPROVAL_RECIPIENT = "brent.vandusen@gtmann.com";
 const CALENDAR_TIME_ZONE = "America/Vancouver";
 
 const typeLabels: Record<Booking["type"], string> = {
@@ -16,15 +15,6 @@ function calendarEscape(value: unknown) {
     .replace(/\r?\n/g, "\\n")
     .replace(/,/g, "\\,")
     .replace(/;/g, "\\;");
-}
-
-function htmlEscape(value: unknown) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 function compactDate(value: string) {
@@ -123,73 +113,4 @@ export function buildApprovalCalendar(booking: Booking) {
   );
 
   return `${lines.join("\r\n")}\r\n`;
-}
-
-function graphConfig() {
-  const tenantId = Netlify.env.get("MICROSOFT_TENANT_ID");
-  const clientId = Netlify.env.get("MICROSOFT_CLIENT_ID");
-  const clientSecret = Netlify.env.get("MICROSOFT_CLIENT_SECRET");
-  const sender = Netlify.env.get("MICROSOFT_GRAPH_SENDER");
-  if (!tenantId || !clientId || !clientSecret || !sender) return null;
-  return { tenantId, clientId, clientSecret, sender };
-}
-
-async function graphToken(config: NonNullable<ReturnType<typeof graphConfig>>) {
-  const body = new URLSearchParams({
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    scope: "https://graph.microsoft.com/.default",
-    grant_type: "client_credentials",
-  });
-  const response = await fetch(`https://login.microsoftonline.com/${encodeURIComponent(config.tenantId)}/oauth2/v2.0/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-  const result = await response.json() as { access_token?: string; error?: string };
-  if (!response.ok || !result.access_token) throw new Error(`Microsoft token request failed (${response.status}): ${result.error || "unknown error"}`);
-  return result.access_token;
-}
-
-export async function notifyApprovalCalendar(booking: Booking) {
-  const config = graphConfig();
-  if (!config) {
-    console.warn("Approval email skipped: Microsoft Graph environment variables are incomplete");
-    return false;
-  }
-
-  const token = await graphToken(config);
-  const calendar = buildApprovalCalendar(booking);
-  const type = typeLabels[booking.type];
-  const when = booking.time ? `${booking.date} at ${booking.time}` : booking.date;
-  const response = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(config.sender)}/sendMail`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      message: {
-        subject: `Approved dispatch: ${type} - ${booking.site}`,
-        body: {
-          contentType: "HTML",
-          content: `<p>A dispatch request has been approved.</p><p><strong>${htmlEscape(type)}</strong><br>${htmlEscape(booking.site)}<br>${htmlEscape(when)}</p><p>Open the attached calendar file to add it to Outlook.</p>`,
-        },
-        toRecipients: [{ emailAddress: { address: APPROVAL_RECIPIENT } }],
-        attachments: [{
-          "@odata.type": "#microsoft.graph.fileAttachment",
-          name: `gtmann-dispatch-${booking.date}.ics`,
-          contentType: "text/calendar; charset=utf-8; method=PUBLISH",
-          contentBytes: Buffer.from(calendar, "utf8").toString("base64"),
-        }],
-      },
-      saveToSentItems: true,
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = (await response.text()).slice(0, 500);
-    throw new Error(`Microsoft Graph sendMail failed (${response.status}): ${detail}`);
-  }
-  return true;
 }
