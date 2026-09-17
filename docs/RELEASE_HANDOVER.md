@@ -3,7 +3,7 @@
 ## Product
 
 - Product: GT Mann Dispatch
-- Release: `v3.1.0`
+- Release: `v3.2.0`
 - Production URL: `https://gtmann-dispatch.netlify.app/`
 - Source repository: `https://github.com/goodtimes668/gtmann-dispatch`
 - Accepted production branch: `main`
@@ -26,6 +26,8 @@
 - Optional `DISPATCH_SLACK_BOT_TOKEN`
 - Optional `BRENT_SLACK_ID`
 - Optional `SLACK_MANAGER_CHANNEL_ID`
+
+The Slack bot requires `chat:write`, `im:write`, `users:read`, and `users:read.email` scopes so dispatchers can send requesters direct 10-minute arrival notices using the booking email address.
 
 ## Acceptance evidence
 

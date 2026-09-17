@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { estimateDispatch } from "../netlify/functions/_shared/cost";
+import { actualDispatchCost, estimateDispatch } from "../netlify/functions/_shared/cost";
 
 describe("dispatch cost model", () => {
   it("calculates a material delivery from the saved round trip", () => {
@@ -20,5 +20,9 @@ describe("dispatch cost model", () => {
 
   it("uses the documented default for an unknown site", () => {
     expect(estimateDispatch("misc")).toEqual({ estCost: 41.2, estMinutes: 45, estKm: 16 });
+  });
+
+  it("calculates actual cost from recorded time and kilometres", () => {
+    expect(actualDispatchCost(60, 20)).toBe(54);
   });
 });

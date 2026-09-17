@@ -4,7 +4,7 @@ import { json } from "./_shared/http";
 export default async (_req: Request, context: Context) => json({
   status: "ok",
   service: "gtmann-dispatch",
-  version: "3.1.0",
+  version: "3.2.0",
   deployed: Boolean(context.deploy?.published),
   checkedAt: new Date().toISOString(),
 });

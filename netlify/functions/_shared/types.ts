@@ -40,8 +40,17 @@ export type Booking = {
   date: string;
   time: string;
   notes: string;
+  supplier: string;
+  poNumber: string;
+  siteContact: string;
+  loadSize: "small" | "medium" | "large" | "flat-deck-truck" | "bin-truck" | "oversize";
+  readyConfirmed: boolean;
   brentNotes: string;
+  assignedTo: string;
+  vehicle: string;
+  durationMinutes: number;
   photoId: string | null;
+  completionPhotoId?: string | null;
   estCost: number;
   estMinutes: number;
   estKm: number;
@@ -52,6 +61,13 @@ export type Booking = {
   updatedAt: string;
   approvedAt?: string;
   completedAt?: string;
+  actualMinutes?: number;
+  actualKm?: number;
+  actualCost?: number;
+  completionNotes?: string;
+  receivedBy?: string;
+  arrivalNoticeSentAt?: string;
+  arrivalNoticeSentBy?: string;
 };
 
 export type AuditEvent = {
@@ -68,7 +84,7 @@ export type AuditEvent = {
 };
 
 export type BackupSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   id: string;
   createdAt: string;
   createdBy: "scheduled" | "manager";

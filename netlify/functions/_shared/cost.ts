@@ -26,3 +26,7 @@ export function estimateDispatch(type: BookingType, site?: Site) {
     estCost: Math.round(cost * 100) / 100,
   };
 }
+
+export function actualDispatchCost(minutes: number, km: number) {
+  return Math.round((((minutes / 60) * COST_MODEL.wagePerHour) + (km * COST_MODEL.mileagePerKm)) * 100) / 100;
+}

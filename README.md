@@ -2,6 +2,17 @@
 
 Authenticated internal dispatch scheduling for material deliveries, tool pickups, tool deliveries, and miscellaneous field tasks.
 
+## v3.2 workflow controls
+
+- New self-service accounts start as `member`; only managers can grant dispatcher or manager access.
+- Booking search and filters cover requester, site, status, type, supplier, PO/cost code, and date.
+- Dispatchers assign a person, vehicle, and scheduled duration while approving a request.
+- Overlapping approved jobs for the same dispatcher are visibly flagged.
+- Completed jobs capture actual minutes, kilometres, receiving contact, completion notes, photo proof, and actual cost.
+- The manager summary shows pending, active and unassigned work, approval speed, actual-data capture, and measured cost variance/savings.
+- Approved work can be added to Outlook Calendar; ad-hoc B.C. job-site addresses autocomplete while typing.
+- The installable PWA shell can reopen in weak-service conditions while the existing IndexedDB outbox safely queues writes.
+
 ## Address and route estimates
 
 Job-site addresses autocomplete from OpenStreetMap data and save the selected canonical address and coordinates. All site distance and drive-time calculations start at Faithwood Farms, 4368 Lochside Drive, Saanich (`48.4952, -123.3698`) and are stored as round trips.
@@ -64,6 +75,8 @@ Optional Slack notifications use:
 - `DISPATCH_APP_URL`
 
 Slack messages deliberately contain only an **Open Dispatch** link. Approval and status changes happen inside the authenticated app.
+
+The Slack app needs `chat:write`, `im:write`, `users:read`, and `users:read.email` bot-token scopes. While a material or tool delivery is in progress, a dispatcher can send the requester a direct **10 minutes away** message. The requester is resolved by the email on their booking, so their GT Mann Dispatch and Slack email addresses must match.
 
 ## Operational safeguards
 

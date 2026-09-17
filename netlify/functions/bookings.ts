@@ -2,14 +2,14 @@ import type { Config, Context } from "@netlify/functions";
 import { requireUser, canDispatch, requireSameOrigin } from "./_shared/auth";
 import { recordAudit } from "./_shared/audit";
 import { buildApprovalCalendar } from "./_shared/calendar-email";
-import { estimateDispatch } from "./_shared/cost";
+import { actualDispatchCost, estimateDispatch } from "./_shared/cost";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
 import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
-import { notifyNewBooking, notifyStatus } from "./_shared/slack";
+import { notifyNewBooking, notifyRequesterTenMinutesAway, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
-import { idempotencyKey, isBookingId, validateBookingInput, validateStatus, validateVersion } from "./_shared/validation";
+import { idempotencyKey, isBookingId, validateBookingInput, validateCompletion, validateDispatchPlan, validateStatus, validateVersion } from "./_shared/validation";
 import { canTransition } from "./_shared/workflow";
 
 async function assertPhotoOwner(photoId: string | null, userId: string) {
@@ -19,16 +19,20 @@ async function assertPhotoOwner(photoId: string | null, userId: string) {
   if (!metadata || metadata.uploadedBy !== userId) throw new HttpError(422, "Photo was not uploaded by this account");
 }
 
-function publicBooking(booking: Booking, user: { id: string; roles: string[] }) {
+export function publicBooking(booking: Booking, user: { id: string; roles: string[] }) {
+  const manager = user.roles.includes("manager");
   const full = user.roles.includes("dispatcher") || user.roles.includes("manager");
   const photo = booking.photoId ? `/api/photos/${encodeURIComponent(booking.photoId)}` : null;
+  const completionPhoto = booking.completionPhotoId ? `/api/photos/${encodeURIComponent(booking.completionPhotoId)}` : null;
   const owner = booking.requesterId === user.id;
   const canEdit = full || (owner && booking.status === "pending");
-  if (full) return { ...booking, photo, canEdit };
-  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estCost: _estCost, estMinutes: _estMinutes, estKm: _estKm, ...safe } = booking;
-  if (owner) return { ...safe, photo, canEdit };
-  const { notes: _notes, photoId: _photoId, ...teamSafe } = safe;
-  return { ...teamSafe, photo: null, canEdit };
+  const { estCost: _estCost, actualCost: _actualCost, ...financiallySafe } = booking;
+  const visibleBooking = manager ? booking : financiallySafe;
+  if (full) return { ...visibleBooking, photo, completionPhoto, canEdit, isMine: owner };
+  const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estMinutes: _estMinutes, estKm: _estKm, arrivalNoticeSentBy: _arrivalNoticeSentBy, ...safe } = visibleBooking;
+  if (owner) return { ...safe, photo, completionPhoto, canEdit, isMine: true };
+  const { notes: _notes, photoId: _photoId, completionPhotoId: _completionPhotoId, ...teamSafe } = safe;
+  return { ...teamSafe, photo: null, completionPhoto: null, canEdit, isMine: false };
 }
 
 async function matchBundles(newBooking: Booking, all: Booking[]) {
@@ -63,6 +67,7 @@ async function createBooking(req: Request, context: Context) {
     await assertPhotoOwner(input.photoId, user.id);
     const site = sites.find((item) => item.name.toLowerCase() === input.site.toLowerCase());
     const now = new Date().toISOString();
+    const estimate = estimateDispatch(input.type, site);
     const booking: Booking = {
       id: crypto.randomUUID(),
       version: 1,
@@ -71,12 +76,15 @@ async function createBooking(req: Request, context: Context) {
       requesterEmail: user.email,
       requesterId: user.id,
       brentNotes: "",
+      assignedTo: "",
+      vehicle: "",
+      durationMinutes: estimate.estMinutes,
       bundleStatus: input.bundleRequested ? "queued" : "none",
       bundleWithId: null,
       createdAt: now,
       updatedAt: now,
       ...input,
-      ...estimateDispatch(input.type, site),
+      ...estimate,
     };
     await matchBundles(booking, all);
     const created = await createBookingRecord(booking);
@@ -107,7 +115,22 @@ async function updateBooking(req: Request, context: Context, id: string) {
     }
 
     let updated: Booking;
-    if (body.status !== undefined) {
+    const arrivalNotice = body.arrivalNotice === true;
+    if (arrivalNotice) {
+      if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
+      if (!["delivery", "tool-delivery"].includes(current.type)) throw new HttpError(409, "Arrival alerts apply only to deliveries");
+      if (current.status !== "in-progress") throw new HttpError(409, "Start the delivery before sending an arrival alert");
+      if (current.arrivalNoticeSentAt) throw new HttpError(409, "The requester has already received the 10-minute arrival alert");
+      const notification = await notifyRequesterTenMinutesAway(current);
+      if (!notification.ok) throw new HttpError(502, notification.message);
+      updated = {
+        ...current,
+        arrivalNoticeSentAt: new Date().toISOString(),
+        arrivalNoticeSentBy: user.id,
+        version: current.version + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    } else if (body.status !== undefined) {
       if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
       const status = validateStatus(body.status);
       if (!canTransition(current.status, status)) throw new HttpError(409, `Cannot change ${current.status} to ${status}`);
@@ -118,8 +141,20 @@ async function updateBooking(req: Request, context: Context, id: string) {
         version: current.version + 1,
         updatedAt: new Date().toISOString(),
       };
-      if (status === "approved") updated.approvedAt = updated.updatedAt;
-      if (status === "completed") updated.completedAt = updated.updatedAt;
+      if (status === "approved") {
+        Object.assign(updated, validateDispatchPlan(body, {
+          assignedTo: current.assignedTo || user.name,
+          vehicle: current.vehicle || "",
+          durationMinutes: current.durationMinutes || current.estMinutes,
+        }));
+        updated.approvedAt = updated.updatedAt;
+      }
+      if (status === "completed") {
+        const actual = validateCompletion(body, { actualMinutes: current.estMinutes, actualKm: current.estKm });
+        await assertPhotoOwner(actual.completionPhotoId, user.id);
+        Object.assign(updated, actual, { actualCost: actualDispatchCost(actual.actualMinutes, actual.actualKm) });
+        updated.completedAt = updated.updatedAt;
+      }
     } else {
       const input = validateBookingInput(body);
       const sites = await listSites();
@@ -132,15 +167,21 @@ async function updateBooking(req: Request, context: Context, id: string) {
         version: current.version + 1,
         updatedAt: new Date().toISOString(),
       };
+      if (dispatcher) Object.assign(updated, validateDispatchPlan(body, {
+        assignedTo: current.assignedTo || user.name,
+        vehicle: current.vehicle || "",
+        durationMinutes: current.durationMinutes || updated.estMinutes,
+      }));
     }
     const write = await saveBookingIfMatch(updated, record.etag);
     if (!write.modified) throw new HttpError(409, "This booking changed on another device. Refresh and try again.");
     if (updated.photoId && updated.photoId !== current.photoId) await bindPhotoToBooking(updated.photoId, updated.id);
+    if (updated.completionPhotoId && updated.completionPhotoId !== current.completionPhotoId) await bindPhotoToBooking(updated.completionPhotoId, updated.id);
     if (current.photoId && current.photoId !== updated.photoId) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
-    context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
+    context.waitUntil(recordAudit(user, arrivalNotice ? "booking.arrival_notice_sent" : body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
       fromStatus: current.status,
       toStatus: updated.status,
       version: updated.version,
@@ -159,6 +200,7 @@ async function removeBooking(req: Request, context: Context, id: string) {
     if (!current) throw new HttpError(404, "Booking not found");
     await deleteBookingRecord(id);
     if (current.photoId) await Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]);
+    if (current.completionPhotoId) await Promise.all([photosStore().delete(`photo/${current.completionPhotoId}`), unbindPhoto(current.completionPhotoId)]);
     context.waitUntil(recordAudit(user, "booking.deleted", "booking", id, context, { status: current.status, site: current.site }));
     return { status: 200, value: { deleted: true } };
   });
