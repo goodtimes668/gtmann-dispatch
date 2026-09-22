@@ -15,7 +15,7 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 - [ ] Member creates and edits their own pending request.
 - [ ] Duplicate offline submission is prevented by idempotency.
 - [ ] With the network disconnected, Approve/Decline/Start/Complete shows a failure and leaves the booking status unchanged; retry after reconnecting.
-- [ ] A blocked offline booking remains visible for correction or discard and is not silently retried on each refresh.
+- [ ] A blocked offline booking remains visible for discard and resubmission and is not silently retried on each refresh.
 - [ ] Dispatcher approves, starts, and completes the request.
 - [ ] Conflicting edits return 409 and refresh safely.
 - [ ] Dispatcher deletes a test request and its photo.
