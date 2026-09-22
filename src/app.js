@@ -339,7 +339,8 @@ async function apiCall(method,path,body,okMsg,options){
 
 async function flushQueue(){
   if(!currentUser) return 0;
-  var queue=await getUserQueue();
+  var queue=(await getUserQueue()).filter(function(item){ return item.state!=='blocked'; })
+    .sort(function(a,b){ return a.createdAt-b.createdAt; });
   var synced=0, blocked=0;
   for(var i=0;i<queue.length;i++){
     var item=queue[i];
@@ -864,9 +865,8 @@ async function doStatus(id,status){
   var payload={status:status,brentNotes:notes,version:b.version};
   var msgs={approved:'Approved',declined:'Declined','in-progress':'Job started',completed:'Marked complete'};
   try{
-    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated');
-    if(updated&&!updated._queued) Object.assign(b,updated);
-    else { b.status=status; b._queued=true; }
+    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated',{queue:false});
+    Object.assign(b,updated);
     closeDetail(); renderAll();
     if(status==='approved'&&!b._queued) openDetail(id);
   }catch(error){ if(error.status===409) await loadData(); }
