@@ -83,6 +83,7 @@ var ICONS = {
   plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
   chevronleft:'<path d="m15 18-6-6 6-6"/>',
   chevronright:'<path d="m9 18 6-6-6-6"/>',
+  help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
   logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>'
 };
 function ico(name,size,color){
@@ -1183,7 +1184,15 @@ async function startAuthenticated(){
   await loadData();
 }
 
+function openHelp(){
+  var role=isManager()?'Manager':isDispatcher()?'Dispatcher':'Member';
+  el('helpRole').textContent='Signed in as '+role;
+  showOverlay('helpOverlay');
+}
+function closeHelp(){ hideOverlay('helpOverlay'); }
+
 function closeTopOverlay(){
+  if(el('helpOverlay').classList.contains('show')) return closeHelp();
   if(el('detailOverlay').classList.contains('show')) return closeDetail();
   if(el('siteFormOverlay').classList.contains('show')) return closeSiteForm();
   if(el('dayOverlay').classList.contains('show')) return closeDay();
@@ -1231,6 +1240,8 @@ document.addEventListener('click',function(event){
   else if(action==='forgot-password') forgotPassword();
   else if(action==='sign-out') signOut();
   else if(action==='refresh') manualRefresh();
+  else if(action==='open-help') openHelp();
+  else if(action==='close-help') closeHelp();
   else if(action==='open-form') openForm(target.dataset.type);
   else if(action==='open-site') openSiteForm(target.dataset.siteIndex===undefined?undefined:Number(target.dataset.siteIndex));
   else if(action==='shift-month') calShiftMonth(Number(target.dataset.delta));
