@@ -79,6 +79,7 @@ select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;flex-direction:column;justify-content:flex-end}
 .overlay.show{display:flex}
+#helpOverlay{z-index:230}
 #detailOverlay{z-index:220} /* always layers above the day-detail sheet so you can drill in without losing your place */
 .sheet{background:#131318;border:1px solid var(--border-soft);border-bottom:none;border-radius:20px 20px 0 0;padding:18px 18px 36px;max-height:92vh;overflow-y:auto;width:min(100%,680px);margin:0 auto}
 .handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
@@ -175,3 +176,19 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 .route-status.warn{color:var(--amber);border-color:rgba(245,158,11,.28)}
 .route-status.err{color:var(--red);border-color:rgba(239,68,68,.28)}
 @media (min-width:681px){.overlay{justify-content:center;padding:24px}.sheet{border-bottom:1px solid var(--border-soft);border-radius:20px}}
+
+/* help sheet */
+.help-role{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}
+.help details{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;margin-bottom:10px}
+.help summary{cursor:pointer;list-style:none;padding:14px 16px;font-size:15px;font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.help summary::-webkit-details-marker{display:none}
+.help summary::after{content:'+';font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--yellow)}
+.help details[open] summary::after{content:'−'}
+.help summary:focus-visible{outline:2px solid var(--yellow);outline-offset:-2px;border-radius:14px}
+.help ul,.help ol{padding:0 16px 14px 34px;font-size:13px;color:var(--dim);line-height:1.6}
+.help li{margin-bottom:4px}
+.help b{color:var(--text);font-weight:600}
+.help p{padding:0 16px 14px;font-size:13px;color:var(--dim);line-height:1.6}
+.help ul.help-status{list-style:none;padding-left:16px}
+.help-status li{display:flex;align-items:center;gap:8px}
+.help-status .dot{width:8px;height:8px;border-radius:50%;background:var(--dc);flex-shrink:0}

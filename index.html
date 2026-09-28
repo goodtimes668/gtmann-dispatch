@@ -50,6 +50,7 @@
     <div class="appsub" id="userRole">Delivery &amp; Booking</div>
   </div>
   <div style="margin-left:auto;display:flex;gap:8px">
+    <button data-action="open-help" class="iconbtn" data-ic="help" data-s="16" aria-label="Help" title="Help"></button>
     <button data-action="sign-out" class="iconbtn" id="lockBtn" aria-label="Sign out"></button>
     <button data-action="refresh" class="iconbtn" id="refreshIc" aria-label="Refresh"></button>
   </div>
@@ -300,6 +301,93 @@
   <div class="sheet" tabindex="-1">
     <div class="handle"></div>
     <div id="dayContent"></div>
+  </div>
+</div>
+
+<!-- HELP OVERLAY -->
+<div id="helpOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span id="helpTitle" style="font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px"><span data-ic="help" data-s="19" data-c="var(--yellow)"></span>Help</span>
+      <button data-action="close-help" class="closebtn" data-ic="x" aria-label="Close"></button>
+    </div>
+    <div id="helpRole" class="help-role"></div>
+
+    <div class="help">
+      <details open>
+        <summary>Getting around</summary>
+        <ul>
+          <li><b>Home</b> — today's counts, quick actions, and upcoming bookings.</li>
+          <li><b>Bookings</b> — every booking; tap one to see details.</li>
+          <li><b>Calendar</b> — bookings by day. Tap a day to see its jobs or add one for that date.</li>
+          <li><b>Brent</b> — Brent's approvals, today's run sheet, 30-day stats, and job sites.</li>
+          <li><b>Manager</b> — cost summaries, user access, backups, and audit activity (managers only).</li>
+          <li>Use <b>Refresh</b> in the top bar to pull the latest changes.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Requesting a booking</summary>
+        <ol>
+          <li>Tap a Quick Action on Home, or <b>+ New</b> on Bookings.</li>
+          <li>Choose the type: Material Delivery, Tool Pickup, Tool Delivery, or Misc Task.</li>
+          <li>Pick the job site (choose Other to type a name), then describe what's needed with quantities.</li>
+          <li>Set the date, optional time, and priority. Urgent jobs are flagged for Brent.</li>
+          <li>Attach a photo and add notes such as access codes or contacts if helpful.</li>
+          <li>Tap <b>Submit Booking Request</b>. It starts as Pending until approved.</li>
+        </ol>
+        <p>The estimated dispatch cost updates as you fill in the form. You can edit your own booking while it is still pending.</p>
+      </details>
+
+      <details>
+        <summary>Booking statuses</summary>
+        <ul class="help-status">
+          <li><span class="dot" style="--dc:var(--amber)"></span><b>Pending</b> — waiting for approval.</li>
+          <li><span class="dot" style="--dc:var(--green)"></span><b>Approved</b> — scheduled and ready to go.</li>
+          <li><span class="dot" style="--dc:var(--violet)"></span><b>In Progress</b> — the job has started.</li>
+          <li><span class="dot" style="--dc:var(--blue)"></span><b>Done</b> — the job is complete.</li>
+          <li><span class="dot" style="--dc:var(--red)"></span><b>Declined</b> — not going ahead.</li>
+        </ul>
+        <p>Open any booking and tap <b>Add to Outlook</b> to save it to your calendar.</p>
+      </details>
+
+      <details>
+        <summary>Dispatchers: approving &amp; running jobs</summary>
+        <ul>
+          <li>Open a pending booking to <b>Approve</b> or <b>Decline</b> it.</li>
+          <li>Approved jobs can be started with <b>Start Job</b>, then finished with <b>Mark Complete</b>.</li>
+          <li>Dispatchers can edit or delete any booking.</li>
+          <li>Manage job sites from the Brent tab. Start typing an address and pick a suggestion; the round trip from Faithwood Farms is calculated for you.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Managers</summary>
+        <ul>
+          <li>Pick a date range to see estimated dispatch spend in total and by site.</li>
+          <li>Under <b>User Access</b>, set each person's role to Member, Dispatcher, or Manager.</li>
+          <li>Backups run daily. Use <b>Create Backup Now</b> before major changes and download it for safekeeping.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Working offline</summary>
+        <p>If you lose signal, new bookings are saved on this device and sync automatically when the connection returns. A banner on Home shows anything waiting to sync. If an item can't sync, discard it and submit it again.</p>
+      </details>
+
+      <details>
+        <summary>Roles &amp; access</summary>
+        <ul>
+          <li><b>Member</b> — create bookings, edit your own pending bookings, see the team schedule.</li>
+          <li><b>Dispatcher</b> — approve, decline, start, complete, edit, and delete bookings; manage job sites.</li>
+          <li><b>Manager</b> — everything a dispatcher can do, plus cost summaries and user roles.</li>
+        </ul>
+        <p>New accounts start as Member. Ask a manager if you need more access.</p>
+      </details>
+    </div>
+
+    <button data-action="close-help" class="btn-outline" style="width:100%;margin-top:18px;padding:14px">Close</button>
   </div>
 </div>
 
