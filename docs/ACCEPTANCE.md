@@ -17,6 +17,11 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 - [ ] With the network disconnected, Approve/Decline/Start/Complete shows a failure and leaves the booking status unchanged; retry after reconnecting.
 - [ ] A blocked offline booking remains visible for discard and resubmission and is not silently retried on each refresh.
 - [ ] Dispatcher approves, starts, and completes the request.
+- [ ] Member submits a flexible, morning, afternoon, and specific-time request; a specific time cannot be left blank.
+- [ ] Request contact, helper requirement, and expected equipment return appear to the dispatcher and in the calendar details.
+- [ ] Dispatcher assigns each supported truck type and a driver; a same-day overlap is flagged and requires an explicit override.
+- [ ] Dispatcher records an equipment return; the open-return list clears and the return update is audited.
+- [ ] Slack request and assignment alerts include the dispatch details and link back to the app.
 - [ ] Conflicting edits return 409 and refresh safely.
 - [ ] Dispatcher deletes a test request and its photo.
 

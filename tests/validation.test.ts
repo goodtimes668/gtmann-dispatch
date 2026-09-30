@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HttpError } from "../netlify/functions/_shared/http";
-import { isISODate, validateBookingInput, validateSiteInput } from "../netlify/functions/_shared/validation";
+import { isISODate, validateBookingInput, validateDispatchAssignment, validateSiteInput } from "../netlify/functions/_shared/validation";
 
 const validBooking = {
   type: "delivery",
@@ -35,6 +35,36 @@ describe("booking validation", () => {
 
   it("rejects forged photo identifiers", () => {
     expect(() => validateBookingInput({ ...validBooking, photoId: "../../another-record" })).toThrow("Invalid photo ID");
+  });
+
+  it("accepts structured scheduling and equipment return details", () => {
+    expect(validateBookingInput({
+      ...validBooking,
+      time: "",
+      timeWindow: "morning",
+      onsiteContact: " Site lead ",
+      helperRequired: true,
+      returnItem: "2 fans",
+      expectedReturnDate: "2026-08-20",
+    })).toMatchObject({
+      timeWindow: "morning",
+      onsiteContact: "Site lead",
+      helperRequired: true,
+      returnItem: "2 fans",
+      expectedReturnDate: "2026-08-20",
+      returnStatus: "pending",
+    });
+  });
+
+  it("requires a specific time and paired return item and date", () => {
+    expect(() => validateBookingInput({ ...validBooking, time: "", timeWindow: "specific" })).toThrow("A time is required");
+    expect(() => validateBookingInput({ ...validBooking, returnItem: "2 fans" })).toThrow("both the item");
+    expect(() => validateBookingInput({ ...validBooking, returnItem: "2 fans", expectedReturnDate: "2026-02-30" })).toThrow("Invalid expected return date");
+  });
+
+  it("restricts assignment trucks to the dispatch fleet", () => {
+    expect(validateDispatchAssignment({ assignedDriver: " Brent ", vehicle: "flat-deck" })).toEqual({ assignedDriver: "Brent", vehicle: "flat-deck" });
+    expect(() => validateDispatchAssignment({ assignedDriver: "Driver", vehicle: "forklift" })).toThrow("Invalid vehicle");
   });
 });
 

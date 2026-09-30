@@ -52,6 +52,14 @@ export type Booking = {
   updatedAt: string;
   approvedAt?: string;
   completedAt?: string;
+  timeWindow?: "anytime" | "morning" | "afternoon" | "specific";
+  onsiteContact?: string;
+  helperRequired?: boolean;
+  assignedDriver?: string;
+  vehicle?: "half-ton" | "flat-deck" | "bin-truck" | "";
+  returnItem?: string;
+  expectedReturnDate?: string;
+  returnStatus?: "pending" | "returned";
 };
 
 export type AuditEvent = {

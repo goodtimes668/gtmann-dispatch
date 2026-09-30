@@ -58,6 +58,22 @@ describe("approval calendar attachment", () => {
     expect(calendar).toContain("Description: First line\\nSecond line");
   });
 
+  it("includes dispatch handoff and return details in the calendar event", () => {
+    const calendar = buildApprovalCalendar(booking({
+      onsiteContact: "Site lead",
+      helperRequired: true,
+      assignedDriver: "Brent",
+      vehicle: "flat-deck",
+      returnItem: "3 fans",
+      expectedReturnDate: "2026-09-05",
+    }));
+    expect(calendar).toContain("On-site contact: Site lead");
+    expect(calendar).toContain("Helper requested at site");
+    expect(calendar).toContain("Assigned driver: Brent");
+    expect(calendar).toContain("Vehicle: flat-deck");
+    expect(calendar).toContain("Return: 3 fans by 2026-09-05");
+  });
+
   it("rolls the event end into the next day", () => {
     const calendar = buildApprovalCalendar(booking({ time: "23:30" }));
     expect(calendar).toContain("DTEND;TZID=America/Vancouver:20260902T003000");

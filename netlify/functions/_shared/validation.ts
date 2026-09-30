@@ -41,9 +41,16 @@ export function validateBookingInput(input: unknown) {
   if (!isISODate(date)) throw new HttpError(422, "Invalid date");
   const time = text(body.time, "Time", 5);
   if (time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new HttpError(422, "Invalid time");
+  const timeWindow = body.timeWindow == null ? (time ? "specific" : "anytime") : body.timeWindow;
+  if (!["anytime", "morning", "afternoon", "specific"].includes(String(timeWindow))) throw new HttpError(422, "Invalid time window");
+  if (timeWindow === "specific" && !time) throw new HttpError(422, "A time is required for a specific time window");
 
   const site = text(body.site, "Job site", 120);
   const pickupLocation = text(body.pickupLocation, "Pickup location", 240);
+  const returnItem = text(body.returnItem, "Item to return", 160);
+  const expectedReturnDate = text(body.expectedReturnDate, "Expected return date", 10);
+  if (expectedReturnDate && !isISODate(expectedReturnDate)) throw new HttpError(422, "Invalid expected return date");
+  if (Boolean(returnItem) !== Boolean(expectedReturnDate)) throw new HttpError(422, "Enter both the item to return and its expected return date");
   const type = body.type as BookingType;
   if ((type === "delivery" || type === "tool-delivery") && !site) throw new HttpError(422, "Job site is required for deliveries");
   if ((type === "pickup" || type === "tool-delivery") && !pickupLocation) throw new HttpError(422, "Pickup location is required");
@@ -59,9 +66,26 @@ export function validateBookingInput(input: unknown) {
     description: text(body.description, "Description", 3000, true),
     date,
     time,
+    timeWindow,
+    onsiteContact: text(body.onsiteContact, "On-site contact", 120),
+    helperRequired: body.helperRequired === true,
+    returnItem,
+    expectedReturnDate,
+    returnStatus: returnItem ? "pending" : undefined,
     notes: text(body.notes, "Notes", 2000),
     photoId,
     bundleRequested: body.bundleRequested === true,
+  };
+}
+
+export function validateDispatchAssignment(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "Invalid dispatch assignment");
+  const body = input as Record<string, unknown>;
+  const vehicle = body.vehicle == null ? "" : body.vehicle;
+  if (!["", "half-ton", "flat-deck", "bin-truck"].includes(String(vehicle))) throw new HttpError(422, "Invalid vehicle");
+  return {
+    assignedDriver: text(body.assignedDriver, "Assigned driver", 120),
+    vehicle: vehicle as "" | "half-ton" | "flat-deck" | "bin-truck",
   };
 }
 

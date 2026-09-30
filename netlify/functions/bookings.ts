@@ -7,9 +7,9 @@ import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
 import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
-import { notifyNewBooking, notifyStatus } from "./_shared/slack";
+import { notifyAssignment, notifyNewBooking, notifyReturn, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
-import { idempotencyKey, isBookingId, validateBookingInput, validateStatus, validateVersion } from "./_shared/validation";
+import { idempotencyKey, isBookingId, validateBookingInput, validateDispatchAssignment, validateStatus, validateVersion } from "./_shared/validation";
 import { canTransition } from "./_shared/workflow";
 
 async function assertPhotoOwner(photoId: string | null, userId: string) {
@@ -107,7 +107,19 @@ async function updateBooking(req: Request, context: Context, id: string) {
     }
 
     let updated: Booking;
-    if (body.status !== undefined) {
+    if (body.assignment === true) {
+      if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
+      updated = {
+        ...current,
+        ...validateDispatchAssignment(body),
+        version: current.version + 1,
+        updatedAt: new Date().toISOString(),
+      };
+    } else if (body.returnStatus !== undefined) {
+      if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
+      if (!current.returnItem || !["pending", "returned"].includes(String(body.returnStatus))) throw new HttpError(422, "This booking has no tracked return");
+      updated = { ...current, returnStatus: body.returnStatus as "pending" | "returned", version: current.version + 1, updatedAt: new Date().toISOString() };
+    } else if (body.status !== undefined) {
       if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
       const status = validateStatus(body.status);
       if (!canTransition(current.status, status)) throw new HttpError(409, `Cannot change ${current.status} to ${status}`);
@@ -128,6 +140,11 @@ async function updateBooking(req: Request, context: Context, id: string) {
       updated = {
         ...current,
         ...input,
+        returnStatus: input.returnItem
+          ? current.returnItem === input.returnItem && current.expectedReturnDate === input.expectedReturnDate
+            ? current.returnStatus || "pending"
+            : "pending"
+          : undefined,
         ...estimateDispatch(input.type, site),
         version: current.version + 1,
         updatedAt: new Date().toISOString(),
@@ -140,7 +157,9 @@ async function updateBooking(req: Request, context: Context, id: string) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
-    context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : "booking.updated", "booking", id, context, {
+    if (body.assignment === true) context.waitUntil(notifyAssignment(updated));
+    if (body.returnStatus === "returned") context.waitUntil(notifyReturn(updated));
+    context.waitUntil(recordAudit(user, body.status !== undefined ? "booking.status_changed" : body.assignment === true ? "booking.assignment_changed" : body.returnStatus !== undefined ? "booking.return_updated" : "booking.updated", "booking", id, context, {
       fromStatus: current.status,
       toStatus: updated.status,
       version: updated.version,
