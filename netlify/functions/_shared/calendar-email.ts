@@ -51,7 +51,12 @@ function descriptionLines(booking: Booking) {
     `Type: ${typeLabels[booking.type]}`,
     `Requested by: ${booking.requester}`,
     booking.pickupLocation ? `Pickup: ${booking.pickupLocation}` : "",
+    booking.onsiteContact ? `On-site contact: ${booking.onsiteContact}` : "",
     booking.description ? `Description: ${booking.description}` : "",
+    booking.helperRequired ? "Helper requested at site" : "",
+    booking.assignedDriver ? `Assigned driver: ${booking.assignedDriver}` : "",
+    booking.vehicle ? `Vehicle: ${booking.vehicle}` : "",
+    booking.returnItem ? `Return: ${booking.returnItem} by ${booking.expectedReturnDate || "date not set"}` : "",
     booking.notes ? `Request notes: ${booking.notes}` : "",
     booking.brentNotes ? `Dispatcher notes: ${booking.brentNotes}` : "",
   ].filter(Boolean).join("\n");

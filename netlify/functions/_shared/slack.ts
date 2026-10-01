@@ -15,6 +15,12 @@ function mrkdwn(value: unknown) {
     .slice(0, 2500);
 }
 
+function requestedTime(booking: Booking) {
+  if (booking.time) return `at ${booking.time}`;
+  if (booking.timeWindow === "morning" || booking.timeWindow === "afternoon") return `in the ${booking.timeWindow}`;
+  return "time flexible";
+}
+
 async function slackCall(method: string, body: Record<string, unknown>) {
   const token = Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN");
   if (!token) return null;
@@ -51,10 +57,15 @@ export async function notifyNewBooking(booking: Booking) {
         { type: "mrkdwn", text: `*Type:*\n${mrkdwn(type)}` },
         { type: "mrkdwn", text: `*From:*\n${mrkdwn(booking.requester)}` },
         { type: "mrkdwn", text: `*Site:*\n${mrkdwn(booking.site || "TBD")}` },
-        { type: "mrkdwn", text: `*Date:*\n${mrkdwn(booking.date)}${booking.time ? ` at ${mrkdwn(booking.time)}` : ""}` },
+        { type: "mrkdwn", text: `*Date:*\n${mrkdwn(booking.date)} · ${mrkdwn(requestedTime(booking))}` },
         { type: "mrkdwn", text: `*Priority:*\n${mrkdwn(priority)}` },
       ] },
-      { type: "section", text: { type: "mrkdwn", text: `*Description:*\n${mrkdwn(booking.description)}` } },
+      { type: "section", text: { type: "mrkdwn", text: [
+        `*Description:*\n${mrkdwn(booking.description)}`,
+        booking.onsiteContact ? `*On-site contact:* ${mrkdwn(booking.onsiteContact)}` : "",
+        booking.helperRequired ? "*Helper:* requested at site" : "",
+        booking.returnItem ? `*Return:* ${mrkdwn(booking.returnItem)} by ${mrkdwn(booking.expectedReturnDate)}` : "",
+      ].filter(Boolean).join("\n") } },
       { type: "actions", elements: [
         { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
       ] },
@@ -69,9 +80,28 @@ export async function notifyStatus(booking: Booking) {
   const messages: Partial<Record<Booking["status"], string>> = {
     approved: `Booking approved: ${type} for ${booking.site} on ${booking.date}`,
     declined: `Booking declined: ${type} for ${booking.site}`,
-    "in-progress": `Brent is on the way: ${type} for ${booking.site}`,
+    "in-progress": `Dispatch started: ${type} for ${booking.site}`,
     completed: `Job completed: ${type} for ${booking.site}`,
   };
   const text = messages[booking.status];
   if (text) await slackCall("chat.postMessage", { channel, text: mrkdwn(text) });
+}
+
+export async function notifyAssignment(booking: Booking) {
+  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
+  if (!channel) return;
+  const truck = booking.vehicle ? booking.vehicle.replace("-", " ") : "no truck set";
+  await slackCall("chat.postMessage", {
+    channel,
+    text: `Dispatch assignment updated: ${booking.assignedDriver || "driver not set"} · ${truck} · ${booking.site || "no site"} · ${booking.date}`,
+  });
+}
+
+export async function notifyReturn(booking: Booking) {
+  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
+  if (!channel) return;
+  await slackCall("chat.postMessage", {
+    channel,
+    text: `Equipment returned: ${booking.returnItem} from ${booking.site || booking.pickupLocation || "dispatch"}`,
+  });
 }

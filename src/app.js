@@ -598,6 +598,11 @@ function fmtT(t){
   try{ var p=t.split(':'); var h=parseInt(p[0]); return ((h%12)||12)+':'+p[1]+(h>=12?'PM':'AM'); }
   catch(e){ return t; }
 }
+function vehicleLabel(value){ return ({'half-ton':'Half-ton','flat-deck':'Flat deck','bin-truck':'Bin truck'})[value]||''; }
+function timeWindowLabel(b){
+  if(b.time) return fmtT(b.time);
+  return ({morning:'Morning',afternoon:'Afternoon',anytime:'Flexible time'})[b.timeWindow]||'Flexible time';
+}
 function isToday(d){ return d===today(); }
 function isThisWeek(d){
   var n=new Date(), s=new Date(n);
@@ -693,8 +698,8 @@ function renderAll(){
   var scheduledToday=bookings.filter(function(b){ return isToday(b.date)&&b.status==='approved'; });
   el('nP').textContent=pend.length; el('nT').textContent=tod.length; el('nW').textContent=wk.length; el('nU').textContent=urg.length;
   el('brentTxt').textContent=inProgress.length
-    ?'Brent is currently on '+inProgress.length+' job'+(inProgress.length===1?'':'s')
-    :scheduledToday.length?scheduledToday.length+' approved job'+(scheduledToday.length===1?'':'s')+' scheduled today':'Brent has no active dispatch';
+    ?inProgress.length+' dispatch task'+(inProgress.length===1?' is':'s are')+' in progress'
+    :scheduledToday.length?scheduledToday.length+' approved job'+(scheduledToday.length===1?'':'s')+' scheduled today':'No active dispatch tasks';
   el('brentCnt').textContent=pend.length>0?pend.length+' job'+(pend.length>1?'s':'')+' need approval':'All clear';
   var up=bookings.filter(function(b){ return b.status!=='completed'&&b.status!=='declined'&&b.date>=today(); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,5);
   el('homeList').innerHTML=up.length?up.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('inbox','No upcoming bookings');
@@ -705,6 +710,7 @@ function renderAll(){
   var bUp=bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
   el('bPending').innerHTML=pend.length?pend.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('checkcircle','No pending requests');
   el('bToday').innerHTML=bTod.length?bTod.map(function(b){ return cardHTML(b,true); }).join(''):emptyState('calendar','No jobs today');
+  renderEquipmentReturns();
   el('bUpcoming').innerHTML=bUp.length?bUp.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('calendar','No upcoming jobs');
   renderMetrics();
   renderCalendar();
@@ -720,15 +726,14 @@ function cardHTML(b,runsheet){
   var badge=b._queued
     ? '<span class="badge '+(b._queueBlocked?'b-declined':'b-queued')+'"><span class="dot"></span>'+(b._queueBlocked?'Needs Attention':'Queued')+'</span>'
     : '<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span>';
-  var when=runsheet
-    ? (b.time?fmtT(b.time):'Anytime')
-    : fmtD(b.date)+(b.time?' · '+fmtT(b.time):'');
+  var when=runsheet ? timeWindowLabel(b) : fmtD(b.date)+' · '+timeWindowLabel(b);
   var extras='';
   if(b.photo||b.photoId) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
   var loc='';
   if(runsheet&&(b.pickupLocation||b.site)){
     loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
   }
+  if(runsheet&&(b.assignedDriver||b.vehicle)) loc+='<div class="sub" style="margin-top:5px">'+esc(b.assignedDriver||'Driver not assigned')+' · '+esc(vehicleLabel(b.vehicle)||'Truck not assigned')+'</div>';
   return '<div class="bcard'+(runsheet?' runsheet':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" style="--bc:'+bc+'" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
     +'<div class="row"><div style="flex:1;padding-right:8px">'
     +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+extras+'</div>'
@@ -736,6 +741,17 @@ function cardHTML(b,runsheet){
     +badge+'</div>'
     +'<div class="desc">'+esc(desc)+'</div>'
     +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div>';
+}
+
+function renderEquipmentReturns(){
+  var box=el('bReturns'); if(!box) return;
+  if(!isDispatcher()){ box.innerHTML=''; return; }
+  var open=bookings.filter(function(b){ return b.returnItem&&b.returnStatus!=='returned'; })
+    .sort(function(a,b){ return (a.expectedReturnDate||'').localeCompare(b.expectedReturnDate||''); });
+  box.innerHTML=open.length?open.map(function(b){
+    var overdue=b.expectedReturnDate<today();
+    return '<div class="return-row" role="button" tabindex="0" data-action="open-detail" data-booking-id="'+esc(b.id)+'"><div><strong>'+esc(b.returnItem)+'</strong><div class="sub">'+esc(b.site||b.pickupLocation||'No site')+' · Due '+fmtD(b.expectedReturnDate)+'</div></div><span class="badge '+(overdue?'b-declined':'b-pending')+'"><span class="dot"></span>'+(overdue?'Overdue':'Expected')+'</span></div>';
+  }).join(''):emptyState('checkcircle','No equipment returns outstanding');
 }
 
 /* ---- calendar ---- */
@@ -822,12 +838,16 @@ function openDetail(id){
     +'<div><div class="dl">From</div><div class="dv">'+esc(b.requester||'—')+'</div></div>'
     +'<div><div class="dl">Site</div><div class="dv">'+esc(b.site||'—')+'</div></div>'
     +'<div><div class="dl">Date</div><div class="dv" style="color:var(--yellow)">'+fmtD(b.date)+'</div></div>'
-    +'<div><div class="dl">Time</div><div class="dv">'+(b.time?fmtT(b.time):'Not set')+'</div></div></div>';
+    +'<div><div class="dl">Time</div><div class="dv">'+esc(timeWindowLabel(b))+'</div></div></div>';
   if(b.pickupLocation) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Pickup Location</div><div class="dbox">'+esc(b.pickupLocation)+'</div></div>';
+  if(b.onsiteContact) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">On-site Contact</div><div class="dbox">'+esc(b.onsiteContact)+'</div></div>';
+  if(b.helperRequired) html+='<div style="margin-bottom:14px"><div class="dbox">Helper requested at site</div></div>';
+  if(b.assignedDriver||b.vehicle) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Dispatch Assignment</div><div class="dbox">'+esc(b.assignedDriver||'Driver not set')+' · '+esc(vehicleLabel(b.vehicle)||'Vehicle not set')+'</div></div>';
+  if(b.returnItem) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Equipment Return</div><div class="dbox">'+esc(b.returnItem)+' · Due '+fmtD(b.expectedReturnDate)+' · '+(b.returnStatus==='returned'?'Returned':'Awaiting return')+'</div></div>';
   html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Description</div><div class="dbox">'+esc(b.description||'')+'</div></div>';
   if(b.photo) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Photo</div><img class="dphoto" src="'+esc(b.photo)+'" alt="Booking photo"/></div>';
   if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
-  if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Brent\'s Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
+  if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Dispatcher Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
   html+='<hr/>';
 
   if(disp&&!b._queued&&(b.status==='approved'||b.status==='in-progress'||b.status==='completed')){
@@ -839,8 +859,10 @@ function openDetail(id){
     html+='<div class="queue-alert" role="status">'+(b._queueBlocked?'This booking could not sync. Discard it and submit again after correcting the issue.':'This booking is stored safely on this device and will sync when the connection returns.')+'</div>';
     if(b._queueBlocked) html+='<button data-action="discard-queued" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%">Discard Local Booking</button>';
   } else if(disp){
+    html+='<div class="assignment-box"><div class="dl" style="margin-bottom:8px">Assign driver and truck</div><label class="sr-only" for="dDriver">Assigned driver</label><input id="dDriver" class="field" maxlength="120" placeholder="Driver name" value="'+esc(b.assignedDriver||'')+'" style="margin-bottom:8px"/><label class="sr-only" for="dVehicle">Vehicle</label><select id="dVehicle" class="field"><option value="">No truck assigned</option>'+[['half-ton','Half-ton'],['flat-deck','Flat deck'],['bin-truck','Bin truck']].map(function(v){return '<option value="'+v[0]+'" '+(b.vehicle===v[0]?'selected':'')+'>'+v[1]+'</option>';}).join('')+'</select><div id="assignmentWarning" class="assignment-warning" role="status"></div><button data-action="save-assignment" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%;margin-top:8px">Save Assignment</button></div>';
+    if(b.returnItem&&b.returnStatus!=='returned') html+='<button data-action="mark-returned" data-booking-id="'+esc(b.id)+'" class="btn-outline" style="width:100%;margin:10px 0">Mark Equipment Returned</button>';
     if(b.status==='pending'){
-      html+='<textarea id="dNotes" class="field" placeholder="Brent\'s notes (optional)..." style="margin-bottom:12px"></textarea>';
+      html+='<textarea id="dNotes" class="field" placeholder="Dispatcher notes (optional)..." style="margin-bottom:12px"></textarea>';
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="approved" class="btn-green">'+ico('check',16)+'Approve</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-red">'+ico('x',16)+'Decline</button></div>';
     } else if(b.status==='approved'){
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="in-progress" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-outline">Cancel</button></div>';
@@ -870,6 +892,42 @@ async function doStatus(id,status){
     Object.assign(b,updated);
     closeDetail(); renderAll();
     if(status==='approved'&&!b._queued) openDetail(id);
+  }catch(error){ if(error.status===409) await loadData(); }
+}
+
+async function saveAssignment(id){
+  var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
+  var driver=el('dDriver').value.trim(), vehicle=el('dVehicle').value;
+  var conflicts=bookings.filter(function(other){
+    if(other.id===id||other.date!==b.date||other.status==='declined'||other.status==='completed') return false;
+    var sameDriver=driver&&other.assignedDriver&&driver.toLowerCase()===other.assignedDriver.toLowerCase();
+    var sameVehicle=vehicle&&other.vehicle===vehicle;
+    if(!sameDriver&&!sameVehicle) return false;
+    var overlap;
+    if(b.time&&other.time){
+      var startA=Number(b.time.slice(0,2))*60+Number(b.time.slice(3,5)), endA=startA+(b.estMinutes||60);
+      var startB=Number(other.time.slice(0,2))*60+Number(other.time.slice(3,5)), endB=startB+(other.estMinutes||60);
+      overlap=startA<endB&&startB<endA;
+    } else if(!b.time&&!other.time&&b.timeWindow&&other.timeWindow&&b.timeWindow!=='anytime'&&other.timeWindow!=='anytime') overlap=b.timeWindow===other.timeWindow;
+    else overlap=true;
+    return overlap;
+  });
+  if(conflicts.length){
+    var warn=el('assignmentWarning');
+    if(warn){ warn.textContent='Possible schedule conflict: '+conflicts.map(function(x){return (x.site||x.description)+' ('+timeWindowLabel(x)+')';}).join(', ')+'. Save anyway only if the jobs can be covered.'; warn.classList.add('show'); }
+    if(!confirm('Possible driver or truck conflict on '+fmtD(b.date)+'. Save this assignment anyway?')) return;
+  }
+  try{
+    var updated=await apiCall('PUT','/bookings/'+id,{assignment:true,assignedDriver:driver,vehicle:vehicle,version:b.version},'Dispatch assignment saved',{queue:false,idempotencyKey:uid()});
+    Object.assign(b,updated); closeDetail(); renderAll();
+  }catch(error){ if(error.status===409) await loadData(); }
+}
+
+async function markEquipmentReturned(id){
+  var b=bookings.find(function(x){return x.id===id;}); if(!b) return;
+  try{
+    var updated=await apiCall('PUT','/bookings/'+id,{returnStatus:'returned',version:b.version},'Equipment return recorded',{queue:false,idempotencyKey:uid()});
+    Object.assign(b,updated); closeDetail(); renderAll();
   }catch(error){ if(error.status===409) await loadData(); }
 }
 
@@ -944,7 +1002,7 @@ function renderCostEstimateBox(est){
     +'<div style="font-size:10px;color:var(--faint);margin-top:8px">Typical route estimate. The server recalculates and stores the final estimate.</div>';
   if(flag){
     html+='<div style="font-size:12px;color:var(--dim);line-height:1.5;padding-top:10px;margin-top:10px;border-top:1px solid var(--border-soft)">'
-      +'Labor $'+est.labor.toFixed(0)+' + mileage $'+est.mileage.toFixed(0)+'. If this can wait, bundling it into Brent\'s next run to this site skips the dedicated trip.'
+      +'Labor $'+est.labor.toFixed(0)+' + mileage $'+est.mileage.toFixed(0)+'. If this can wait, bundling it into the next run to this site skips the dedicated trip.'
       +'</div>';
     if(canBundle) html+='<button type="button" data-action="bundle" class="btn-outline" style="width:100%;margin-top:10px;padding:11px;font-size:13px">Queue for Next Run Instead</button>';
   }
@@ -976,6 +1034,13 @@ function setType(t){
   }
   renderCostEstimate();
 }
+
+function setTimeWindow(value){
+  var specific=value==='specific';
+  el('fTimeWrap').classList.toggle('hidden',!specific);
+  el('fTime').required=specific;
+  if(!specific) el('fTime').value='';
+}
 function setPri(p){
   curPri=p;
   ['urgent','normal','scheduled'].forEach(function(x){
@@ -990,8 +1055,9 @@ function openForm(type){
   var titles={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   el('fTitle').textContent=titles[type]||'New Booking';
   el('fWho').value=currentUser?currentUser.name:''; el('fWho').readOnly=true; el('fDesc').value=''; el('fNotes').value='';
+  el('fContact').value=''; el('fHelper').checked=false; el('fReturnItem').value=''; el('fReturnDate').value='';
   if(el('fPickup')) el('fPickup').value='';
-  if(el('fTime')) el('fTime').value='';
+  if(el('fTime')) el('fTime').value=''; el('fTimeWindow').value='anytime'; setTimeWindow('anytime');
   el('fDate').min=today(); el('fDate').value=today(); setSiteField('');
   el('fSubmit').textContent='Submit Booking Request';
   setType(curType); setPri('normal'); renderPhotoPrev(); renderCostEstimate();
@@ -1009,7 +1075,9 @@ function startEdit(id){
   setSiteField(b.site||'');
   el('fDesc').value=b.description||'';
   el('fDate').min=''; el('fDate').value=b.date||today();
-  el('fTime').value=b.time||'';
+  el('fTime').value=b.time||''; el('fTimeWindow').value=b.timeWindow||(b.time?'specific':'anytime'); setTimeWindow(el('fTimeWindow').value);
+  el('fContact').value=b.onsiteContact||''; el('fHelper').checked=b.helperRequired===true;
+  el('fReturnItem').value=b.returnItem||''; el('fReturnDate').value=b.expectedReturnDate||'';
   el('fNotes').value=b.notes||'';
   if(el('fPickup')) el('fPickup').value=b.pickupLocation||'';
   el('fSubmit').textContent='Save Changes';
@@ -1029,11 +1097,15 @@ async function submitBooking(){
   if((curType==='delivery'||curType==='tool-delivery')&&!siteName){ toast('Select or enter a job site','err'); return; }
   if((curType==='pickup'||curType==='tool-delivery')&&!pickup){ toast('Enter the pickup location','err'); return; }
   if(el('fSite').value==='__other__'&&!siteName){ alert('Enter the job site name.'); return; }
+  var returnItem=el('fReturnItem').value.trim(), returnDate=el('fReturnDate').value;
+  if(Boolean(returnItem)!==Boolean(returnDate)){ toast('Enter both the return item and expected return date','err'); return; }
+  var timeWindow=el('fTimeWindow').value;
+  if(timeWindow==='specific'&&!el('fTime').value){ toast('Enter the requested specific time','err'); return; }
   var btn=el('fSubmit');
   var editing=!!editId;
   btn.textContent=editing?'Saving...':'Submitting...'; btn.disabled=true;
 
-  var fields={type:curType,site:siteName,description:desc,date:date,time:el('fTime').value,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested};
+  var fields={type:curType,site:siteName,description:desc,date:date,time:el('fTime').value,timeWindow:timeWindow,onsiteContact:el('fContact').value.trim(),helperRequired:el('fHelper').checked,returnItem:returnItem,expectedReturnDate:returnDate,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested};
 
   try{
     if(editing){
@@ -1228,6 +1300,7 @@ document.addEventListener('change',function(event){
   if(event.target.id==='fSite') onSiteChange();
   else if(event.target.id==='fPhoto') handlePhoto(event.target);
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
+  else if(event.target.id==='fTimeWindow') setTimeWindow(event.target.value);
 });
 document.addEventListener('input',function(event){
   if(event.target.id==='fSiteOther') renderCostEstimate();
@@ -1267,6 +1340,8 @@ document.addEventListener('click',function(event){
   else if(action==='close-detail') closeDetail();
   else if(action==='discard-queued') discardQueued(target.dataset.bookingId);
   else if(action==='set-status') doStatus(target.dataset.bookingId,target.dataset.status);
+  else if(action==='save-assignment') saveAssignment(target.dataset.bookingId);
+  else if(action==='mark-returned') markEquipmentReturned(target.dataset.bookingId);
   else if(action==='download-calendar') downloadCalendar(target.dataset.bookingId);
   else if(action==='edit-booking') startEdit(target.dataset.bookingId);
   else if(action==='delete-booking') doDelete(target.dataset.bookingId);
