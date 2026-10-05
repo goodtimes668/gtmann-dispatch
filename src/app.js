@@ -1383,5 +1383,13 @@ async function init(){
   }
 }
 
+function registerOfflineApp(){
+  if(!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.register('/sw.js',{scope:'/'})
+    .catch(function(error){ console.warn('Offline app support could not start.',error); });
+}
+if(document.readyState==='complete') registerOfflineApp();
+else window.addEventListener('load',registerOfflineApp,{once:true});
+
 window.addEventListener('online',function(){ if(currentUser) flushQueue().then(function(synced){ if(synced) loadData(); }); });
 init();
