@@ -1,6 +1,6 @@
 const CACHE_PREFIX = 'gtmann-dispatch-shell-';
 const CACHE_NAME = CACHE_PREFIX + 'v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/icons/dispatch.svg'];
+const APP_SHELL = ['/', '/manifest.webmanifest', '/icons/dispatch.svg', '/icons/apple-touch-icon.png'];
 
 function isSensitiveNavigation(url) {
   return ['token', 'access_token', 'invite_token', 'recovery_token', 'confirmation_token', 'code', 'state']
