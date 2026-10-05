@@ -29,6 +29,15 @@ The old browser PINs and the unauthenticated Railway dispatch API are not used b
 
 New signups always start as `member`. Only an existing manager can grant dispatcher or manager access.
 
+## Mobile app
+
+GT Mann Dispatch can be installed from its HTTPS site as a home-screen web app.
+
+- **iPhone:** Open the dispatch site in Safari, tap Share → Add to Home Screen, turn on **Open as Web App**, then tap Add.
+- **Android:** Open the dispatch site in Chrome, open the browser menu, then choose **Install app** or **Add to Home screen**.
+
+The app shell and static app files are cached for launch when signal drops. Booking API and authentication requests stay online-only; new bookings continue to use the existing on-device retry queue when disconnected. Sign-in, account recovery, and syncing queued requests need a connection.
+
 ## Local verification
 
 Requires Node.js 22.12 or newer.
