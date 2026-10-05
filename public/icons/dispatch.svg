@@ -1,11 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GTMANN DISPATCH">
   <rect width="512" height="512" rx="112" fill="#f5c518"/>
-  <g fill="none" stroke="#0d0d0f" stroke-linecap="round" stroke-linejoin="round" stroke-width="26">
-    <path d="M116 151h182a24 24 0 0 1 24 24v155H92V175a24 24 0 0 1 24-24Z"/>
-    <path d="M322 219h67l55 70v41H322z"/>
-    <path d="M345 219v69h99"/>
-    <circle cx="163" cy="351" r="34" fill="#f5c518"/>
-    <circle cx="383" cy="351" r="34" fill="#f5c518"/>
-    <path d="M197 351h152"/>
+  <rect x="12" y="12" width="488" height="488" rx="101" fill="none" stroke="#0d0d0f" stroke-width="8"/>
+  <g fill="none" stroke="#0d0d0f" stroke-linecap="round" stroke-linejoin="round" stroke-width="22">
+    <path d="M104 95h188a20 20 0 0 1 20 20v111H84V115a20 20 0 0 1 20-20Z"/>
+    <path d="M312 145h64l52 58v23H312z"/>
+    <path d="M336 146v57h91"/>
+    <circle cx="145" cy="239" r="24" fill="#f5c518"/>
+    <circle cx="377" cy="239" r="24" fill="#f5c518"/>
+    <path d="M169 239h184"/>
+    <path d="M100 126h172M101 160h137M101 194h104" stroke-width="12"/>
   </g>
+  <text x="256" y="348" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="61" font-weight="900" letter-spacing="-1">GTMANN</text>
+  <text x="256" y="405" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="32" font-weight="800" letter-spacing="7">DISPATCH</text>
+  <path d="M116 435h280" stroke="#0d0d0f" stroke-width="6" stroke-linecap="round"/>
+  <text x="256" y="472" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="4">GT MANN CONTRACTING</text>
 </svg>
