@@ -33,7 +33,9 @@ export default async (req: Request, context: Context) => {
       const body = await readJson(req) as Record<string, unknown>;
       if (typeof body.role !== "string" || !roles.has(body.role)) throw new HttpError(422, "Invalid role");
       if (id === caller.id && body.role !== "manager") throw new HttpError(409, "You cannot remove your own manager access");
-      const updated = await admin.updateUser(id, { role: body.role });
+      // Netlify Identity authorizes from app_metadata.roles; a top-level role field
+      // is not included in the user's roles claim or the server-side authorization checks.
+      const updated = await admin.updateUser(id, { app_metadata: { roles: [body.role] } });
       context.waitUntil(recordAudit(caller, "user.role_changed", "user", id, context, { role: body.role }));
       return { status: 200, value: safeUser(updated) };
     });
