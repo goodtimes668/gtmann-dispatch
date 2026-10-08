@@ -300,3 +300,25 @@ describe("Slack request form", () => {
       .forEach((message) => expect(blockIds).toContain(errorBlockFor(message)));
   });
 });
+
+describe("Slack endpoint diagnostics", () => {
+  it("accepts a secret that was saved with stray whitespace", async () => {
+    env.DISPATCH_SLACK_SIGNING_SECRET = ` ${SECRET}\n`;
+    const { context } = makeContext();
+    const response = await handler(slackRequest({ type: "shortcut", callback_id: "new_booking_shortcut", trigger_id: "trig-2", user: { id: "U123ABC" } }), context);
+    expect(response.status).toBe(200);
+    expect(slackCalls[0]?.method).toBe("views.open");
+  });
+
+  it("logs a rejected request without leaking the secret or signature", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const { context } = makeContext();
+    const response = await handler(slackRequest(submission(), { signature: "v0=deadbeef" }), context);
+    expect(response.status).toBe(401);
+    const logged = warn.mock.calls.map((call) => String(call[0])).join("\n");
+    expect(logged).toContain("slack_request_rejected");
+    expect(logged).not.toContain(SECRET);
+    expect(logged).not.toContain("deadbeef");
+    warn.mockRestore();
+  });
+});
