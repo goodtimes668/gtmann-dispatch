@@ -659,6 +659,7 @@ async function discardQueued(id){
   await outboxDelete(id); closeDetail(); await loadData();
 }
 async function manualRefresh(){
+  await refreshAccess();
   await flushQueue();
   await loadSites();
   await loadData();
@@ -1164,7 +1165,11 @@ function showPage(p){
   });
   window.scrollTo(0,0);
   if(p==='calendar') renderCalendar();
-  if(p==='manager') renderManagerView();
+  if(p==='manager'){
+    renderManagerView();
+    // A manager may have granted access since this session loaded; re-check before showing the locked card.
+    if(!isManager()) refreshAccess();
+  }
 }
 
 function renderManagerView(){
@@ -1226,7 +1231,7 @@ async function saveUserRole(id){
   var select=document.querySelector('[data-user-role="'+CSS.escape(id)+'"]'); if(!select) return;
   try{
     await apiCall('PUT','/admin/users/'+encodeURIComponent(id),{role:select.value},null,{queue:false,idempotencyKey:uid()});
-    toast('Access updated — that user should sign out and back in','ok');
+    toast('Access updated — they will see it after tapping refresh','ok');
     await loadUsers();
   }catch(error){}
 }
@@ -1269,6 +1274,30 @@ async function loadAudit(){
       return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail)+' · '+esc(event.targetType)+' '+esc(event.targetId)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
     }).join(''):emptyState('inbox','No administrative activity recorded yet');
   }catch(error){ list.innerHTML=emptyState('alert','Audit activity could not be loaded'); }
+}
+
+/* Roles are read once at sign-in, so a role changed by a manager would otherwise
+   stay stale until the user signed out. Re-read them from the server on demand. */
+var accessCheck=null;
+function refreshAccess(){
+  if(!currentUser) return Promise.resolve(false);
+  if(accessCheck) return accessCheck;
+  accessCheck=(async function(){
+    var before=(currentUser.roles||[]).slice().sort().join(',');
+    var fresh;
+    try{ fresh=await apiRequest('GET','/me'); }
+    catch(error){ return false; }
+    if(!currentUser||!fresh) return false;
+    currentUser=fresh;
+    if((fresh.roles||[]).slice().sort().join(',')===before) return false;
+    renderLock();
+    renderManagerView();
+    await loadUsers();
+    await loadData();
+    toast('Your access was updated','ok');
+    return true;
+  })().finally(function(){ accessCheck=null; });
+  return accessCheck;
 }
 
 async function startAuthenticated(){
@@ -1419,5 +1448,6 @@ function registerOfflineApp(){
 if(document.readyState==='complete') registerOfflineApp();
 else window.addEventListener('load',registerOfflineApp,{once:true});
 
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&currentUser) refreshAccess(); });
 window.addEventListener('online',function(){ if(currentUser) flushQueue().then(function(synced){ if(synced) loadData(); }); });
 init();
