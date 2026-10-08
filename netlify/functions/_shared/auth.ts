@@ -1,6 +1,6 @@
 import { getUser, verifyRequestOrigin } from "@netlify/identity";
 import { HttpError } from "./http";
-import type { AuthUser, DispatchRole } from "./types";
+import type { AuthUser, Booking, DispatchRole } from "./types";
 
 const knownRoles = new Set<DispatchRole>(["member", "dispatcher", "manager"]);
 
@@ -26,6 +26,16 @@ export async function requireUser(required: DispatchRole[] = []): Promise<AuthUs
 
 export function canDispatch(user: AuthUser) {
   return user.roles.includes("dispatcher") || user.roles.includes("manager");
+}
+
+// A request made from Slack before its requester had a Dispatch account is held
+// under the Slack identity ("slack:U…"). Sign-in requires a confirmed email, so a
+// matching email is enough for that person to claim their own request.
+export function ownsBooking(booking: Pick<Booking, "requesterId" | "requesterEmail">, user: Pick<AuthUser, "id" | "email">) {
+  if (booking.requesterId === user.id) return true;
+  return booking.requesterId.startsWith("slack:")
+    && Boolean(user.email)
+    && (booking.requesterEmail || "").toLowerCase() === user.email.toLowerCase();
 }
 
 export function requireSameOrigin(req: Request) {

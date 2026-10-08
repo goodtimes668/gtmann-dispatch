@@ -15,6 +15,12 @@ Netlify Identity registration must be set to **Open** under Project configuratio
 
 Identity cannot be tested through `netlify dev`. Use a deploy preview for signup, confirmation, invitation, recovery, and role acceptance testing.
 
+## Slack request form
+
+`POST /api/slack/interactions` receives the Dispatch Slack app's shortcut and form. It accepts only requests signed with `DISPATCH_SLACK_SIGNING_SECRET` and returns 503 until that variable is set. The app's Interactivity Request URL must point at this endpoint; setup is listed in the README.
+
+If a Slack request does not appear in the app, search the function log for `slack_booking_failed` (the save failed and the requester was told in Slack) or a 401 on this path (signing secret mismatch).
+
 ## Monitoring
 
 Monitor `GET /api/health` at least every five minutes. A healthy response returns HTTP 200 and `status: ok`.

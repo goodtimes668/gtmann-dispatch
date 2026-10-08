@@ -21,17 +21,38 @@ function requestedTime(booking: Booking) {
   return "time flexible";
 }
 
-async function slackCall(method: string, body: Record<string, unknown>) {
+type SlackResult = { ok?: boolean; error?: string; channel?: { id?: string } } & Record<string, unknown>;
+
+export async function slackCall(method: string, body: Record<string, unknown>) {
   const token = Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN");
   if (!token) return null;
   const response = await fetch(`https://slack.com/api/${method}`, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify(body),
   });
-  const result = await response.json() as { ok?: boolean; error?: string; channel?: { id?: string } };
+  const result = await response.json() as SlackResult;
   if (!result.ok) console.error(`Slack ${method} failed`, result.error);
   return result;
+}
+
+// Some read methods (users.info among them) only accept form-encoded arguments.
+export async function slackForm(method: string, params: Record<string, string>) {
+  const token = Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN");
+  if (!token) return null;
+  const response = await fetch(`https://slack.com/api/${method}`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(params).toString(),
+  });
+  const result = await response.json() as SlackResult;
+  if (!result.ok) console.error(`Slack ${method} failed`, result.error);
+  return result;
+}
+
+// Direct message to one Slack member, used to confirm or fail a request made from Slack.
+export async function notifySlackUser(slackUserId: string, text: string) {
+  return slackCall("chat.postMessage", { channel: slackUserId, text: mrkdwn(text) });
 }
 
 async function notificationChannel() {

@@ -60,6 +60,9 @@ export type Booking = {
   returnItem?: string;
   expectedReturnDate?: string;
   returnStatus?: "pending" | "returned";
+  // Set only for requests submitted through the Slack form.
+  source?: "slack";
+  slackUserId?: string;
 };
 
 export type AuditEvent = {
