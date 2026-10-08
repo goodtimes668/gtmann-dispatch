@@ -127,7 +127,8 @@ async function retiredButtonNotice(responseUrl: unknown) {
 export default async (req: Request, context: Context) => {
   try {
     allowMethods(req, ["POST"]);
-    const secret = Netlify.env.get("DISPATCH_SLACK_SIGNING_SECRET") || "";
+    // Trim so a stray space or newline pasted with the secret cannot break every signature check.
+    const secret = (Netlify.env.get("DISPATCH_SLACK_SIGNING_SECRET") || "").trim();
     if (!secret) {
       console.error("DISPATCH_SLACK_SIGNING_SECRET is not set; Slack requests are rejected");
       throw new HttpError(503, "Slack requests are not configured");
@@ -139,16 +140,47 @@ export default async (req: Request, context: Context) => {
       timestamp: req.headers.get("x-slack-request-timestamp"),
       rawBody: raw,
     });
-    if (!signed) throw new HttpError(401, "Invalid Slack signature");
+    if (!signed) {
+      // Never log the secret or the signature themselves; this is enough to tell a wrong secret from a missing header.
+      const timestamp = req.headers.get("x-slack-request-timestamp");
+      console.warn(JSON.stringify({
+        level: "warn",
+        service: "gtmann-dispatch",
+        event: "slack_request_rejected",
+        requestId: context.requestId,
+        occurredAt: new Date().toISOString(),
+        hasSignature: Boolean(req.headers.get("x-slack-signature")),
+        hasTimestamp: Boolean(timestamp),
+        clockSkewSeconds: timestamp && /^\d+$/.test(timestamp) ? Math.floor(Date.now() / 1000) - Number(timestamp) : null,
+        secretLength: secret.length,
+        bodyBytes: raw.length,
+        hint: "Signature did not match. DISPATCH_SLACK_SIGNING_SECRET must be the Signing Secret of the Slack app whose Request URL points here.",
+      }));
+      throw new HttpError(401, "Invalid Slack signature");
+    }
 
     const payload = parsePayload(raw);
     const actor: SlackActor = { id: String(payload.user?.id || ""), username: payload.user?.username, name: payload.user?.name };
     if (!/^[A-Z0-9]{2,30}$/.test(actor.id)) throw new HttpError(400, "Invalid Slack payload");
 
+    console.log(JSON.stringify({
+      level: "info",
+      service: "gtmann-dispatch",
+      event: "slack_interaction",
+      requestId: context.requestId,
+      type: String(payload.type || ""),
+      callbackId: String(payload.callback_id || payload.view?.callback_id || ""),
+      slackUserId: actor.id,
+    }));
+
     if (payload.type === "shortcut") {
       if (payload.callback_id === NEW_BOOKING_SHORTCUT && payload.trigger_id) {
         // The trigger expires three seconds after the shortcut is used, so open the form before anything else.
-        try { await slackCall("views.open", { trigger_id: payload.trigger_id, view: buildNewBookingModal() }); }
+        try {
+          const opened = await slackCall("views.open", { trigger_id: payload.trigger_id, view: buildNewBookingModal() });
+          if (!opened) console.error("Slack form not opened: DISPATCH_SLACK_BOT_TOKEN is not set");
+          else if (!opened.ok) console.error("Slack views.open rejected", JSON.stringify({ error: opened.error, detail: opened.response_metadata }));
+        }
         catch (error) { console.error("Slack views.open error", error instanceof Error ? error.message : String(error)); }
       }
       return ack();
