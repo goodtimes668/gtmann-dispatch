@@ -10,6 +10,7 @@ import backups from "../netlify/functions/backups";
 import audit from "../netlify/functions/audit";
 import health from "../netlify/functions/health";
 import scheduledBackup from "../netlify/functions/backup-scheduled";
+import slackInteractions from "../netlify/functions/slack-interactions";
 
 describe("address function entry points", () => {
   it("loads the location, route, and site handlers", () => {
@@ -19,7 +20,7 @@ describe("address function entry points", () => {
   });
 
   it("loads every protected production handler", () => {
-    [bookings, photos, users, managerSummary, backups, audit, health, scheduledBackup]
+    [bookings, photos, users, managerSummary, backups, audit, health, scheduledBackup, slackInteractions]
       .forEach((handler) => expect(handler).toBeTypeOf("function"));
   });
 });

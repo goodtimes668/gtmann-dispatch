@@ -26,6 +26,7 @@
 - Optional `DISPATCH_SLACK_BOT_TOKEN`
 - Optional `BRENT_SLACK_ID`
 - Optional `SLACK_MANAGER_CHANNEL_ID`
+- Optional `DISPATCH_SLACK_SIGNING_SECRET` (required for the Slack request form)
 
 ## Acceptance evidence
 

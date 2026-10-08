@@ -22,6 +22,8 @@ Complete this checklist on a Netlify deploy preview and again after the producti
 - [ ] Dispatcher assigns each supported truck type and a driver; a same-day overlap is flagged and requires an explicit override.
 - [ ] Dispatcher records an equipment return; the open-return list clears and the return update is audited.
 - [ ] Slack request and assignment alerts include the dispatch details and link back to the app.
+- [ ] A request submitted from the Slack shortcut form appears in the app as pending within seconds, and the requester receives a Slack confirmation.
+- [ ] A Slack request from someone with a Dispatch account is editable by them in the app; one from someone without an account is visible to dispatchers.
 - [ ] Conflicting edits return 409 and refresh safely.
 - [ ] Dispatcher deletes a test request and its photo.
 

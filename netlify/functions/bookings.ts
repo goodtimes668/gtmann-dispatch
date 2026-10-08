@@ -1,12 +1,13 @@
 import type { Config, Context } from "@netlify/functions";
-import { requireUser, canDispatch, requireSameOrigin } from "./_shared/auth";
+import { requireUser, canDispatch, ownsBooking, requireSameOrigin } from "./_shared/auth";
+import { matchBundles } from "./_shared/bundles";
 import { recordAudit } from "./_shared/audit";
 import { buildApprovalCalendar } from "./_shared/calendar-email";
 import { estimateDispatch } from "./_shared/cost";
 import { allowMethods, handleError, HttpError, json, readJson } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
-import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBooking, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
+import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
 import { notifyAssignment, notifyNewBooking, notifyReturn, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
 import { idempotencyKey, isBookingId, validateBookingInput, validateDispatchAssignment, validateStatus, validateVersion } from "./_shared/validation";
@@ -19,37 +20,16 @@ async function assertPhotoOwner(photoId: string | null, userId: string) {
   if (!metadata || metadata.uploadedBy !== userId) throw new HttpError(422, "Photo was not uploaded by this account");
 }
 
-function publicBooking(booking: Booking, user: { id: string; roles: string[] }) {
+function publicBooking(booking: Booking, user: { id: string; email: string; roles: string[] }) {
   const full = user.roles.includes("dispatcher") || user.roles.includes("manager");
   const photo = booking.photoId ? `/api/photos/${encodeURIComponent(booking.photoId)}` : null;
-  const owner = booking.requesterId === user.id;
+  const owner = ownsBooking(booking, user);
   const canEdit = full || (owner && booking.status === "pending");
   if (full) return { ...booking, photo, canEdit };
   const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estCost: _estCost, estMinutes: _estMinutes, estKm: _estKm, ...safe } = booking;
   if (owner) return { ...safe, photo, canEdit };
   const { notes: _notes, photoId: _photoId, ...teamSafe } = safe;
   return { ...teamSafe, photo: null, canEdit };
-}
-
-async function matchBundles(newBooking: Booking, all: Booking[]) {
-  if (newBooking.bundleRequested) {
-    const match = all
-      .filter((item) => item.site === newBooking.site && !item.bundleRequested && !["declined", "completed"].includes(item.status) && item.date >= newBooking.date)
-      .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))[0];
-    if (match) {
-      newBooking.bundleStatus = "matched";
-      newBooking.bundleWithId = match.id;
-    }
-  } else if (newBooking.site) {
-    const waiting = all.filter((item) => item.site === newBooking.site && item.bundleStatus === "queued" && item.date <= newBooking.date);
-    await Promise.all(waiting.map(async (item) => {
-      item.bundleStatus = "matched";
-      item.bundleWithId = newBooking.id;
-      item.updatedAt = new Date().toISOString();
-      item.version += 1;
-      await saveBooking(item);
-    }));
-  }
 }
 
 async function createBooking(req: Request, context: Context) {
@@ -102,7 +82,7 @@ async function updateBooking(req: Request, context: Context, id: string) {
     if (current.version !== version) throw new HttpError(409, "This booking changed on another device. Refresh and try again.");
 
     const dispatcher = canDispatch(user);
-    if (!dispatcher && (current.requesterId !== user.id || current.status !== "pending")) {
+    if (!dispatcher && (!ownsBooking(current, user) || current.status !== "pending")) {
       throw new HttpError(403, "You can only edit your own pending bookings");
     }
 

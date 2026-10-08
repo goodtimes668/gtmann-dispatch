@@ -74,6 +74,17 @@ Optional Slack notifications use:
 
 Slack messages deliberately contain only an **Open Dispatch** link. Approval and status changes happen inside the authenticated app.
 
+### Requests from Slack
+
+The **New Dispatch Booking** shortcut opens a request form in Slack. Submitting it writes a pending booking straight into the same store the app reads — there is no sync job. This needs one more variable and three Slack app settings:
+
+- `DISPATCH_SLACK_SIGNING_SECRET` — the Dispatch Slack app's signing secret (Basic Information → App Credentials). Without it the endpoint rejects every request.
+- Interactivity & Shortcuts → Request URL: `https://gtmann-dispatch.netlify.app/api/slack/interactions`
+- Interactivity & Shortcuts → a **Global** shortcut with callback ID `new_booking_shortcut`
+- OAuth & Permissions → bot scopes `chat:write`, `im:write`, `users:read`, `users:read.email` (reinstall the app after adding scopes)
+
+The requester is taken from the Slack profile email. If a confirmed Dispatch account uses that email, the booking belongs to that account. If not, the booking is still saved under the Slack identity and that person can track and edit it once they sign up with the same email. Every request made this way is marked `source: "slack"` and audited.
+
 ## Operational safeguards
 
 - IDs, requester identity, status defaults, timestamps, and cost estimates are owned by the server.
