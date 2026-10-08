@@ -246,3 +246,20 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 /* sign-in screen stays dark */
 .authgate{--bg:#141414;--card:#16161b;--card2:#1d1d24;--border:#2a2a33;--border-soft:#222229;--text:#f4f4f6;--dim:#9a9aa6;--faint:#8a8a96;--yellow:#f5c518;--amber:#f59e0b;--green:#22c55e;--red:#ef4444;color:var(--text);color-scheme:dark}
 .authgate .field:focus{border-color:var(--brand);background:#20201a}
+
+/* sign-in: charcoal, GT Mann logo on top */
+.authgate{--bg:#1f1e1e;--card2:#2a2929;--border:#4a4949;--dim:#c9c9cc;--faint:#b9b9bd;background:var(--bg)}
+.authgate::after{display:none}
+.authgate::before{top:0;left:0;right:0;width:auto;height:6px;aspect-ratio:auto;opacity:1;transform:none;background:repeating-linear-gradient(-45deg,var(--brand) 0 10px,var(--ink) 10px 20px)}
+.authcard{background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0;width:min(100%,360px)}
+.authcard .field{background:var(--card2);min-height:54px}
+.authcard .btn-primary{min-height:58px;font-size:17px}
+.authbrand{display:flex;flex-direction:column;align-items:center;gap:16px;margin-bottom:44px}
+.authbrandlogo{display:block;width:min(268px,78vw);height:auto}
+.authtag{display:flex;align-items:center;gap:12px;width:min(268px,78vw);font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.34em;color:var(--brand)}
+.authtag::before,.authtag::after{content:"";flex:1;height:1.5px;background:#4a4949}
+.authcopy{font-size:15px;text-align:center;margin:0 0 20px}
+.authactions{flex-direction:column;gap:0;margin-top:16px}
+.authlink{font-family:inherit;font-size:14px;font-weight:600;min-height:44px}
+.authmessage{text-align:center}
+#authPasswordConfirmWrap{margin-top:16px}

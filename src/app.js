@@ -1387,7 +1387,6 @@ window.onerror = function(msg, src, line){
 };
 
 async function init(){
-  el('authLogo').innerHTML=ico('truck',22,'#0d0d0f');
   el('brentIc').innerHTML=ico('hardhat',24,'#0d0d0f');
   el('refreshIc').innerHTML=ico('refresh',16);
   hydrateIcons(document);
