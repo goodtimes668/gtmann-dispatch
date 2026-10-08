@@ -736,7 +736,7 @@ function cardHTML(b,runsheet){
     loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
   }
   if(runsheet&&(b.assignedDriver||b.vehicle)) loc+='<div class="sub" style="margin-top:5px">'+esc(b.assignedDriver||'Driver not assigned')+' · '+esc(vehicleLabel(b.vehicle)||'Truck not assigned')+'</div>';
-  return '<div class="bcard'+(runsheet?' runsheet':'')+(urgent?' urgent':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
+  return '<div class="bcard bk'+(runsheet?' runsheet':'')+(urgent?' urgent':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
     +'<div class="bic">'+ico(ic[b.type]||'clipboard',20)+'</div>'
     +'<div class="bmain"><div class="row"><div style="flex:1;padding-right:8px">'
     +'<div class="ttl">'+esc(lb[b.type]||b.type)+extras+'</div>'
