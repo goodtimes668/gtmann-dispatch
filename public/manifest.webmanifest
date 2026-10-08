@@ -7,8 +7,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#0d0d0f",
-  "theme_color": "#0d0d0f",
+  "background_color": "#1f1e1e",
+  "theme_color": "#1f1e1e",
   "icons": [
     {
       "src": "/icons/dispatch.svg",
