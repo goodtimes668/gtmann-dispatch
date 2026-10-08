@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<meta name="theme-color" content="#0d0d0f"/>
+<meta name="theme-color" content="#1f1e1e"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="GTMANN DISPATCH"/>
@@ -19,8 +19,10 @@
 
 <div id="authGate" class="authgate" aria-live="polite">
   <div class="authcard">
-    <div class="logo authlogo" id="authLogo" aria-hidden="true"></div>
-    <div class="apptitle" style="font-size:16px">GTMANN DISPATCH</div>
+    <div class="authbrand">
+      <img class="authbrandlogo" src="/src/assets/gt-mann-logo-white.svg" alt="GT Mann" width="268" height="40"/>
+      <div class="authtag">DISPATCH</div>
+    </div>
     <p class="authcopy">Sign in with your GT Mann account.</p>
     <form id="authForm">
       <div id="authNameWrap" class="hidden">
@@ -47,12 +49,10 @@
 
 <div id="appShell" class="hidden">
 
-<div class="hazard"></div>
 <div class="topbar">
-  <div class="logo" id="logoIc"></div>
-  <div>
-    <div class="apptitle">GTMANN DISPATCH</div>
-    <div class="appsub" id="userRole">Delivery &amp; Booking</div>
+  <div class="brand">
+    <img class="brandlogo" src="/src/assets/gt-mann-logo-white.svg" alt="GT Mann" width="132" height="19"/>
+    <div class="appsub"><span class="brandtag">Dispatch</span><span id="userRole">Delivery &amp; Booking</span></div>
   </div>
   <div style="margin-left:auto;display:flex;gap:8px">
     <button data-action="open-help" class="iconbtn" data-ic="help" data-s="16" aria-label="Help" title="Help"></button>
@@ -63,31 +63,30 @@
 
 <!-- HOME PAGE -->
 <div id="pg-home" class="page">
-  <div id="queueStatus"></div>
-  <div class="card" style="margin-top:4px">
-    <div id="todayTxt" class="mono" style="font-size:16px;font-weight:800;letter-spacing:0.04em"></div>
-    <div id="brentTxt" style="font-size:13px;color:var(--yellow);margin-top:6px;font-weight:600">Loading...</div>
+  <section class="hero">
+    <div id="todayDow" class="hero-dow"></div>
+    <h1 id="todayTxt" class="hero-date"></h1>
+    <div id="brentTxt" class="hero-status">Loading...</div>
+    <div class="hero-stats">
+      <div><div id="nP" class="hnum hn-pending">0</div><div class="hlbl">Pending</div></div>
+      <div><div id="nT" class="hnum">0</div><div class="hlbl">Today</div></div>
+      <div><div id="nW" class="hnum">0</div><div class="hlbl">This week</div></div>
+      <div><div id="nU" class="hnum hn-urgent">0</div><div class="hlbl">Urgent</div></div>
+    </div>
+  </section>
+  <div class="home-body">
+    <button data-action="open-form" data-type="delivery" class="cta"><span>New booking request</span><span data-ic="plus" data-s="26"></span></button>
+    <div id="queueStatus"></div>
+    <div class="tabs" role="tablist" aria-label="Home lists">
+      <button class="tab on" id="ht-upcoming" role="tab" aria-selected="true" aria-controls="homeList" data-action="home-tab" data-tab="upcoming">Upcoming</button>
+      <button class="tab" id="ht-pending" role="tab" aria-selected="false" aria-controls="homePending" data-action="home-tab" data-tab="pending">Pending<span id="htPendingN"></span></button>
+      <button class="tab hidden" id="ht-returns" role="tab" aria-selected="false" aria-controls="homeReturns" data-action="home-tab" data-tab="returns">Returns<span id="htReturnsN"></span></button>
+    </div>
+    <div id="homeList" role="tabpanel" aria-labelledby="ht-upcoming"><div class="skel"></div><div class="skel"></div></div>
+    <div id="homePending" class="hidden" role="tabpanel" aria-labelledby="ht-pending"></div>
+    <div id="homeReturns" class="hidden" role="tabpanel" aria-labelledby="ht-returns"></div>
   </div>
-
-  <div class="g2" style="margin-bottom:18px">
-    <div class="stat" style="--sc:var(--amber)"><div class="sic" data-ic="clock" data-c="var(--amber)"></div><div id="nP" class="num" style="color:var(--amber)">0</div><div class="slbl">Pending</div></div>
-    <div class="stat" style="--sc:var(--green)"><div class="sic" data-ic="calendar" data-c="var(--green)"></div><div id="nT" class="num" style="color:var(--green)">0</div><div class="slbl">Today</div></div>
-    <div class="stat" style="--sc:var(--blue)"><div class="sic" data-ic="clipboard" data-c="var(--blue)"></div><div id="nW" class="num" style="color:var(--blue)">0</div><div class="slbl">This Week</div></div>
-    <div class="stat" style="--sc:var(--red)"><div class="sic" data-ic="alert" data-c="var(--red)"></div><div id="nU" class="num" style="color:var(--red)">0</div><div class="slbl">Urgent</div></div>
-  </div>
-
-  <h2 style="margin-top:0">Quick Actions</h2>
-  <div class="g2" style="margin-bottom:20px">
-    <button data-action="open-form" data-type="delivery" class="qa qa-primary"><span class="qic" data-ic="package"></span><span>Material Delivery</span></button>
-    <button data-action="open-form" data-type="pickup" class="qa qa-dark"><span class="qic" data-ic="wrench"></span><span>Tool Pickup</span></button>
-    <button data-action="open-form" data-type="tool-delivery" class="qa qa-dark"><span class="qic" data-ic="truck"></span><span>Tool Delivery</span></button>
-    <button data-action="open-form" data-type="misc" class="qa qa-dark"><span class="qic" data-ic="file"></span><span>Misc Task</span></button>
-  </div>
-
-  <h2 style="margin-top:0">Upcoming</h2>
-  <div id="homeList"><div class="skel"></div><div class="skel"></div></div>
 </div>
-
 <!-- BOOKINGS PAGE -->
 <div id="pg-bookings" class="page hidden">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">

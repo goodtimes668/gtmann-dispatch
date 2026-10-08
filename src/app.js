@@ -689,7 +689,7 @@ function renderMetrics(){
 /* ---- render ---- */
 function renderAll(){
   var now=new Date();
-  el('todayTxt').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+  setToday(now);
   var pend=bookings.filter(function(b){ return b.status==='pending'; });
   var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'; });
   var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'; });
@@ -709,6 +709,8 @@ function renderAll(){
     .sort(function(a,b){ return (a.time||'99:99').localeCompare(b.time||'99:99'); });
   var bUp=bookings.filter(function(b){ return b.date>today()&&(b.status==='approved'||b.status==='in-progress'); }).sort(function(a,b){ return a.date.localeCompare(b.date); }).slice(0,8);
   el('bPending').innerHTML=pend.length?pend.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('checkcircle','No pending requests');
+  el('homePending').innerHTML=el('bPending').innerHTML;
+  el('htPendingN').textContent=pend.length?' · '+pend.length:'';
   el('bToday').innerHTML=bTod.length?bTod.map(function(b){ return cardHTML(b,true); }).join(''):emptyState('calendar','No jobs today');
   renderEquipmentReturns();
   el('bUpcoming').innerHTML=bUp.length?bUp.map(function(b){ return cardHTML(b,false); }).join(''):emptyState('calendar','No upcoming jobs');
@@ -721,7 +723,7 @@ function cardHTML(b,runsheet){
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
   var sl={pending:'Pending',approved:'Approved',declined:'Declined',completed:'Done','in-progress':'In Progress'};
   var scls={pending:'b-pending',approved:'b-approved',declined:'b-declined',completed:'b-completed','in-progress':'b-in-progress'};
-  var bc=b.priority==='urgent'?'var(--red)':b.status==='approved'?'var(--green)':b.status==='completed'?'var(--blue)':'var(--yellow)';
+  var urgent=b.priority==='urgent'&&b.status!=='completed'&&b.status!=='declined';
   var desc=(b.description||'').slice(0,80)+((b.description||'').length>80?'...':'');
   var badge=b._queued
     ? '<span class="badge '+(b._queueBlocked?'b-declined':'b-queued')+'"><span class="dot"></span>'+(b._queueBlocked?'Needs Attention':'Queued')+'</span>'
@@ -734,24 +736,33 @@ function cardHTML(b,runsheet){
     loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
   }
   if(runsheet&&(b.assignedDriver||b.vehicle)) loc+='<div class="sub" style="margin-top:5px">'+esc(b.assignedDriver||'Driver not assigned')+' · '+esc(vehicleLabel(b.vehicle)||'Truck not assigned')+'</div>';
-  return '<div class="bcard'+(runsheet?' runsheet':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" style="--bc:'+bc+'" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
-    +'<div class="row"><div style="flex:1;padding-right:8px">'
-    +'<div class="ttl">'+ico(ic[b.type]||'clipboard',16,'var(--yellow)')+esc(lb[b.type]||b.type)+extras+'</div>'
+  return '<div class="bcard'+(runsheet?' runsheet':'')+(urgent?' urgent':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
+    +'<div class="bic">'+ico(ic[b.type]||'clipboard',20)+'</div>'
+    +'<div class="bmain"><div class="row"><div style="flex:1;padding-right:8px">'
+    +'<div class="ttl">'+esc(lb[b.type]||b.type)+extras+'</div>'
     +'<div class="sub">'+esc(b.requester||'')+(b.site&&!runsheet?' · '+esc(b.site):'')+'</div>'+loc+'</div>'
     +badge+'</div>'
     +'<div class="desc">'+esc(desc)+'</div>'
-    +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div>';
+    +'<div class="when">'+ico(runsheet?'clock':'calendar',13,'currentColor')+when+'</div></div></div>';
 }
 
 function renderEquipmentReturns(){
   var box=el('bReturns'); if(!box) return;
-  if(!isDispatcher()){ box.innerHTML=''; return; }
+  var hbox=el('homeReturns'), htab=el('ht-returns');
+  if(!isDispatcher()){
+    box.innerHTML=''; hbox.innerHTML=''; htab.classList.add('hidden');
+    if(homeTab==='returns') setHomeTab('upcoming');
+    return;
+  }
+  htab.classList.remove('hidden');
   var open=bookings.filter(function(b){ return b.returnItem&&b.returnStatus!=='returned'; })
     .sort(function(a,b){ return (a.expectedReturnDate||'').localeCompare(b.expectedReturnDate||''); });
   box.innerHTML=open.length?open.map(function(b){
     var overdue=b.expectedReturnDate<today();
     return '<div class="return-row" role="button" tabindex="0" data-action="open-detail" data-booking-id="'+esc(b.id)+'"><div><strong>'+esc(b.returnItem)+'</strong><div class="sub">'+esc(b.site||b.pickupLocation||'No site')+' · Due '+fmtD(b.expectedReturnDate)+'</div></div><span class="badge '+(overdue?'b-declined':'b-pending')+'"><span class="dot"></span>'+(overdue?'Overdue':'Expected')+'</span></div>';
   }).join(''):emptyState('checkcircle','No equipment returns outstanding');
+  hbox.innerHTML=box.innerHTML;
+  el('htReturnsN').textContent=open.length?' · '+open.length:'';
 }
 
 /* ---- calendar ---- */
@@ -1127,6 +1138,24 @@ async function submitBooking(){
   finally{ btn.textContent=editing?'Save Changes':'Submit Booking Request'; btn.disabled=false; }
 }
 
+/* ---- home: date + list tabs ---- */
+var homeTab='upcoming';
+function setToday(d){
+  el('todayDow').textContent=d.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase();
+  el('todayTxt').textContent=d.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+}
+function setHomeTab(t){
+  var panels={upcoming:'homeList',pending:'homePending',returns:'homeReturns'};
+  if(!panels[t]) t='upcoming';
+  homeTab=t;
+  Object.keys(panels).forEach(function(k){
+    var on=k===t, tab=el('ht-'+k);
+    el(panels[k]).classList.toggle('hidden',!on);
+    tab.classList.toggle('on',on);
+    tab.setAttribute('aria-selected',on?'true':'false');
+  });
+}
+
 function showPage(p){
   ['home','bookings','brent','calendar','manager'].forEach(function(x){
     var pg=el('pg-'+x); var nb=el('nb-'+x);
@@ -1320,6 +1349,7 @@ document.addEventListener('click',function(event){
   else if(action==='shift-month') calShiftMonth(Number(target.dataset.delta));
   else if(action==='calendar-today') calGoToday();
   else if(action==='show-page') showPage(target.dataset.page);
+  else if(action==='home-tab') setHomeTab(target.dataset.tab);
   else if(action==='close-form') closeForm();
   else if(action==='set-type') setType(target.dataset.type);
   else if(action==='set-priority') setPri(target.dataset.priority);
@@ -1352,17 +1382,15 @@ document.addEventListener('click',function(event){
 // Global error catcher
 window.onerror = function(msg, src, line){
   var bt = document.getElementById('brentTxt');
-  if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = 'var(--red)'; }
+  if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = '#ff8a80'; }
   return false;
 };
 
 async function init(){
-  el('authLogo').innerHTML=ico('truck',22,'#0d0d0f');
-  el('logoIc').innerHTML=ico('truck',19,'#0d0d0f');
   el('brentIc').innerHTML=ico('hardhat',24,'#0d0d0f');
   el('refreshIc').innerHTML=ico('refresh',16);
   hydrateIcons(document);
-  el('todayTxt').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+  setToday(new Date());
   loadSignupAvailability();
   try{
     authCallback=await handleAuthCallback();
