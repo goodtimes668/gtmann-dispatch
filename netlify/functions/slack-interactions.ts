@@ -103,7 +103,7 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
 
     const booking = result.value;
     await recordSlackTrace("booking_saved", { slackUserId: actor.id, bookingId: booking.id, linkedAccount: linked, hasSlackEmail: Boolean(user.email) });
-    const [, , confirmation] = await Promise.allSettled([
+    const [channelNotification, , confirmation] = await Promise.allSettled([
       notifyNewBooking(booking),
       recordAudit(user, "booking.created", "booking", booking.id, context, { status: booking.status, site: booking.site, source: "slack", linkedAccount: linked }),
       notifySlackUser(actor.id, [
@@ -113,6 +113,14 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
           : `Sign up in Dispatch with your Slack email to track or edit it: ${appUrl()}`,
       ].join("\n")),
     ]);
+    const channelSent = channelNotification.status === "fulfilled" ? channelNotification.value : null;
+    await recordSlackTrace("booking_channel_notification", {
+      ok: Boolean(channelSent?.ok),
+      destination: Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") ? "configured_channel" : "fallback",
+      error: channelNotification.status === "rejected"
+        ? String(channelNotification.reason).slice(0, 200)
+        : channelSent ? String(channelSent.error || "") : "no channel configured",
+    });
     const sent = confirmation.status === "fulfilled" ? confirmation.value : null;
     await recordSlackTrace("requester_dm", {
       slackUserId: actor.id,
