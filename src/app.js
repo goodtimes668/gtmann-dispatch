@@ -31,6 +31,7 @@ var selectedSiteAddress = '';
 var siteRoutePending = false;
 
 var bookings = [];
+var bookingsRefreshInFlight = false;
 var curType = 'delivery';
 var curPri = 'normal';
 var curPhoto = null;
@@ -663,6 +664,14 @@ async function manualRefresh(){
   await flushQueue();
   await loadSites();
   await loadData();
+}
+async function refreshBookingsIfActive(){
+  if(bookingsRefreshInFlight||!currentUser||!navigator.onLine||document.visibilityState!=='visible') return;
+  bookingsRefreshInFlight=true;
+  try{
+    var accessChanged=await refreshAccess();
+    if(!accessChanged) await loadData();
+  }finally{ bookingsRefreshInFlight=false; }
 }
 
 /* ---- metrics ---- */
@@ -1448,6 +1457,7 @@ function registerOfflineApp(){
 if(document.readyState==='complete') registerOfflineApp();
 else window.addEventListener('load',registerOfflineApp,{once:true});
 
-document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible'&&currentUser) refreshAccess(); });
+document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible') refreshBookingsIfActive(); });
+window.setInterval(refreshBookingsIfActive,60000);
 window.addEventListener('online',function(){ if(currentUser) flushQueue().then(function(synced){ if(synced) loadData(); }); });
 init();
