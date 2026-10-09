@@ -65,7 +65,9 @@ async function notificationChannel() {
 }
 
 export async function notifyNewBooking(booking: Booking) {
-  const channel = await notificationChannel();
+  // New requests belong in the configured dispatch channel. notificationChannel()
+  // may prefer Brent's DM, which hides new requests from the material-handling team.
+  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
   if (!channel) return;
   const type = labels[booking.type] || booking.type;
   const priority = booking.priority === "urgent" ? "URGENT" : booking.priority === "scheduled" ? "Planned" : "Normal";
