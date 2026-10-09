@@ -104,7 +104,7 @@ beforeEach(() => {
   listUsers.mockResolvedValue([]);
   slackProfile = { email: "Ryan@Example.com", real_name: "Ryan J" };
   Object.keys(env).forEach((key) => delete env[key]);
-  Object.assign(env, { DISPATCH_SLACK_SIGNING_SECRET: SECRET, DISPATCH_SLACK_BOT_TOKEN: "xoxb-test", BRENT_SLACK_ID: "UBRENT", DISPATCH_APP_URL: "https://gtmann-dispatch.netlify.app/" });
+  Object.assign(env, { DISPATCH_SLACK_SIGNING_SECRET: SECRET, DISPATCH_SLACK_BOT_TOKEN: "xoxb-test", BRENT_SLACK_ID: "UBRENT", SLACK_MANAGER_CHANNEL_ID: "CMATERIAL", DISPATCH_APP_URL: "https://gtmann-dispatch.netlify.app/" });
   vi.stubGlobal("Netlify", { env: { get: (key: string) => env[key] } });
   vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
     const method = String(url).replace("https://slack.com/api/", "");
@@ -203,7 +203,8 @@ describe("Slack interactions endpoint", () => {
     expect(booking.estCost).toBeGreaterThan(0);
 
     const posts = slackCalls.filter((call) => call.method === "chat.postMessage");
-    expect(posts.some((call) => call.body.channel === "DBRENT" && call.body.blocks)).toBe(true);
+    expect(posts.some((call) => call.body.channel === "CMATERIAL" && call.body.blocks)).toBe(true);
+    expect(posts.some((call) => call.body.channel === "DBRENT" && call.body.blocks)).toBe(false);
     expect(posts.some((call) => call.body.channel === "U123ABC" && /Request submitted/.test(call.body.text))).toBe(true);
 
     const audit = [...blobs.get("dispatch-audit")!.values()].map((entry) => entry.value as any);
@@ -326,7 +327,8 @@ describe("Slack diagnostics", () => {
     const { context, settle } = makeContext();
     await handler(slackRequest(submission()), context);
     await settle();
-    expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_saved", "form_submitted", "requester_dm"]);
+    expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_channel_notification", "booking_saved", "form_submitted", "requester_dm"]);
+    expect(traces()).toContainEqual(expect.objectContaining({ event: "booking_channel_notification", ok: true, destination: "configured_channel" }));
     expect(JSON.stringify(traces())).not.toContain("20 sheets");
   });
 
