@@ -65,17 +65,19 @@ async function notificationChannel() {
 }
 
 export async function notifyNewBooking(booking: Booking) {
-  // New requests belong in the configured dispatch channel. notificationChannel()
-  // may prefer Brent's DM, which hides new requests from the material-handling team.
-  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
-  if (!channel) return;
+  // Deliver each saved request to the material-handling team, plus configured manager and Brent targets.
+  const targets = new Set<string>(["C090X2NSHLY"]);
+  const managerChannel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID")?.trim();
+  if (managerChannel) targets.add(managerChannel);
+  const brentId = Netlify.env.get("BRENT_SLACK_ID")?.trim();
+  if (brentId) {
+    const opened = await slackCall("conversations.open", { users: brentId });
+    if (opened?.ok && opened.channel?.id) targets.add(opened.channel.id);
+  }
   const type = labels[booking.type] || booking.type;
   const priority = booking.priority === "urgent" ? "URGENT" : booking.priority === "scheduled" ? "Planned" : "Normal";
-  await slackCall("chat.postMessage", {
-    channel,
-    text: `New dispatch request from ${mrkdwn(booking.requester)}`,
-    blocks: [
-      { type: "header", text: { type: "plain_text", text: "New Dispatch Request" } },
+  const blocks = [
+            { type: "header", text: { type: "plain_text", text: "New Dispatch Request" } },
       { type: "section", fields: [
         { type: "mrkdwn", text: `*Type:*\n${mrkdwn(type)}` },
         { type: "mrkdwn", text: `*From:*\n${mrkdwn(booking.requester)}` },
@@ -92,8 +94,12 @@ export async function notifyNewBooking(booking: Booking) {
       { type: "actions", elements: [
         { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
       ] },
-    ],
-  });
+    ];
+  await Promise.all([...targets].map((channel) => slackCall("chat.postMessage", {
+    channel,
+    text: `New dispatch request from ${mrkdwn(booking.requester)}`,
+    blocks,
+  })));
 }
 
 export async function notifyStatus(booking: Booking) {
