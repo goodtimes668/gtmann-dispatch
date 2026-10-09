@@ -292,6 +292,64 @@ describe("Slack interactions endpoint", () => {
   });
 });
 
+describe("Slack diagnostics", () => {
+  const traces = () => [...(blobs.get("dispatch-slack-diagnostics")?.values() || [])].map((entry) => entry.value as any);
+
+  it("opens the form for a shortcut saved under a different callback ID", async () => {
+    const { context, settle } = makeContext();
+    await handler(slackRequest({ type: "shortcut", callback_id: "new_booking", trigger_id: "trig-2", api_app_id: "A0APP", user: { id: "U123ABC" } }), context);
+    await settle();
+    expect(slackCalls.map((call) => call.method)).toEqual(["views.open"]);
+    expect(traces()).toEqual([expect.objectContaining({ event: "form_open", ok: true, callbackId: "new_booking", appId: "A0APP" })]);
+  });
+
+  it("records why the form did not open", async () => {
+    (fetch as any).mockImplementationOnce(async () => Response.json({ ok: false, error: "invalid_auth" }));
+    const { context, settle } = makeContext();
+    await handler(slackRequest({ type: "shortcut", callback_id: "new_booking_shortcut", trigger_id: "trig-3", user: { id: "U123ABC" } }), context);
+    await settle();
+    expect(traces()).toEqual([expect.objectContaining({ event: "form_open", ok: false, error: "invalid_auth" })]);
+  });
+
+  it("records a rejected signature with the calling app but nothing secret", async () => {
+    const { context, settle } = makeContext();
+    const request = slackRequest({ type: "shortcut", api_app_id: "A0OTHER", user: { id: "U123ABC" } }, { signature: "v0=deadbeef" });
+    expect((await handler(request, context)).status).toBe(401);
+    await settle();
+    const [trace] = traces();
+    expect(trace).toMatchObject({ event: "rejected_bad_signature", claimedAppId: "A0OTHER", hasSignature: true, secretLength: SECRET.length });
+    expect(JSON.stringify(trace)).not.toContain(SECRET);
+    expect(JSON.stringify(trace)).not.toContain("deadbeef");
+  });
+
+  it("records the outcome of a saved request", async () => {
+    const { context, settle } = makeContext();
+    await handler(slackRequest(submission()), context);
+    await settle();
+    expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_saved", "form_submitted", "requester_dm"]);
+    expect(JSON.stringify(traces())).not.toContain("20 sheets");
+  });
+
+  it("serves the readout only with the configured key", async () => {
+    const { default: diagnostics } = await import("../netlify/functions/slack-diagnostics");
+    const url = "https://gtmann-dispatch.netlify.app/api/slack/diagnostics";
+    expect((await diagnostics(new Request(`${url}?key=anything`))).status).toBe(404);
+    env.SLACK_DIAGNOSTICS_KEY = "k".repeat(32);
+    expect((await diagnostics(new Request(url))).status).toBe(404);
+    expect((await diagnostics(new Request(`${url}?key=${"x".repeat(32)}`))).status).toBe(404);
+    (fetch as any).mockImplementation(async (target: string) => String(target).endsWith("auth.test")
+      ? new Response(JSON.stringify({ ok: true, team: "GT Mann", user: "dispatch", user_id: "UBOT", bot_id: "B1" }), { headers: { "x-oauth-scopes": "chat:write,im:write" } })
+      : Response.json({ ok: true, bot: { app_id: "A0APP", name: "Dispatch" } }));
+    const response = await diagnostics(new Request(`${url}?key=${"k".repeat(32)}`));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.botToken).toMatchObject({ valid: true, appId: "A0APP", missingScopes: ["users:read", "users:read.email"] });
+    expect(body.signingSecret).toEqual({ configured: true, length: SECRET.length });
+    expect(JSON.stringify(body)).not.toContain("xoxb-test");
+    expect(JSON.stringify(body)).not.toContain(SECRET);
+  });
+});
+
 describe("Slack request form", () => {
   it("uses unique block IDs that every validation message maps onto", () => {
     const blockIds = buildNewBookingModal().blocks.map((block) => block.block_id);

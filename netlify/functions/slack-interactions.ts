@@ -6,6 +6,7 @@ import { allowMethods, handleError, HttpError, json } from "./_shared/http";
 import { once } from "./_shared/idempotency";
 import { enforceRateLimit } from "./_shared/rate-limit";
 import { notifyNewBooking, notifySlackUser, slackCall } from "./_shared/slack";
+import { recordSlackTrace } from "./_shared/slack-diagnostics";
 import {
   BOOKING_MODAL_CALLBACK,
   NEW_BOOKING_SHORTCUT,
@@ -47,6 +48,15 @@ function parsePayload(raw: string) {
   }
 }
 
+// Which Slack app sent the request. Read before the signature is checked, so it is a
+// troubleshooting hint only and is never used to make a decision.
+function claimedAppId(raw: string) {
+  try {
+    const value = JSON.parse(new URLSearchParams(raw).get("payload") || "{}")?.api_app_id;
+    return typeof value === "string" && /^[A-Z0-9]{2,30}$/.test(value) ? value : null;
+  } catch { return null; }
+}
+
 function appUrl() {
   return Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/";
 }
@@ -86,10 +96,14 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
       if (!created.modified) throw new HttpError(409, "Booking ID collision. Please retry.");
       return { status: 201, value: booking };
     });
-    if (result.replayed) return;
+    if (result.replayed) {
+      await recordSlackTrace("booking_duplicate_ignored", { slackUserId: actor.id });
+      return;
+    }
 
     const booking = result.value;
-    await Promise.allSettled([
+    await recordSlackTrace("booking_saved", { slackUserId: actor.id, bookingId: booking.id, linkedAccount: linked, hasSlackEmail: Boolean(user.email) });
+    const [, , confirmation] = await Promise.allSettled([
       notifyNewBooking(booking),
       recordAudit(user, "booking.created", "booking", booking.id, context, { status: booking.status, site: booking.site, source: "slack", linkedAccount: linked }),
       notifySlackUser(actor.id, [
@@ -99,6 +113,12 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
           : `Sign up in Dispatch with your Slack email to track or edit it: ${appUrl()}`,
       ].join("\n")),
     ]);
+    const sent = confirmation.status === "fulfilled" ? confirmation.value : null;
+    await recordSlackTrace("requester_dm", {
+      slackUserId: actor.id,
+      ok: Boolean(sent?.ok),
+      error: confirmation.status === "rejected" ? String(confirmation.reason) : sent ? String(sent.error || "") : "bot token not set",
+    });
   } catch (error) {
     console.error(JSON.stringify({
       level: "error",
@@ -109,6 +129,7 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
       occurredAt: new Date().toISOString(),
       message: error instanceof Error ? error.message : String(error),
     }));
+    await recordSlackTrace("booking_failed", { slackUserId: actor.id, message: (error instanceof Error ? error.message : String(error)).slice(0, 300) });
     const reason = error instanceof HttpError && error.status === 429 ? "Too many requests in a short time." : "It could not be saved.";
     await notifySlackUser(actor.id, `Your dispatch request did not go through. ${reason} Please submit it again or use the app: ${appUrl()}`).catch(() => undefined);
   }
@@ -156,6 +177,13 @@ export default async (req: Request, context: Context) => {
         bodyBytes: raw.length,
         hint: "Signature did not match. DISPATCH_SLACK_SIGNING_SECRET must be the Signing Secret of the Slack app whose Request URL points here.",
       }));
+      await recordSlackTrace("rejected_bad_signature", {
+        claimedAppId: claimedAppId(raw),
+        hasSignature: Boolean(req.headers.get("x-slack-signature")),
+        hasTimestamp: Boolean(timestamp),
+        clockSkewSeconds: timestamp && /^\d+$/.test(timestamp) ? Math.floor(Date.now() / 1000) - Number(timestamp) : null,
+        secretLength: secret.length,
+      });
       throw new HttpError(401, "Invalid Slack signature");
     }
 
@@ -174,14 +202,29 @@ export default async (req: Request, context: Context) => {
     }));
 
     if (payload.type === "shortcut") {
-      if (payload.callback_id === NEW_BOOKING_SHORTCUT && payload.trigger_id) {
+      // This endpoint serves exactly one form, so any shortcut that reaches it opens that form.
+      // Requiring one exact callback ID made a shortcut saved under a slightly different ID do nothing at all.
+      if (payload.callback_id !== NEW_BOOKING_SHORTCUT) console.warn(`Slack shortcut callback_id is "${String(payload.callback_id)}", expected "${NEW_BOOKING_SHORTCUT}"; opening the form anyway`);
+      if (!payload.trigger_id) context.waitUntil(recordSlackTrace("shortcut_without_trigger", { slackUserId: actor.id, callbackId: String(payload.callback_id || "") }));
+      if (payload.trigger_id) {
         // The trigger expires three seconds after the shortcut is used, so open the form before anything else.
         try {
           const opened = await slackCall("views.open", { trigger_id: payload.trigger_id, view: buildNewBookingModal() });
           if (!opened) console.error("Slack form not opened: DISPATCH_SLACK_BOT_TOKEN is not set");
           else if (!opened.ok) console.error("Slack views.open rejected", JSON.stringify({ error: opened.error, detail: opened.response_metadata }));
+          context.waitUntil(recordSlackTrace("form_open", {
+            callbackId: String(payload.callback_id || ""),
+            appId: typeof payload.api_app_id === "string" ? payload.api_app_id : null,
+            slackUserId: actor.id,
+            ok: Boolean(opened?.ok),
+            error: opened ? String(opened.error || "") : "bot token not set",
+            detail: opened?.ok ? "" : JSON.stringify(opened?.response_metadata || {}).slice(0, 400),
+          }));
         }
-        catch (error) { console.error("Slack views.open error", error instanceof Error ? error.message : String(error)); }
+        catch (error) {
+          console.error("Slack views.open error", error instanceof Error ? error.message : String(error));
+          context.waitUntil(recordSlackTrace("form_open", { slackUserId: actor.id, ok: false, error: error instanceof Error ? error.message : String(error) }));
+        }
       }
       return ack();
     }
@@ -192,6 +235,7 @@ export default async (req: Request, context: Context) => {
         input = validateBookingInput(submissionToBookingInput(payload.view?.state?.values));
       } catch (error) {
         if (error instanceof HttpError && error.status === 422) {
+          context.waitUntil(recordSlackTrace("form_validation_error", { slackUserId: actor.id, message: error.message }));
           return json({ response_action: "errors", errors: { [errorBlockFor(error.message)]: error.message } });
         }
         throw error;
@@ -199,8 +243,14 @@ export default async (req: Request, context: Context) => {
       // Slack needs an answer within three seconds. The form is already validated, so
       // close it now and finish the save in the background; the requester gets a DM either way.
       const viewId = typeof payload.view?.id === "string" && payload.view.id ? payload.view.id : crypto.randomUUID();
+      context.waitUntil(recordSlackTrace("form_submitted", { slackUserId: actor.id, appId: typeof payload.api_app_id === "string" ? payload.api_app_id : null }));
       context.waitUntil(saveSlackBooking(actor, viewId, input, context));
       return json({ response_action: "clear" });
+    }
+
+    if (payload.type === "view_submission") {
+      context.waitUntil(recordSlackTrace("unhandled_form", { slackUserId: actor.id, callbackId: String(payload.view?.callback_id || "") }));
+      return ack();
     }
 
     if (payload.type === "block_actions") {
@@ -209,6 +259,7 @@ export default async (req: Request, context: Context) => {
       return ack();
     }
 
+    context.waitUntil(recordSlackTrace("unhandled_interaction", { slackUserId: actor.id, type: String(payload.type || ""), callbackId: String(payload.callback_id || "") }));
     return ack();
   } catch (error) {
     return handleError(error);
