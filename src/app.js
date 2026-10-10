@@ -1419,6 +1419,9 @@ document.addEventListener('click',function(event){
 
 // Global error catcher
 window.onerror = function(msg, src, line){
+  // Chrome for iOS injects scripts that may reference this private global.
+  // Keep that browser-only error out of the dispatch status card.
+  if(String(msg||'').indexOf('__gCrWeb')!==-1) return true;
   var bt = document.getElementById('brentTxt');
   if(bt){ bt.textContent = 'ERROR: '+msg+' (line '+line+')'; bt.style.color = '#ff8a80'; }
   return false;
