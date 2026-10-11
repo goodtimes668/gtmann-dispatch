@@ -115,11 +115,13 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
     ]);
     const channelSent = channelNotification.status === "fulfilled" ? channelNotification.value : null;
     await recordSlackTrace("booking_channel_notification", {
-      ok: Boolean(channelSent?.ok),
-      destination: Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") ? "configured_channel" : "fallback",
-      error: channelNotification.status === "rejected"
-        ? String(channelNotification.reason).slice(0, 200)
-        : channelSent ? String(channelSent.error || "") : "no channel configured",
+      ok: Boolean(channelSent?.materialChannel?.ok),
+      materialChannelOk: Boolean(channelSent?.materialChannel?.ok),
+      materialChannelError: channelSent?.materialChannel?.error || (channelNotification.status === "rejected" ? String(channelNotification.reason).slice(0, 200) : ""),
+      managerChannelOk: channelSent?.managerChannel?.ok ?? null,
+      managerChannelError: channelSent?.managerChannel?.error || "",
+      brentDmOk: channelSent?.brentDm?.ok ?? null,
+      brentDmError: channelSent?.brentDm?.error || "",
     });
     const sent = confirmation.status === "fulfilled" ? confirmation.value : null;
     await recordSlackTrace("requester_dm", {
