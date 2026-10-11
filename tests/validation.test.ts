@@ -20,6 +20,13 @@ describe("booking validation", () => {
     expect(validateBookingInput(validBooking)).toMatchObject(validBooking);
   });
 
+
+  it("accepts and trims an address for a jobsite entered in the booking form", () => {
+    expect(validateBookingInput({ ...validBooking, site: " New Site ", siteAddress: "  123 Main St, Victoria, BC  " })).toMatchObject({
+      site: "New Site",
+      siteAddress: "123 Main St, Victoria, BC",
+    });
+  });
   it("rejects calendar rollover dates", () => {
     expect(isISODate("2026-02-29")).toBe(false);
     expect(() => validateBookingInput({ ...validBooking, date: "2026-02-29" })).toThrow(HttpError);
