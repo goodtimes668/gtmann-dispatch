@@ -1203,20 +1203,51 @@ async function renderManagerSummary(){
   var fromV=el('mgrFrom').value, toV=el('mgrTo').value;
   if(!isManager()) return;
   el('mgrTotalCard').innerHTML='<div class="skel"></div>';
+  if(el('mgrValueReport')) el('mgrValueReport').innerHTML='<div class="skel"></div>';
+  if(el('mgrBottleneckList')) el('mgrBottleneckList').innerHTML='<div class="skel"></div>';
   var summary;
   try{ summary=await apiRequest('GET','/manager-summary?from='+encodeURIComponent(fromV)+'&to='+encodeURIComponent(toV)); }
-  catch(error){ el('mgrTotalCard').innerHTML=emptyState('alert','Summary could not be loaded'); return; }
+  catch(error){
+    el('mgrTotalCard').innerHTML=emptyState('alert','Summary could not be loaded');
+    if(el('mgrValueReport')) el('mgrValueReport').innerHTML='';
+    if(el('mgrBottleneckList')) el('mgrBottleneckList').innerHTML='';
+    return;
+  }
 
+  var approval=summary.avgApprovalHours==null?'—':summary.avgApprovalHours+'h';
   el('mgrTotalCard').innerHTML=
-    '<div class="card" style="display:flex;justify-content:space-between;gap:10px;text-align:center">'
-    +'<div style="flex:1"><div class="dl">Bookings</div><div class="mono" style="font-size:22px;font-weight:800">'+summary.bookings+'</div></div>'
-    +'<div style="flex:1"><div class="dl">Est. Cost</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--amber)">$'+Math.round(summary.cost)+'</div></div>'
-    +'<div style="flex:1"><div class="dl">Declined</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--faint)">'+summary.declined+'</div></div>'
+    '<div class="manager-grid">'
+    +'<div class="stat" style="--sc:var(--yellow)"><div class="num sm">'+summary.bookings+'</div><div class="slbl">Requests</div></div>'
+    +'<div class="stat" style="--sc:var(--green)"><div class="num sm" style="color:var(--green)">$'+Math.round(summary.estimatedSavings||0)+'</div><div class="slbl">Saved</div></div>'
+    +'<div class="stat" style="--sc:var(--amber)"><div class="num sm" style="color:var(--amber)">$'+Math.round(summary.cost||0)+'</div><div class="slbl">Est. Cost</div></div>'
+    +'<div class="stat" style="--sc:var(--blue)"><div class="num sm" style="color:var(--blue)">'+approval+'</div><div class="slbl">Avg Approval</div></div>'
     +'</div>';
+
+  var report=summary.ownerReport||{headline:'Dispatch report',bullets:[],nextActions:[]};
+  var reportText=report.headline+'\n\n'+(report.bullets||[]).map(function(item){ return '• '+item; }).join('\n')+'\n\nNext actions:\n'+(report.nextActions||[]).map(function(item){ return '• '+item; }).join('\n');
+  if(el('mgrValueReport')) el('mgrValueReport').innerHTML=
+    '<div class="manager-report">'
+    +'<div class="ttl">'+esc(report.headline)+'</div>'
+    +'<div class="sub">Copy this into an owner update or weekly review.</div>'
+    +'<textarea class="field manager-report-text" readonly>'+esc(reportText)+'</textarea>'
+    +'</div>';
+
+  var bottlenecks=[
+    ['Pending approvals',summary.pending||0,'Requests waiting for dispatcher/manager decision'],
+    ['Urgent still open',summary.urgentOpen||0,'Urgent requests not completed or declined'],
+    ['Unassigned active work',summary.unassignedActive||0,'Approved or started jobs without driver/truck'],
+    ['Overdue returns',summary.overdueReturns||0,'Tools or equipment due back already'],
+    ['Queued bundle savings','$'+Math.round(summary.potentialSavings||0),'Money still available if queued trips are bundled']
+  ];
+  if(el('mgrBottleneckList')) el('mgrBottleneckList').innerHTML=bottlenecks.map(function(item){
+    var hot=item[1]&&item[1]!==0&&item[1]!=='$0';
+    return '<div class="bcard insight-row" style="--bc:'+(hot?'var(--amber)':'var(--border)')+';cursor:default"><div><div class="ttl" style="font-size:14px">'+esc(item[0])+'</div><div class="sub">'+esc(item[2])+'</div></div><div class="mono insight-num">'+esc(item[1])+'</div></div>';
+  }).join('');
+
   el('mgrSiteList').innerHTML=summary.bySite.length ? summary.bySite.map(function(r){
     return '<div class="bcard" style="--bc:var(--amber);cursor:default">'
       +'<div class="row"><div><div class="ttl" style="font-size:15px">'+esc(r.name)+'</div>'
-      +'<div class="sub">'+r.count+' booking'+(r.count!==1?'s':'')+(r.declined?' · '+r.declined+' declined':'')+'</div></div>'
+      +'<div class="sub">'+r.count+' booking'+(r.count!==1?'s':'')+(r.urgent?' · '+r.urgent+' urgent':'')+(r.bundled?' · '+r.bundled+' bundled':'')+(r.declined?' · '+r.declined+' declined':'')+'</div></div>'
       +'<div class="mono" style="font-size:18px;font-weight:800;color:var(--amber)">$'+Math.round(r.cost)+'</div></div>'
       +'</div>';
   }).join('') : emptyState('inbox','No bookings in this range');
