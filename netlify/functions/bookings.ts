@@ -56,6 +56,7 @@ async function createBooking(req: Request, context: Context) {
       createdAt: now,
       updatedAt: now,
       ...input,
+      siteAddress: input.siteAddress || site?.address || "",
       ...estimateDispatch(input.type, site),
     };
     await matchBundles(booking, all);
@@ -120,6 +121,7 @@ async function updateBooking(req: Request, context: Context, id: string) {
       updated = {
         ...current,
         ...input,
+        siteAddress: input.siteAddress || site?.address || (current.site.toLowerCase() === input.site.toLowerCase() ? current.siteAddress : "") || "",
         returnStatus: input.returnItem
           ? current.returnItem === input.returnItem && current.expectedReturnDate === input.expectedReturnDate
             ? current.returnStatus || "pending"

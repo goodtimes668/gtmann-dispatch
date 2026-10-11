@@ -35,6 +35,7 @@ export type Booking = {
   requesterEmail: string;
   requesterId: string;
   site: string;
+  siteAddress?: string;
   pickupLocation: string;
   description: string;
   date: string;

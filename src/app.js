@@ -28,6 +28,10 @@ var siteAddressSuggestions = [];
 var siteAddressTimer = null;
 var siteAddressEpoch = 0;
 var selectedSiteAddress = '';
+var bookingAddressSuggestions = [];
+var bookingAddressTimer = null;
+var bookingAddressEpoch = 0;
+var selectedBookingAddress = '';
 var siteRoutePending = false;
 
 var bookings = [];
@@ -431,19 +435,78 @@ function currentSiteName(){
   if(v==='__other__') return (el('fSiteOther')?el('fSiteOther').value.trim():'');
   return v;
 }
+function currentSiteAddress(){
+  var v=el('fSite')?el('fSite').value:'';
+  if(v==='__other__') return (el('fSiteAddress')?el('fSiteAddress').value.trim():'');
+  var match=sites.find(function(s){ return s.name===v; });
+  return match&&match.address?match.address:'';
+}
+function hideBookingAddressSuggestions(){
+  var list=el('fSiteAddressResults'); if(!list) return;
+  list.classList.add('hidden');
+  el('fSiteAddress').setAttribute('aria-expanded','false');
+}
+function renderBookingAddressSuggestions(message){
+  var list=el('fSiteAddressResults'); if(!list) return;
+  if(message) list.innerHTML='<div class="address-message">'+esc(message)+'</div>';
+  else list.innerHTML=bookingAddressSuggestions.map(function(suggestion,index){
+    return '<button type="button" class="address-option" role="option" data-action="choose-booking-address" data-address-index="'+index+'">'+esc(suggestion.label)+'</button>';
+  }).join('');
+  list.classList.remove('hidden');
+  el('fSiteAddress').setAttribute('aria-expanded','true');
+}
+function onBookingAddressInput(){
+  var query=el('fSiteAddress').value.trim();
+  selectedBookingAddress='';
+  if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+  var epoch=++bookingAddressEpoch;
+  if(query.length<3){ hideBookingAddressSuggestions(); return; }
+  renderBookingAddressSuggestions('Searching addresses…');
+  bookingAddressTimer=setTimeout(async function(){
+    try{
+      var result=await apiRequest('GET','/locations?q='+encodeURIComponent(query));
+      if(epoch!==bookingAddressEpoch) return;
+      bookingAddressSuggestions=Array.isArray(result.suggestions)?result.suggestions:[];
+      if(bookingAddressSuggestions.length) renderBookingAddressSuggestions();
+      else renderBookingAddressSuggestions('No matching B.C. addresses found. Add the city or postal code and try again.');
+    }catch(error){
+      if(epoch!==bookingAddressEpoch) return;
+      renderBookingAddressSuggestions('Address lookup is unavailable right now. Please try again.');
+    }
+  },350);
+}
+function chooseBookingAddress(index){
+  var suggestion=bookingAddressSuggestions[index]; if(!suggestion) return;
+  selectedBookingAddress=suggestion.address;
+  el('fSiteAddress').value=suggestion.address;
+  hideBookingAddressSuggestions();
+}
 function onSiteChange(){
-  el('fSiteOtherWrap').className=el('fSite').value==='__other__'?'':'hidden';
+  var other=el('fSite').value==='__other__';
+  el('fSiteOtherWrap').className=other?'':'hidden';
+  if(!other){
+    el('fSiteOther').value='';
+    el('fSiteAddress').value='';
+    selectedBookingAddress='';
+    if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+    bookingAddressEpoch++;
+    hideBookingAddressSuggestions();
+  }
   renderCostEstimate();
 }
-function setSiteField(name){
+function setSiteField(name,address){
   var match=sites.some(function(s){ return s.name===name; });
   if(name&&!match){
     el('fSite').value='__other__';
     if(el('fSiteOther')) el('fSiteOther').value=name;
+    if(el('fSiteAddress')) el('fSiteAddress').value=address||'';
+    selectedBookingAddress=address||'';
     el('fSiteOtherWrap').className='';
   } else {
     el('fSite').value=name||'';
     if(el('fSiteOther')) el('fSiteOther').value='';
+    if(el('fSiteAddress')) el('fSiteAddress').value='';
+    selectedBookingAddress='';
     el('fSiteOtherWrap').className='hidden';
   }
 }
@@ -743,7 +806,8 @@ function cardHTML(b,runsheet){
   if(b.photo||b.photoId) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
   var loc='';
   if(runsheet&&(b.pickupLocation||b.site)){
-    loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(b.pickupLocation||b.site)+'</div>';
+    var runLocation=b.pickupLocation||[b.site,b.siteAddress].filter(Boolean).join(' · ');
+    loc='<div class="sub" style="display:flex;align-items:center;gap:5px;margin-top:6px">'+ico('mappin',12,'var(--faint)')+esc(runLocation)+'</div>';
   }
   if(runsheet&&(b.assignedDriver||b.vehicle)) loc+='<div class="sub" style="margin-top:5px">'+esc(b.assignedDriver||'Driver not assigned')+' · '+esc(vehicleLabel(b.vehicle)||'Truck not assigned')+'</div>';
   return '<div class="bcard bk'+(runsheet?' runsheet':'')+(urgent?' urgent':'')+'" role="button" tabindex="0" aria-label="Open '+esc(lb[b.type]||b.type)+' booking" data-action="open-detail" data-booking-id="'+esc(b.id)+'">'
@@ -857,7 +921,7 @@ function openDetail(id){
   var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:18px;font-weight:800;display:flex;align-items:center;gap:9px">'+ico(ic[b.type]||'clipboard',19,'var(--yellow)')+esc(lb[b.type]||b.type)+'</span><button data-action="close-detail" class="closebtn" aria-label="Close">'+ico('x',15)+'</button></div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">'
     +'<div><div class="dl">From</div><div class="dv">'+esc(b.requester||'—')+'</div></div>'
-    +'<div><div class="dl">Site</div><div class="dv">'+esc(b.site||'—')+'</div></div>'
+    +'<div><div class="dl">Site</div><div class="dv">'+esc(b.site||'—')+(b.siteAddress?'<div class="sub">'+esc(b.siteAddress)+'</div>':'')+'</div></div>'
     +'<div><div class="dl">Date</div><div class="dv" style="color:var(--yellow)">'+fmtD(b.date)+'</div></div>'
     +'<div><div class="dl">Time</div><div class="dv">'+esc(timeWindowLabel(b))+'</div></div></div>';
   if(b.pickupLocation) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Pickup Location</div><div class="dbox">'+esc(b.pickupLocation)+'</div></div>';
@@ -1093,7 +1157,7 @@ function startEdit(id){
   curPhotoPreviewUrl=null; curPhotoFile=null; curPhoto=b.photo||null; bundleRequested=b.bundleRequested===true;
   el('fTitle').textContent='Edit Booking';
   el('fWho').value=b.requester||''; el('fWho').readOnly=true;
-  setSiteField(b.site||'');
+  setSiteField(b.site||'',b.siteAddress||'');
   el('fDesc').value=b.description||'';
   el('fDate').min=''; el('fDate').value=b.date||today();
   el('fTime').value=b.time||''; el('fTimeWindow').value=b.timeWindow||(b.time?'specific':'anytime'); setTimeWindow(el('fTimeWindow').value);
@@ -1106,18 +1170,25 @@ function startEdit(id){
   showOverlay('formOverlay');
 }
 
-function closeForm(){ hideOverlay('formOverlay'); }
+function closeForm(){
+  if(bookingAddressTimer) clearTimeout(bookingAddressTimer);
+  bookingAddressEpoch++;
+  hideBookingAddressSuggestions();
+  hideOverlay('formOverlay');
+}
 function closeDetail(){ hideOverlay('detailOverlay'); }
 
 async function submitBooking(){
   var desc=el('fDesc').value.trim();
   var date=el('fDate').value;
   var siteName=currentSiteName();
+  var siteAddress=currentSiteAddress();
   var pickup=el('fPickup').value.trim();
   if(!desc||!date){ toast('Description and date are required','err'); return; }
   if((curType==='delivery'||curType==='tool-delivery')&&!siteName){ toast('Select or enter a job site','err'); return; }
   if((curType==='pickup'||curType==='tool-delivery')&&!pickup){ toast('Enter the pickup location','err'); return; }
-  if(el('fSite').value==='__other__'&&!siteName){ alert('Enter the job site name.'); return; }
+  if(el('fSite').value==='__other__'&&!siteName){ toast('Enter the jobsite name','err'); el('fSiteOther').focus(); return; }
+  if(el('fSite').value==='__other__'&&(curType==='delivery'||curType==='tool-delivery')&&(!siteAddress||siteAddress!==selectedBookingAddress)){ toast('Choose a jobsite address from the suggestions','err'); el('fSiteAddress').focus(); return; }
   var returnItem=el('fReturnItem').value.trim(), returnDate=el('fReturnDate').value;
   if(Boolean(returnItem)!==Boolean(returnDate)){ toast('Enter both the return item and expected return date','err'); return; }
   var timeWindow=el('fTimeWindow').value;
@@ -1126,7 +1197,7 @@ async function submitBooking(){
   var editing=!!editId;
   btn.textContent=editing?'Saving...':'Submitting...'; btn.disabled=true;
 
-  var fields={type:curType,site:siteName,description:desc,date:date,time:el('fTime').value,timeWindow:timeWindow,onsiteContact:el('fContact').value.trim(),helperRequired:el('fHelper').checked,returnItem:returnItem,expectedReturnDate:returnDate,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested};
+  var fields={type:curType,site:siteName,siteAddress:siteAddress,description:desc,date:date,time:el('fTime').value,timeWindow:timeWindow,onsiteContact:el('fContact').value.trim(),helperRequired:el('fHelper').checked,returnItem:returnItem,expectedReturnDate:returnDate,priority:curPri,notes:el('fNotes').value,pickupLocation:pickup,bundleRequested:bundleRequested};
 
   try{
     if(editing){
@@ -1370,11 +1441,15 @@ function closeTopOverlay(){
 }
 
 document.addEventListener('keydown',function(event){
-  if(event.target.id==='sfAddress'&&event.key==='ArrowDown'&&!el('sfAddressResults').classList.contains('hidden')){
-    var first=el('sfAddressResults').querySelector('button'); if(first){ event.preventDefault(); first.focus(); } return;
+  if((event.target.id==='sfAddress'&&event.key==='ArrowDown'&&!el('sfAddressResults').classList.contains('hidden'))||(event.target.id==='fSiteAddress'&&event.key==='ArrowDown'&&!el('fSiteAddressResults').classList.contains('hidden'))){
+    var resultId=event.target.id==='sfAddress'?'sfAddressResults':'fSiteAddressResults';
+    var first=el(resultId).querySelector('button'); if(first){ event.preventDefault(); first.focus(); } return;
   }
   if(event.target.id==='sfAddress'&&event.key==='Escape'&&!el('sfAddressResults').classList.contains('hidden')){
     event.preventDefault(); hideAddressSuggestions(); return;
+  }
+  if(event.target.id==='fSiteAddress'&&event.key==='Escape'&&!el('fSiteAddressResults').classList.contains('hidden')){
+    event.preventDefault(); hideBookingAddressSuggestions(); return;
   }
   if(event.key==='Escape') return closeTopOverlay();
   if((event.key==='Enter'||event.key===' ')&&event.target.matches('[role="button"][data-action]')){
@@ -1402,6 +1477,7 @@ document.addEventListener('change',function(event){
 });
 document.addEventListener('input',function(event){
   if(event.target.id==='fSiteOther') renderCostEstimate();
+  else if(event.target.id==='fSiteAddress') onBookingAddressInput();
   else if(event.target.id==='sfAddress') onSiteAddressInput();
 });
 document.addEventListener('click',function(event){
@@ -1427,6 +1503,7 @@ document.addEventListener('click',function(event){
   else if(action==='close-site') closeSiteForm();
   else if(action==='save-site') saveSite();
   else if(action==='choose-site-address') chooseSiteAddress(Number(target.dataset.addressIndex));
+  else if(action==='choose-booking-address') chooseBookingAddress(Number(target.dataset.addressIndex));
   else if(action==='delete-site') deleteSite();
   else if(action==='save-role') saveUserRole(target.dataset.userId);
   else if(action==='create-backup') createManagerBackup();

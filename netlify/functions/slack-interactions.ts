@@ -87,6 +87,7 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
         ...input,
         // Use the saved site's exact name so cost estimates and bundling match typed input.
         site: site?.name || input.site,
+        siteAddress: site?.address || input.siteAddress || "",
         ...estimateDispatch(input.type, site),
         source: "slack",
         slackUserId: actor.id,

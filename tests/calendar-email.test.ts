@@ -42,6 +42,10 @@ describe("approval calendar attachment", () => {
     expect(calendar).toContain("STATUS:CONFIRMED");
   });
 
+  it("uses the entered jobsite address as the calendar location", () => {
+    const calendar = buildApprovalCalendar(booking({ siteAddress: "52 Cedar Road, Surrey, BC" }));
+    expect(calendar).toContain("LOCATION:52 Cedar Road\\, Surrey\\, BC");
+  });
   it("creates an all-day event when no booking time is provided", () => {
     const calendar = buildApprovalCalendar(booking({ time: "" }));
     expect(calendar).toContain("DTSTART;VALUE=DATE:20260901");
