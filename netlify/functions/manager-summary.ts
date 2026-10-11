@@ -44,8 +44,8 @@ function buildOwnerReport(params: {
   pending: number;
   unassignedActive: number;
   overdueReturns: number;
-  matchedSavings: number;
-  potentialSavings: number;
+  matchedBundleCost: number;
+  queuedBundleCost: number;
   avgApprovalHours: number | null;
   busiestSite: string;
 }) {
@@ -53,7 +53,7 @@ function buildOwnerReport(params: {
     `${params.bookings.length} dispatch request${params.bookings.length === 1 ? "" : "s"} in the selected range with $${Math.round(params.cost)} estimated dispatch cost.`,
     `${params.completed} completed dispatch${params.completed === 1 ? "" : "es"}; ${params.pending} awaiting approval; ${params.urgentOpen} urgent still open.`,
     `${params.unassignedActive} approved or in-progress dispatch${params.unassignedActive === 1 ? "" : "es"} still need a driver or truck assigned.`,
-    `$${Math.round(params.matchedSavings)} estimated savings protected from matched bundled trips; $${Math.round(params.potentialSavings)} more is waiting in queued bundle requests.`,
+    `${Math.round(params.matchedBundleCost)} estimated trip cost across matched bundle requests; ${Math.round(params.queuedBundleCost)} estimated trip cost across queued bundle requests.`,
   ];
   if (params.avgApprovalHours !== null) bullets.push(`Average approval time is ${params.avgApprovalHours.toFixed(1)} hours.`);
   if (params.busiestSite) bullets.push(`${params.busiestSite} is the busiest jobsite for this range.`);
@@ -62,12 +62,12 @@ function buildOwnerReport(params: {
   const nextActions = [];
   if (params.pending) nextActions.push("Clear pending approvals before the next dispatch window.");
   if (params.unassignedActive) nextActions.push("Assign a driver and truck to active approved work.");
-  if (params.potentialSavings) nextActions.push("Bundle queued non-urgent trips with the next site run.");
+  if (params.queuedBundleCost) nextActions.push("Review queued bundle requests and confirm which trips can share a site run.");
   if (params.overdueReturns) nextActions.push("Recover overdue equipment returns.");
-  if (!nextActions.length) nextActions.push("Keep tracking requests so the savings number can be shown weekly.");
+  if (!nextActions.length) nextActions.push("Keep tracking estimated dispatch costs and completed work weekly.");
 
   return {
-    headline: `Dispatch report: ${params.bookings.length} requests, $${Math.round(params.cost)} cost, $${Math.round(params.matchedSavings)} saved`,
+    headline: `Dispatch report: ${params.bookings.length} requests, $${Math.round(params.cost)} cost, $${Math.round(params.matchedBundleCost)} matched trip cost`,
     bullets,
     nextActions,
   };
@@ -100,8 +100,8 @@ export default async (req: Request, _context: Context) => {
     let overdueReturns = 0;
     let bundleMatched = 0;
     let bundleQueued = 0;
-    let matchedSavings = 0;
-    let potentialSavings = 0;
+    let matchedBundleCost = 0;
+    let queuedBundleCost = 0;
     const approvalHours: number[] = [];
     const completionDays: number[] = [];
 
@@ -134,11 +134,11 @@ export default async (req: Request, _context: Context) => {
       if (booking.bundleStatus === "matched") {
         bundleMatched += 1;
         sites[key].bundled += 1;
-        if (booking.status !== "declined") matchedSavings += amount;
+        if (booking.status !== "declined") matchedBundleCost += amount;
       }
       if (booking.bundleStatus === "queued") {
         bundleQueued += 1;
-        if (booking.status !== "declined" && booking.status !== "completed") potentialSavings += amount;
+        if (booking.status !== "declined" && booking.status !== "completed") queuedBundleCost += amount;
       }
 
       const approval = hoursBetween(booking.createdAt, booking.approvedAt);
@@ -162,8 +162,8 @@ export default async (req: Request, _context: Context) => {
       pending,
       unassignedActive,
       overdueReturns,
-      matchedSavings,
-      potentialSavings,
+      matchedBundleCost,
+      queuedBundleCost,
       avgApprovalHours: avgApproval === null ? null : Math.round(avgApproval * 10) / 10,
       busiestSite,
     });
@@ -183,8 +183,8 @@ export default async (req: Request, _context: Context) => {
       overdueReturns,
       bundleMatched,
       bundleQueued,
-      estimatedSavings: roundMoney(matchedSavings),
-      potentialSavings: roundMoney(potentialSavings),
+      matchedBundleCost: roundMoney(matchedBundleCost),
+      queuedBundleCost: roundMoney(queuedBundleCost),
       avgApprovalHours: avgApproval === null ? null : Math.round(avgApproval * 10) / 10,
       avgCompletionDays: avgCompletion === null ? null : Math.round(avgCompletion * 10) / 10,
       busiestSite,
