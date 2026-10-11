@@ -228,8 +228,14 @@
     </select>
 
     <div id="fSiteOtherWrap" class="hidden">
-      <label class="lbl" for="fSiteOther">Site Name</label>
-      <input id="fSiteOther" class="field" placeholder="Type the job site name" type="text"/>
+      <label class="lbl" for="fSiteOther">Site Name *</label>
+      <input id="fSiteOther" class="field" placeholder="Enter the jobsite name" type="text" maxlength="120"/>
+      <label class="lbl" for="fSiteAddress">Jobsite Address *</label>
+      <div class="address-picker">
+        <input id="fSiteAddress" class="field" placeholder="Start typing a street address" type="text" maxlength="240" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="fSiteAddressResults" aria-expanded="false"/>
+        <div id="fSiteAddressResults" class="address-results hidden" role="listbox" aria-label="Address suggestions"></div>
+      </div>
+      <div class="address-credit">Choose a suggested B.C. address. © OpenStreetMap contributors</div>
     </div>
 
     <div id="fPickupWrap" class="hidden">
