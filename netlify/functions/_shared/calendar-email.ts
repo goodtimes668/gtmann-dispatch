@@ -109,7 +109,7 @@ export function buildApprovalCalendar(booking: Booking) {
     `UID:${calendarEscape(booking.id)}@gtmann-dispatch.netlify.app`,
     `DTSTAMP:${utcStamp(booking.approvedAt || booking.updatedAt)}`,
     `SUMMARY:${calendarEscape(summary)}`,
-    `LOCATION:${calendarEscape(booking.site)}`,
+    `LOCATION:${calendarEscape(booking.siteAddress || booking.site)}`,
     `DESCRIPTION:${calendarEscape(descriptionLines(booking))}`,
     "STATUS:CONFIRMED",
     "TRANSP:OPAQUE",
