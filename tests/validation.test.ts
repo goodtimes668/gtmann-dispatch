@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HttpError } from "../netlify/functions/_shared/http";
-import { isISODate, validateBookingInput, validateDispatchAssignment, validateSiteInput } from "../netlify/functions/_shared/validation";
+import { isISODate, validateBookingInput, validateCompletionInput, validateDispatchAssignment, validateSiteInput } from "../netlify/functions/_shared/validation";
 
 const validBooking = {
   type: "delivery",
@@ -72,6 +72,19 @@ describe("booking validation", () => {
   it("restricts assignment trucks to the dispatch fleet", () => {
     expect(validateDispatchAssignment({ assignedDriver: " Brent ", vehicle: "flat-deck" })).toEqual({ assignedDriver: "Brent", vehicle: "flat-deck" });
     expect(() => validateDispatchAssignment({ assignedDriver: "Driver", vehicle: "forklift" })).toThrow("Invalid vehicle");
+  });
+
+  it("accepts completion proof fields and rejects forged completion photo IDs", () => {
+    expect(validateCompletionInput({
+      receivedBy: " Site lead ",
+      completionNotes: " Left inside the gate ",
+      completionPhotoId: "123e4567-e89b-42d3-a456-426614174000",
+    })).toEqual({
+      receivedBy: "Site lead",
+      completionNotes: "Left inside the gate",
+      completionPhotoId: "123e4567-e89b-42d3-a456-426614174000",
+    });
+    expect(() => validateCompletionInput({ completionPhotoId: "../../photo" })).toThrow("Invalid completion photo ID");
   });
 });
 

@@ -91,6 +91,18 @@ export function validateDispatchAssignment(input: unknown) {
   };
 }
 
+export function validateCompletionInput(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "Invalid completion proof");
+  const body = input as Record<string, unknown>;
+  const completionPhotoId = body.completionPhotoId == null || body.completionPhotoId === "" ? null : text(body.completionPhotoId, "Completion photo", 100, true);
+  if (completionPhotoId && !isUuid(completionPhotoId)) throw new HttpError(422, "Invalid completion photo ID");
+  return {
+    completionPhotoId,
+    completionNotes: text(body.completionNotes, "Completion notes", 1000),
+    receivedBy: text(body.receivedBy, "Received by", 120),
+  };
+}
+
 export function validateSiteInput(input: unknown): Omit<Site, "version" | "createdAt" | "updatedAt"> {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "Invalid site");
   const body = input as Record<string, unknown>;
