@@ -83,6 +83,7 @@ export async function notifyNewBooking(booking: Booking) {
         { type: "mrkdwn", text: `*Type:*\n${mrkdwn(type)}` },
         { type: "mrkdwn", text: `*From:*\n${mrkdwn(booking.requester)}` },
         { type: "mrkdwn", text: `*Site:*\n${mrkdwn(booking.site || "TBD")}` },
+        { type: "mrkdwn", text: `*Address:*\n${mrkdwn(booking.siteAddress || "Not provided")}` },
         { type: "mrkdwn", text: `*Date:*\n${mrkdwn(booking.date)} · ${mrkdwn(requestedTime(booking))}` },
         { type: "mrkdwn", text: `*Priority:*\n${mrkdwn(priority)}` },
       ] },
