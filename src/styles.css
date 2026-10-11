@@ -46,6 +46,14 @@ svg{display:block;flex-shrink:0}
 .card{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:16px;margin-bottom:12px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
+.manager-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.manager-report{background:var(--card);border:1px solid var(--border-soft);border-left:3px solid var(--green);border-radius:14px;padding:14px;margin-bottom:12px}
+.manager-report .ttl{font-size:15px;font-weight:800;margin-bottom:4px}
+.manager-report .sub{font-size:13px;color:var(--dim);line-height:1.45;margin-bottom:10px}
+.manager-report-text{min-height:190px;font-size:13px;line-height:1.45;background:var(--card2)}
+.insight-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.insight-num{font-size:18px;font-weight:800;color:var(--amber);white-space:nowrap}
+
 .stat{background:var(--card);border:1px solid var(--border-soft);border-radius:14px;padding:14px;margin-bottom:0;position:relative;overflow:hidden}
 .stat .sic{margin-bottom:10px}
 .stat .num{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:800;line-height:1}

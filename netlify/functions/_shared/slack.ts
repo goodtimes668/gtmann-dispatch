@@ -95,11 +95,16 @@ export async function notifyNewBooking(booking: Booking) {
         { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
       ] },
     ];
-  await Promise.all([...targets].map((channel) => slackCall("chat.postMessage", {
+  const results = await Promise.all([...targets].map((channel) => slackCall("chat.postMessage", {
     channel,
     text: `New dispatch request from ${mrkdwn(booking.requester)}`,
     blocks,
   })));
+  const ok = results.some((result) => result?.ok);
+  return {
+    ok,
+    error: ok ? "" : results.map((result) => result?.error || "not sent").join("; "),
+  };
 }
 
 export async function notifyStatus(booking: Booking) {
