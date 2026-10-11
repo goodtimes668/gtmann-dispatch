@@ -43,6 +43,11 @@ export type Booking = {
   notes: string;
   brentNotes: string;
   photoId: string | null;
+  completionPhotoId?: string | null;
+  completionNotes?: string;
+  completedBy?: string;
+  completedById?: string;
+  receivedBy?: string;
   estCost: number;
   estMinutes: number;
   estKm: number;

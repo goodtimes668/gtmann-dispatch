@@ -1,8 +1,8 @@
 import type { Config, Context } from "@netlify/functions";
 import { requireUser } from "./_shared/auth";
 import { handleError, HttpError, json } from "./_shared/http";
-import { listBookings } from "./_shared/stores";
-import type { Booking } from "./_shared/types";
+import { listBookings, listSites } from "./_shared/stores";
+import type { Booking, Site } from "./_shared/types";
 import { isISODate } from "./_shared/validation";
 
 type SiteSummary = {
@@ -11,6 +11,7 @@ type SiteSummary = {
   declined: number;
   urgent: number;
   bundled: number;
+  proof: number;
 };
 
 function roundMoney(value: number) {
@@ -36,6 +37,23 @@ function bookingCost(booking: Booking) {
   return typeof booking.estCost === "number" && Number.isFinite(booking.estCost) ? booking.estCost : 0;
 }
 
+function normalizeSiteName(value: string) {
+  return value.trim().toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function titleCaseSite(value: string) {
+  return value.trim().replace(/\s+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function siteLookup(sites: Site[]) {
+  const lookup = new Map<string, string>();
+  for (const site of sites) {
+    const key = normalizeSiteName(site.name);
+    if (key) lookup.set(key, site.name);
+  }
+  return lookup;
+}
+
 function buildOwnerReport(params: {
   bookings: Booking[];
   cost: number;
@@ -46,14 +64,16 @@ function buildOwnerReport(params: {
   overdueReturns: number;
   matchedBundleCost: number;
   queuedBundleCost: number;
+  completionProofs: number;
   avgApprovalHours: number | null;
   busiestSite: string;
 }) {
   const bullets = [
     `${params.bookings.length} dispatch request${params.bookings.length === 1 ? "" : "s"} in the selected range with $${Math.round(params.cost)} estimated dispatch cost.`,
     `${params.completed} completed dispatch${params.completed === 1 ? "" : "es"}; ${params.pending} awaiting approval; ${params.urgentOpen} urgent still open.`,
+    `${params.completionProofs} completed dispatch${params.completionProofs === 1 ? " has" : "es have"} receiver notes, sign-off, or photo proof attached.`,
     `${params.unassignedActive} approved or in-progress dispatch${params.unassignedActive === 1 ? "" : "es"} still need a driver or truck assigned.`,
-    `${Math.round(params.matchedBundleCost)} estimated trip cost across matched bundle requests; ${Math.round(params.queuedBundleCost)} estimated trip cost across queued bundle requests.`,
+    `$${Math.round(params.matchedBundleCost)} estimated trip cost across matched bundle requests; $${Math.round(params.queuedBundleCost)} estimated trip cost across queued bundle requests.`,
   ];
   if (params.avgApprovalHours !== null) bullets.push(`Average approval time is ${params.avgApprovalHours.toFixed(1)} hours.`);
   if (params.busiestSite) bullets.push(`${params.busiestSite} is the busiest jobsite for this range.`);
@@ -84,8 +104,13 @@ export default async (req: Request, _context: Context) => {
     }
 
     const today = new Date().toISOString().slice(0, 10);
-    const bookings = (await listBookings()).filter((booking) => (!from || booking.date >= from) && (!to || booking.date <= to));
+    const [bookings, savedSites] = await Promise.all([
+      listBookings().then((items) => items.filter((booking) => (!from || booking.date >= from) && (!to || booking.date <= to))),
+      listSites(),
+    ]);
+    const savedSiteNames = siteLookup(savedSites);
     const sites: Record<string, SiteSummary> = {};
+    const siteNames: Record<string, string> = {};
 
     let cost = 0;
     let declined = 0;
@@ -102,13 +127,16 @@ export default async (req: Request, _context: Context) => {
     let bundleQueued = 0;
     let matchedBundleCost = 0;
     let queuedBundleCost = 0;
+    let completionProofs = 0;
     const approvalHours: number[] = [];
     const completionDays: number[] = [];
 
     for (const booking of bookings) {
       const amount = bookingCost(booking);
-      const key = booking.site || "(No Site)";
-      sites[key] ||= { count: 0, cost: 0, declined: 0, urgent: 0, bundled: 0 };
+      const normalizedSite = normalizeSiteName(booking.site || "");
+      const key = normalizedSite || "(No Site)";
+      siteNames[key] ||= savedSiteNames.get(normalizedSite) || titleCaseSite(booking.site || "") || "(No Site)";
+      sites[key] ||= { count: 0, cost: 0, declined: 0, urgent: 0, bundled: 0, proof: 0 };
       sites[key].count += 1;
 
       if (booking.status === "declined") {
@@ -120,6 +148,10 @@ export default async (req: Request, _context: Context) => {
       }
 
       if (booking.status === "completed") completed += 1;
+      if (booking.status === "completed" && (booking.completionPhotoId || booking.completionNotes || booking.receivedBy)) {
+        completionProofs += 1;
+        sites[key].proof += 1;
+      }
       if (booking.status === "pending") pending += 1;
       if (booking.status === "approved" || booking.status === "in-progress") active += 1;
       if (booking.priority === "urgent") sites[key].urgent += 1;
@@ -148,7 +180,7 @@ export default async (req: Request, _context: Context) => {
     }
 
     const bySite = Object.entries(sites)
-      .map(([name, value]) => ({ name, ...value, cost: roundMoney(value.cost) }))
+      .map(([key, value]) => ({ name: siteNames[key] || key, ...value, cost: roundMoney(value.cost) }))
       .sort((a, b) => b.cost - a.cost || b.count - a.count);
     const busiestSite = bySite[0]?.name === "(No Site)" ? "" : bySite[0]?.name || "";
     const avgApproval = average(approvalHours);
@@ -164,6 +196,7 @@ export default async (req: Request, _context: Context) => {
       overdueReturns,
       matchedBundleCost,
       queuedBundleCost,
+      completionProofs,
       avgApprovalHours: avgApproval === null ? null : Math.round(avgApproval * 10) / 10,
       busiestSite,
     });
@@ -185,6 +218,7 @@ export default async (req: Request, _context: Context) => {
       bundleQueued,
       matchedBundleCost: roundMoney(matchedBundleCost),
       queuedBundleCost: roundMoney(queuedBundleCost),
+      completionProofs,
       avgApprovalHours: avgApproval === null ? null : Math.round(avgApproval * 10) / 10,
       avgCompletionDays: avgCompletion === null ? null : Math.round(avgCompletion * 10) / 10,
       busiestSite,

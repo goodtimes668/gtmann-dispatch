@@ -11,6 +11,10 @@ vi.mock("@netlify/blobs", () => ({
     const data = blobs.get(name)!;
     return {
       get: async (key: string) => data.get(key)?.value ?? null,
+      setJSON: async (key: string, value: unknown) => {
+        data.set(key, { value });
+        return { modified: true };
+      },
       list: async ({ prefix = "" }: { prefix?: string } = {}) => ({
         blobs: [...data.keys()].filter((key) => key.startsWith(prefix)).map((key) => ({ key })),
       }),
@@ -70,15 +74,17 @@ describe("manager summary value dashboard", () => {
     putBooking({ id: "e", date: "2026-10-05", status: "pending", bundleRequested: true, bundleStatus: "queued", estCost: 35 });
     putBooking({ id: "f", date: "2026-10-06", status: "approved", returnItem: "laser", expectedReturnDate: "2000-01-01", returnStatus: "pending", estCost: 20 });
     putBooking({ id: "g", date: "2026-10-07", status: "declined", estCost: 999 });
+    putBooking({ id: "h", date: "2026-10-08", status: "completed", site: "Grand and fir", receivedBy: "Site Lead", estCost: 25 });
 
     const response = await handler(new Request("https://example.com/api/manager-summary?from=2026-10-01&to=2026-10-31"), {} as any);
     expect(response.status).toBe(200);
     const body = await response.json();
 
-    expect(body.bookings).toBe(7);
-    expect(body.cost).toBe(310);
+    expect(body.bookings).toBe(8);
+    expect(body.cost).toBe(335);
     expect(body.declined).toBe(1);
-    expect(body.completed).toBe(1);
+    expect(body.completed).toBe(2);
+    expect(body.completionProofs).toBe(1);
     expect(body.urgentOpen).toBe(1);
     expect(body.pending).toBe(2);
     expect(body.unassignedActive).toBe(3);
@@ -91,7 +97,7 @@ describe("manager summary value dashboard", () => {
     expect(body.ownerReport.bullets.join(" ")).toContain("$45 estimated trip cost across matched bundle requests");
     expect(body.ownerReport.headline).toContain("$45 matched trip cost");
     expect(body.ownerReport.bullets.join(" ")).not.toContain("savings");
-    expect(body.bySite[0]).toMatchObject({ name: "Grand & Fir", count: 7, urgent: 1, bundled: 1 });
+    expect(body.bySite[0]).toMatchObject({ name: "Grand & Fir", count: 8, urgent: 1, bundled: 1, proof: 1 });
   });
 
   it("rejects non-manager access", async () => {

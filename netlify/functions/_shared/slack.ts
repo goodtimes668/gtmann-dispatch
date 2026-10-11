@@ -120,16 +120,24 @@ export async function notifyNewBooking(booking: Booking) {
 
 export async function notifyStatus(booking: Booking) {
   const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
-  if (!channel) return;
   const type = labels[booking.type] || booking.type;
   const messages: Partial<Record<Booking["status"], string>> = {
     approved: `Booking approved: ${type} for ${booking.site} on ${booking.date}`,
     declined: `Booking declined: ${type} for ${booking.site}`,
     "in-progress": `Dispatch started: ${type} for ${booking.site}`,
-    completed: `Job completed: ${type} for ${booking.site}`,
+    completed: [
+      `Job completed: ${type} for ${booking.site}`,
+      booking.receivedBy ? `Received by: ${booking.receivedBy}` : "",
+      booking.completionNotes ? `Proof notes: ${booking.completionNotes}` : "",
+      booking.completionPhotoId ? "Completion photo attached in Dispatch." : "",
+    ].filter(Boolean).join("\n"),
   };
   const text = messages[booking.status];
-  if (text) await slackCall("chat.postMessage", { channel, text: mrkdwn(text) });
+  if (!text) return;
+  const sends = [];
+  if (channel) sends.push(slackCall("chat.postMessage", { channel, text: mrkdwn(text) }));
+  if (booking.slackUserId) sends.push(notifySlackUser(booking.slackUserId, text));
+  await Promise.all(sends);
 }
 
 export async function notifyAssignment(booking: Booking) {

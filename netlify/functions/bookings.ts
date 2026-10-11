@@ -10,7 +10,7 @@ import { enforceRateLimit } from "./_shared/rate-limit";
 import { bindPhotoToBooking, createBookingRecord, deleteBookingRecord, getBooking, getBookingVersioned, listBookings, listSites, photosStore, saveBookingIfMatch, unbindPhoto } from "./_shared/stores";
 import { notifyAssignment, notifyNewBooking, notifyReturn, notifyStatus } from "./_shared/slack";
 import type { Booking } from "./_shared/types";
-import { idempotencyKey, isBookingId, validateBookingInput, validateDispatchAssignment, validateStatus, validateVersion } from "./_shared/validation";
+import { idempotencyKey, isBookingId, validateBookingInput, validateCompletionInput, validateDispatchAssignment, validateStatus, validateVersion } from "./_shared/validation";
 import { canTransition } from "./_shared/workflow";
 
 async function assertPhotoOwner(photoId: string | null, userId: string) {
@@ -23,13 +23,14 @@ async function assertPhotoOwner(photoId: string | null, userId: string) {
 function publicBooking(booking: Booking, user: { id: string; email: string; roles: string[] }) {
   const full = user.roles.includes("dispatcher") || user.roles.includes("manager");
   const photo = booking.photoId ? `/api/photos/${encodeURIComponent(booking.photoId)}` : null;
+  const completionPhoto = booking.completionPhotoId ? `/api/photos/${encodeURIComponent(booking.completionPhotoId)}` : null;
   const owner = ownsBooking(booking, user);
   const canEdit = full || (owner && booking.status === "pending");
-  if (full) return { ...booking, photo, canEdit };
+  if (full) return { ...booking, photo, completionPhoto, canEdit };
   const { requesterId: _requesterId, requesterEmail: _requesterEmail, brentNotes: _brentNotes, estCost: _estCost, estMinutes: _estMinutes, estKm: _estKm, ...safe } = booking;
-  if (owner) return { ...safe, photo, canEdit };
-  const { notes: _notes, photoId: _photoId, ...teamSafe } = safe;
-  return { ...teamSafe, photo: null, canEdit };
+  if (owner) return { ...safe, photo, completionPhoto, canEdit };
+  const { notes: _notes, photoId: _photoId, completionPhotoId: _completionPhotoId, completionNotes: _completionNotes, receivedBy: _receivedBy, ...teamSafe } = safe;
+  return { ...teamSafe, photo: null, completionPhoto: null, canEdit };
 }
 
 async function createBooking(req: Request, context: Context) {
@@ -104,6 +105,8 @@ async function updateBooking(req: Request, context: Context, id: string) {
       if (!dispatcher) throw new HttpError(403, "Dispatcher access required");
       const status = validateStatus(body.status);
       if (!canTransition(current.status, status)) throw new HttpError(409, `Cannot change ${current.status} to ${status}`);
+      const completion = status === "completed" ? validateCompletionInput(body) : null;
+      if (completion?.completionPhotoId !== current.completionPhotoId) await assertPhotoOwner(completion?.completionPhotoId || null, user.id);
       updated = {
         ...current,
         status,
@@ -112,7 +115,14 @@ async function updateBooking(req: Request, context: Context, id: string) {
         updatedAt: new Date().toISOString(),
       };
       if (status === "approved") updated.approvedAt = updated.updatedAt;
-      if (status === "completed") updated.completedAt = updated.updatedAt;
+      if (status === "completed") {
+        updated.completedAt = updated.updatedAt;
+        updated.completedBy = user.name;
+        updated.completedById = user.id;
+        updated.completionPhotoId = completion?.completionPhotoId || null;
+        updated.completionNotes = completion?.completionNotes || "";
+        updated.receivedBy = completion?.receivedBy || "";
+      }
     } else {
       const input = validateBookingInput(body);
       const sites = await listSites();
@@ -138,6 +148,10 @@ async function updateBooking(req: Request, context: Context, id: string) {
     if (current.photoId && current.photoId !== updated.photoId) {
       context.waitUntil(Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]).then(() => undefined));
     }
+    if (updated.completionPhotoId && updated.completionPhotoId !== current.completionPhotoId) await bindPhotoToBooking(updated.completionPhotoId, updated.id);
+    if (current.completionPhotoId && current.completionPhotoId !== updated.completionPhotoId) {
+      context.waitUntil(Promise.all([photosStore().delete(`photo/${current.completionPhotoId}`), unbindPhoto(current.completionPhotoId)]).then(() => undefined));
+    }
     if (body.status !== undefined) context.waitUntil(notifyStatus(updated));
     if (body.assignment === true) context.waitUntil(notifyAssignment(updated));
     if (body.returnStatus === "returned") context.waitUntil(notifyReturn(updated));
@@ -160,6 +174,7 @@ async function removeBooking(req: Request, context: Context, id: string) {
     if (!current) throw new HttpError(404, "Booking not found");
     await deleteBookingRecord(id);
     if (current.photoId) await Promise.all([photosStore().delete(`photo/${current.photoId}`), unbindPhoto(current.photoId)]);
+    if (current.completionPhotoId) await Promise.all([photosStore().delete(`photo/${current.completionPhotoId}`), unbindPhoto(current.completionPhotoId)]);
     context.waitUntil(recordAudit(user, "booking.deleted", "booking", id, context, { status: current.status, site: current.site }));
     return { status: 200, value: { deleted: true } };
   });

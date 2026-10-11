@@ -41,7 +41,10 @@ var curPri = 'normal';
 var curPhoto = null;
 var curPhotoFile = null;
 var curPhotoPreviewUrl = null;
+var completionPhotoFile = null;
+var completionPhotoPreviewUrl = null;
 var bundleRequested = false;
+var lastManagerReportText = '';
 var editId = null;
 var calDate = new Date(); // month currently shown on the Calendar tab
 var overlayFocusStack = [];
@@ -315,7 +318,7 @@ async function apiCall(method,path,body,okMsg,options){
   try{
     if(options.photoFile){
       var uploaded=await uploadPhoto(options.photoFile,actionId+':photo');
-      body.photoId=uploaded.id;
+      body[options.photoField||'photoId']=uploaded.id;
       queuedPhoto=null;
     }
     var headers=method!=='GET'?{'Idempotency-Key':actionId}:{};
@@ -329,7 +332,7 @@ async function apiCall(method,path,body,okMsg,options){
         await Promise.all(prior.map(function(item){ return outboxDelete(item.id); }));
       }
       try{
-        await outboxPut({id:actionId,userId:currentUser.id,method:method,path:path,body:body,photoFile:queuedPhoto,createdAt:Date.now(),state:'pending'});
+        await outboxPut({id:actionId,userId:currentUser.id,method:method,path:path,body:body,photoFile:queuedPhoto,photoField:options.photoField||'photoId',createdAt:Date.now(),state:'pending'});
       }catch(storageError){
         toast('Could not save this change offline. Reconnect and try again.','err');
         throw new ApiError(507,'Offline storage is unavailable');
@@ -351,7 +354,7 @@ async function flushQueue(){
   for(var i=0;i<queue.length;i++){
     var item=queue[i];
     try{
-      if(item.photoFile){ var uploaded=await uploadPhoto(item.photoFile,item.id+':photo'); item.body.photoId=uploaded.id; }
+      if(item.photoFile){ var uploaded=await uploadPhoto(item.photoFile,item.id+':photo'); item.body[item.photoField||'photoId']=uploaded.id; }
       await apiRequest(item.method,item.path,item.body,{headers:{'Idempotency-Key':item.id}});
       await outboxDelete(item.id); synced++;
     }catch(error){
@@ -933,6 +936,14 @@ function openDetail(id){
   if(b.photo) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Photo</div><img class="dphoto" src="'+esc(b.photo)+'" alt="Booking photo"/></div>';
   if(b.notes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Notes</div><div class="dbox">'+esc(b.notes)+'</div></div>';
   if(b.brentNotes) html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Dispatcher Notes</div><div class="dbox" style="color:var(--yellow);border-color:rgba(245,197,24,0.25)">'+esc(b.brentNotes)+'</div></div>';
+  if(b.status==='completed'&&(b.completedBy||b.receivedBy||b.completionNotes||b.completionPhoto)){
+    html+='<div style="margin-bottom:14px"><div class="dl" style="margin-bottom:6px">Completion Proof</div><div class="dbox">'
+      +(b.completedBy?'<div><strong>Completed by:</strong> '+esc(b.completedBy)+'</div>':'')
+      +(b.receivedBy?'<div><strong>Received by:</strong> '+esc(b.receivedBy)+'</div>':'')
+      +(b.completionNotes?'<div style="margin-top:6px">'+esc(b.completionNotes)+'</div>':'')
+      +'</div></div>';
+    if(b.completionPhoto) html+='<div style="margin-bottom:14px"><img class="dphoto" src="'+esc(b.completionPhoto)+'" alt="Completion proof photo"/></div>';
+  }
   html+='<hr/>';
 
   if(disp&&!b._queued&&(b.status==='approved'||b.status==='in-progress'||b.status==='completed')){
@@ -952,7 +963,12 @@ function openDetail(id){
     } else if(b.status==='approved'){
       html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="in-progress" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px">'+ico('play',15)+'Start Job</button><button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="declined" class="btn-outline">Cancel</button></div>';
     } else if(b.status==='in-progress'){
-      html+='<button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="completed" class="btn-green" style="width:100%">'+ico('checkcircle',16)+'Mark Complete</button>';
+      html+='<div class="assignment-box"><div class="dl" style="margin-bottom:8px">Completion proof</div>'
+        +'<label class="sr-only" for="dReceivedBy">Received by</label><input id="dReceivedBy" class="field" maxlength="120" placeholder="Received by / site contact" style="margin-bottom:8px"/>'
+        +'<label class="sr-only" for="dCompletionNotes">Completion notes</label><textarea id="dCompletionNotes" class="field" maxlength="1000" placeholder="Drop-off location, condition, or sign-off notes..." style="margin-bottom:8px"></textarea>'
+        +'<button type="button" data-action="choose-completion-photo" class="btn-outline photobtn" id="completionPhotoBtn" style="width:100%;padding:12px">'+ico('camera',16)+'Attach Completion Photo</button>'
+        +'<div id="completionPhotoPrev"></div>'
+        +'<button data-action="set-status" data-booking-id="'+esc(b.id)+'" data-status="completed" class="btn-green" style="width:100%;margin-top:10px">'+ico('checkcircle',16)+'Mark Complete</button></div>';
     }
   } else if(b.status==='pending'){
     html+='<div style="text-align:center;color:var(--faint);font-size:12px;padding:4px 0 8px;font-family:\'JetBrains Mono\',monospace;letter-spacing:0.08em">AWAITING DISPATCHER APPROVAL</div>';
@@ -964,6 +980,7 @@ function openDetail(id){
     html+='<button data-action="delete-booking" data-booking-id="'+esc(b.id)+'" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('trash',15)+'Delete Booking</button>';
   }
   el('detailContent').innerHTML=html;
+  resetCompletionPhoto();
   showOverlay('detailOverlay');
 }
 
@@ -971,10 +988,18 @@ async function doStatus(id,status){
   var b=bookings.find(function(x){ return x.id===id; }); if(!b) return;
   var n=el('dNotes'); var notes=n?n.value:'';
   var payload={status:status,brentNotes:notes,version:b.version};
+  var options={queue:false};
+  if(status==='completed'){
+    payload.receivedBy=el('dReceivedBy')?el('dReceivedBy').value.trim():'';
+    payload.completionNotes=el('dCompletionNotes')?el('dCompletionNotes').value.trim():'';
+    options.photoFile=completionPhotoFile;
+    options.photoField='completionPhotoId';
+  }
   var msgs={approved:'Approved',declined:'Declined','in-progress':'Job started',completed:'Marked complete'};
   try{
-    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated',{queue:false});
+    var updated=await apiCall('PUT','/bookings/'+id,payload,msgs[status]||'Updated',options);
     Object.assign(b,updated);
+    resetCompletionPhoto();
     closeDetail(); renderAll();
     if(status==='approved'&&!b._queued) openDetail(id);
   }catch(error){ if(error.status===409) await loadData(); }
@@ -1064,6 +1089,52 @@ function renderPhotoPrev(){
 function removePhoto(){
   if(curPhotoPreviewUrl) URL.revokeObjectURL(curPhotoPreviewUrl);
   curPhotoPreviewUrl=null; curPhotoFile=null; curPhoto=null; renderPhotoPrev();
+}
+
+function resetCompletionPhoto(){
+  if(completionPhotoPreviewUrl) URL.revokeObjectURL(completionPhotoPreviewUrl);
+  completionPhotoPreviewUrl=null; completionPhotoFile=null;
+}
+
+function renderCompletionPhotoPrev(){
+  var p=el('completionPhotoPrev'); if(!p) return;
+  if(completionPhotoPreviewUrl){
+    p.innerHTML='<div class="photoprev"><img src="'+completionPhotoPreviewUrl+'" alt="Completion proof preview"/><button data-action="remove-completion-photo" aria-label="Remove completion photo">'+ico('x',14)+'</button></div>';
+    if(el('completionPhotoBtn')) el('completionPhotoBtn').classList.add('hidden');
+  } else {
+    p.innerHTML='';
+    if(el('completionPhotoBtn')) el('completionPhotoBtn').classList.remove('hidden');
+  }
+}
+
+function handleCompletionPhoto(input){
+  var f=input.files&&input.files[0]; if(!f) return;
+  if(!/^image\/(jpeg|png|webp)$/.test(f.type)){ toast('Use a JPEG, PNG, or WebP photo','err'); input.value=''; return; }
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var max=1600, w=img.width, h=img.height;
+      if(w>max||h>max){ var r=Math.min(max/w,max/h); w=Math.round(w*r); h=Math.round(h*r); }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(function(blob){
+        if(!blob||blob.size>5*1024*1024){ toast('Photo is larger than 5MB after compression','err'); return; }
+        resetCompletionPhoto();
+        completionPhotoFile=new File([blob],'completion-'+Date.now()+'.jpg',{type:'image/jpeg'});
+        completionPhotoPreviewUrl=URL.createObjectURL(completionPhotoFile);
+        renderCompletionPhotoPrev();
+      },'image/jpeg',0.82);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
+  input.value='';
+}
+
+function removeCompletionPhoto(){
+  resetCompletionPhoto();
+  renderCompletionPhotoPrev();
 }
 
 /* ---- cost estimate ---- */
@@ -1296,11 +1367,13 @@ async function renderManagerSummary(){
 
   var report=summary.ownerReport||{headline:'Dispatch report',bullets:[],nextActions:[]};
   var reportText=report.headline+'\n\n'+(report.bullets||[]).map(function(item){ return '• '+item; }).join('\n')+'\n\nNext actions:\n'+(report.nextActions||[]).map(function(item){ return '• '+item; }).join('\n');
+  lastManagerReportText=reportText;
   if(el('mgrValueReport')) el('mgrValueReport').innerHTML=
     '<div class="manager-report">'
     +'<div class="ttl">'+esc(report.headline)+'</div>'
     +'<div class="sub">Copy this into an owner update or weekly review.</div>'
     +'<textarea class="field manager-report-text" readonly>'+esc(reportText)+'</textarea>'
+    +'<button type="button" class="btn-outline" data-action="download-owner-report" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px">'+ico('file',15)+'Download Report</button>'
     +'</div>';
 
   var bottlenecks=[
@@ -1308,6 +1381,7 @@ async function renderManagerSummary(){
     ['Urgent still open',summary.urgentOpen||0,'Urgent requests not completed or declined'],
     ['Unassigned active work',summary.unassignedActive||0,'Approved or started jobs without driver/truck'],
     ['Overdue returns',summary.overdueReturns||0,'Tools or equipment due back already'],
+    ['Completion proof captured',summary.completionProofs||0,'Completed jobs with receiver notes, sign-off, or photo proof'],
     ['Queued bundle trip cost','$'+Math.round(summary.queuedBundleCost||0),'Estimated trip cost across queued requests']
   ];
   if(el('mgrBottleneckList')) el('mgrBottleneckList').innerHTML=bottlenecks.map(function(item){
@@ -1375,6 +1449,16 @@ async function downloadBackup(id){
     link.href=url; link.download='gtmann-dispatch-'+id+'.json'; document.body.appendChild(link); link.click(); link.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); },1000);
   }catch(error){ toast('Backup download failed','err'); }
+}
+
+function downloadOwnerReport(){
+  if(!lastManagerReportText){ toast('Owner report is not ready yet','warn'); return; }
+  var blob=new Blob([lastManagerReportText],{type:'text/plain;charset=utf-8'});
+  var url=URL.createObjectURL(blob), link=document.createElement('a');
+  var fromV=el('mgrFrom')?el('mgrFrom').value:'', toV=el('mgrTo')?el('mgrTo').value:'';
+  link.href=url; link.download='gtmann-owner-report-'+(fromV||'from')+'-to-'+(toV||'today')+'.txt';
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
 }
 
 async function loadAudit(){
@@ -1472,6 +1556,7 @@ el('authForm').addEventListener('submit',submitAuth);
 document.addEventListener('change',function(event){
   if(event.target.id==='fSite') onSiteChange();
   else if(event.target.id==='fPhoto') handlePhoto(event.target);
+  else if(event.target.id==='dCompletionPhoto') handleCompletionPhoto(event.target);
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
   else if(event.target.id==='fTimeWindow') setTimeWindow(event.target.value);
 });
@@ -1508,6 +1593,7 @@ document.addEventListener('click',function(event){
   else if(action==='save-role') saveUserRole(target.dataset.userId);
   else if(action==='create-backup') createManagerBackup();
   else if(action==='download-backup') downloadBackup(target.dataset.backupId);
+  else if(action==='download-owner-report') downloadOwnerReport();
   else if(action==='clear-blocked') clearBlockedQueue();
   else if(action==='open-detail') openDetail(target.dataset.bookingId);
   else if(action==='open-day') openDay(target.dataset.date);
@@ -1519,9 +1605,11 @@ document.addEventListener('click',function(event){
   else if(action==='save-assignment') saveAssignment(target.dataset.bookingId);
   else if(action==='mark-returned') markEquipmentReturned(target.dataset.bookingId);
   else if(action==='download-calendar') downloadCalendar(target.dataset.bookingId);
+  else if(action==='choose-completion-photo') el('dCompletionPhoto').click();
   else if(action==='edit-booking') startEdit(target.dataset.bookingId);
   else if(action==='delete-booking') doDelete(target.dataset.bookingId);
   else if(action==='remove-photo') removePhoto();
+  else if(action==='remove-completion-photo') removeCompletionPhoto();
   else if(action==='bundle') bundleInstead();
 });
 
