@@ -84,8 +84,8 @@ describe("manager summary value dashboard", () => {
     expect(body.unassignedActive).toBe(3);
     expect(body.overdueReturns).toBe(1);
     expect(body.slackCreated).toBe(1);
-    expect(body.estimatedSavings).toBe(45);
-    expect(body.potentialSavings).toBe(35);
+    expect(body.matchedBundleCost).toBe(45);
+    expect(body.queuedBundleCost).toBe(35);
     expect(body.avgApprovalHours).toBe(4);
     expect(body.ownerReport.headline).toContain("Dispatch report");
     expect(body.ownerReport.bullets.join(" ")).toContain("$45 estimated trip cost across matched bundle requests");
