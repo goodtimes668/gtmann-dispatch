@@ -46,6 +46,7 @@ export function validateBookingInput(input: unknown) {
   if (timeWindow === "specific" && !time) throw new HttpError(422, "A time is required for a specific time window");
 
   const site = text(body.site, "Job site", 120);
+  const siteAddress = text(body.siteAddress, "Job site address", 240);
   const pickupLocation = text(body.pickupLocation, "Pickup location", 240);
   const returnItem = text(body.returnItem, "Item to return", 160);
   const expectedReturnDate = text(body.expectedReturnDate, "Expected return date", 10);
@@ -62,6 +63,7 @@ export function validateBookingInput(input: unknown) {
     type,
     priority: body.priority as BookingPriority,
     site,
+    siteAddress,
     pickupLocation,
     description: text(body.description, "Description", 3000, true),
     date,
