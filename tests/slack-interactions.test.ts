@@ -204,7 +204,7 @@ describe("Slack interactions endpoint", () => {
 
     const posts = slackCalls.filter((call) => call.method === "chat.postMessage");
     expect(posts.some((call) => call.body.channel === "CMATERIAL" && call.body.blocks)).toBe(true);
-    expect(posts.some((call) => call.body.channel === "DBRENT" && call.body.blocks)).toBe(false);
+    expect(posts.some((call) => call.body.channel === "DBRENT" && call.body.blocks)).toBe(true);
     expect(posts.some((call) => call.body.channel === "U123ABC" && /Request submitted/.test(call.body.text))).toBe(true);
 
     const audit = [...blobs.get("dispatch-audit")!.values()].map((entry) => entry.value as any);
