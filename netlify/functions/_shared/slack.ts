@@ -65,6 +65,7 @@ async function notificationChannel() {
 }
 
 export async function notifyNewBooking(booking: Booking) {
+  let brentDmChannel: string | null = null;
   // Deliver each saved request to the material-handling team, plus configured manager and Brent targets.
   const targets = new Set<string>(["C090X2NSHLY"]);
   const managerChannel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID")?.trim();
@@ -72,7 +73,7 @@ export async function notifyNewBooking(booking: Booking) {
   const brentId = Netlify.env.get("BRENT_SLACK_ID")?.trim();
   if (brentId) {
     const opened = await slackCall("conversations.open", { users: brentId });
-    if (opened?.ok && opened.channel?.id) targets.add(opened.channel.id);
+    if (opened?.ok && opened.channel?.id) { brentDmChannel = opened.channel.id; targets.add(opened.channel.id); }
   }
   const type = labels[booking.type] || booking.type;
   const priority = booking.priority === "urgent" ? "URGENT" : booking.priority === "scheduled" ? "Planned" : "Normal";
@@ -95,15 +96,24 @@ export async function notifyNewBooking(booking: Booking) {
         { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
       ] },
     ];
-  const results = await Promise.all([...targets].map((channel) => slackCall("chat.postMessage", {
+  const channels = [...targets];
+  const results = await Promise.all(channels.map((channel) => slackCall("chat.postMessage", {
     channel,
     text: `New dispatch request from ${mrkdwn(booking.requester)}`,
     blocks,
   })));
-  const ok = results.some((result) => result?.ok);
+  const statusFor = (channel: string | null) => {
+    if (!channel) return null;
+    const result = results[channels.indexOf(channel)];
+    return { ok: Boolean(result?.ok), error: result?.ok ? "" : String(result?.error || "not sent") };
+  };
+  const materialChannel = statusFor("C090X2NSHLY") || { ok: false, error: "not sent" };
   return {
-    ok,
-    error: ok ? "" : results.map((result) => result?.error || "not sent").join("; "),
+    // The required Material Handling post cannot be masked by optional Slack destinations.
+    ok: materialChannel.ok,
+    materialChannel,
+    managerChannel: statusFor(managerChannel),
+    brentDm: brentId ? statusFor(brentDmChannel) || { ok: false, error: "DM could not be opened" } : null,
   };
 }
 
