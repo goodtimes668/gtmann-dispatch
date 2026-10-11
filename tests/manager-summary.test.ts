@@ -62,7 +62,7 @@ beforeEach(() => {
 });
 
 describe("manager summary value dashboard", () => {
-  it("returns savings, bottlenecks, and an owner-ready report", async () => {
+  it("returns cost totals, bottlenecks, and an owner-ready report", async () => {
     putBooking({ id: "a", date: "2026-10-01", status: "completed", completedAt: "2026-10-02T12:00:00.000Z", approvedAt: "2026-10-01T16:00:00.000Z", estCost: 80 });
     putBooking({ id: "b", date: "2026-10-02", status: "pending", priority: "urgent", source: "slack", estCost: 60 });
     putBooking({ id: "c", date: "2026-10-03", status: "approved", assignedDriver: "", vehicle: "", estCost: 70 });
@@ -84,11 +84,13 @@ describe("manager summary value dashboard", () => {
     expect(body.unassignedActive).toBe(3);
     expect(body.overdueReturns).toBe(1);
     expect(body.slackCreated).toBe(1);
-    expect(body.estimatedSavings).toBe(45);
-    expect(body.potentialSavings).toBe(35);
+    expect(body.matchedBundleCost).toBe(45);
+    expect(body.queuedBundleCost).toBe(35);
     expect(body.avgApprovalHours).toBe(4);
     expect(body.ownerReport.headline).toContain("Dispatch report");
-    expect(body.ownerReport.bullets.join(" ")).toContain("$45 estimated savings");
+    expect(body.ownerReport.bullets.join(" ")).toContain("$45 estimated trip cost across matched bundle requests");
+    expect(body.ownerReport.headline).toContain("$45 matched trip cost");
+    expect(body.ownerReport.bullets.join(" ")).not.toContain("savings");
     expect(body.bySite[0]).toMatchObject({ name: "Grand & Fir", count: 7, urgent: 1, bundled: 1 });
   });
 

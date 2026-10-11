@@ -1218,7 +1218,7 @@ async function renderManagerSummary(){
   el('mgrTotalCard').innerHTML=
     '<div class="manager-grid">'
     +'<div class="stat" style="--sc:var(--yellow)"><div class="num sm">'+summary.bookings+'</div><div class="slbl">Requests</div></div>'
-    +'<div class="stat" style="--sc:var(--green)"><div class="num sm" style="color:var(--green)">$'+Math.round(summary.estimatedSavings||0)+'</div><div class="slbl">Saved</div></div>'
+    +'<div class="stat" style="--sc:var(--green)"><div class="num sm" style="color:var(--green)">$'+Math.round(summary.matchedBundleCost||0)+'</div><div class="slbl">Matched trip cost</div></div>'
     +'<div class="stat" style="--sc:var(--amber)"><div class="num sm" style="color:var(--amber)">$'+Math.round(summary.cost||0)+'</div><div class="slbl">Est. Cost</div></div>'
     +'<div class="stat" style="--sc:var(--blue)"><div class="num sm" style="color:var(--blue)">'+approval+'</div><div class="slbl">Avg Approval</div></div>'
     +'</div>';
@@ -1237,7 +1237,7 @@ async function renderManagerSummary(){
     ['Urgent still open',summary.urgentOpen||0,'Urgent requests not completed or declined'],
     ['Unassigned active work',summary.unassignedActive||0,'Approved or started jobs without driver/truck'],
     ['Overdue returns',summary.overdueReturns||0,'Tools or equipment due back already'],
-    ['Queued bundle savings','$'+Math.round(summary.potentialSavings||0),'Money still available if queued trips are bundled']
+    ['Queued bundle trip cost','$'+Math.round(summary.queuedBundleCost||0),'Estimated trip cost across queued requests']
   ];
   if(el('mgrBottleneckList')) el('mgrBottleneckList').innerHTML=bottlenecks.map(function(item){
     var hot=item[1]&&item[1]!==0&&item[1]!=='$0';

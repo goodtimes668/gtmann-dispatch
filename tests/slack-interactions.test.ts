@@ -43,6 +43,7 @@ import { buildNewBookingModal, errorBlockFor, verifySlackSignature } from "../ne
 const SECRET = "test-signing-secret";
 const env: Record<string, string> = {};
 const slackCalls: Array<{ method: string; body: any }> = [];
+const slackOutcomes = new Map<string, { ok: boolean; error?: string }>();
 let slackProfile: { email?: string; real_name?: string } | null = { email: "Ryan@Example.com", real_name: "Ryan J" };
 
 function sign(body: string, timestamp = Math.floor(Date.now() / 1000), secret = SECRET) {
@@ -100,6 +101,7 @@ const savedBookings = () => [...(blobs.get("dispatch-bookings")?.entries() || []
 beforeEach(() => {
   blobs.clear();
   slackCalls.length = 0;
+  slackOutcomes.clear();
   listUsers.mockReset();
   listUsers.mockResolvedValue([]);
   slackProfile = { email: "Ryan@Example.com", real_name: "Ryan J" };
@@ -115,6 +117,7 @@ beforeEach(() => {
       return Response.json(slackProfile ? { ok: true, user: { real_name: slackProfile.real_name, profile: { email: slackProfile.email } } } : { ok: false, error: "missing_scope" });
     }
     if (method === "conversations.open") return Response.json({ ok: true, channel: { id: "DBRENT" } });
+    if (method === "chat.postMessage") return Response.json(slackOutcomes.get(String(body.channel)) || { ok: true });
     return Response.json({ ok: true });
   }));
 });
@@ -328,10 +331,26 @@ describe("Slack diagnostics", () => {
     await handler(slackRequest(submission()), context);
     await settle();
     expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_channel_notification", "booking_saved", "form_submitted", "requester_dm"]);
-    expect(traces()).toContainEqual(expect.objectContaining({ event: "booking_channel_notification", ok: true, destination: "configured_channel" }));
+    expect(traces()).toContainEqual(expect.objectContaining({ event: "booking_channel_notification", ok: true, materialChannelOk: true, managerChannelOk: true, brentDmOk: true }));
     expect(JSON.stringify(traces())).not.toContain("20 sheets");
   });
 
+  it("reports a Material Handling failure even when manager and Brent destinations succeed", async () => {
+    slackOutcomes.set("C090X2NSHLY", { ok: false, error: "not_in_channel" });
+    listUsers.mockResolvedValue([{ id: "identity-1", email: "ryan@example.com", name: "Ryan Jones", roles: ["dispatcher"], confirmedAt: "2026-09-01T00:00:00Z" }]);
+    const { context, settle } = makeContext();
+    await handler(slackRequest(submission()), context);
+    await settle();
+
+    const trace = traces().find((item) => item.event === "booking_channel_notification");
+    expect(trace).toMatchObject({
+      ok: false,
+      materialChannelOk: false,
+      materialChannelError: "not_in_channel",
+      managerChannelOk: true,
+      brentDmOk: true,
+    });
+  });
   it("serves the readout only with the configured key", async () => {
     const { default: diagnostics } = await import("../netlify/functions/slack-diagnostics");
     const url = "https://gtmann-dispatch.netlify.app/api/slack/diagnostics";
