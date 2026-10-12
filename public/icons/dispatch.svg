@@ -1,17 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="GTMANN DISPATCH">
-  <rect width="512" height="512" rx="112" fill="#f5c518"/>
-  <rect x="12" y="12" width="488" height="488" rx="101" fill="none" stroke="#0d0d0f" stroke-width="8"/>
-  <g fill="none" stroke="#0d0d0f" stroke-linecap="round" stroke-linejoin="round" stroke-width="22">
-    <path d="M104 95h188a20 20 0 0 1 20 20v111H84V115a20 20 0 0 1 20-20Z"/>
-    <path d="M312 145h64l52 58v23H312z"/>
-    <path d="M336 146v57h91"/>
-    <circle cx="145" cy="239" r="24" fill="#f5c518"/>
-    <circle cx="377" cy="239" r="24" fill="#f5c518"/>
-    <path d="M169 239h184"/>
-    <path d="M100 126h172M101 160h137M101 194h104" stroke-width="12"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">GT Mann Dispatch Logo Icon</title>
+  <desc id="desc">A dispatch app icon using the official GT Mann logo with construction stripes, routing marks, and a Dispatch label.</desc>
+  <defs>
+    <linearGradient id="bg" x1="116" y1="90" x2="904" y2="930" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#323d49"/>
+      <stop offset="0.5" stop-color="#151b23"/>
+      <stop offset="1" stop-color="#070b10"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="202" y1="190" x2="830" y2="840" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffd75a"/>
+      <stop offset="0.52" stop-color="#f5b51b"/>
+      <stop offset="1" stop-color="#ff7a1a"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="120" y1="80" x2="760" y2="640" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="30" stdDeviation="30" flood-color="#000000" flood-opacity="0.42"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity="0.28"/>
+    </filter>
+    <clipPath id="round">
+      <rect x="64" y="64" width="896" height="896" rx="210"/>
+    </clipPath>
+  </defs>
+
+  <rect x="64" y="64" width="896" height="896" rx="210" fill="url(#bg)" filter="url(#shadow)"/>
+  <g clip-path="url(#round)">
+    <path d="M64 64H960V230H64Z" fill="#11161d"/>
+    <g transform="rotate(-28 512 146)">
+      <rect x="-44" y="96" width="1112" height="94" fill="#f5b51b"/>
+      <path d="M-44 96H20L-33 190H-97Z" fill="#151515"/>
+      <path d="M74 96H138L85 190H21Z" fill="#151515"/>
+      <path d="M192 96H256L203 190H139Z" fill="#151515"/>
+      <path d="M310 96H374L321 190H257Z" fill="#151515"/>
+      <path d="M428 96H492L439 190H375Z" fill="#151515"/>
+      <path d="M546 96H610L557 190H493Z" fill="#151515"/>
+      <path d="M664 96H728L675 190H611Z" fill="#151515"/>
+      <path d="M782 96H846L793 190H729Z" fill="#151515"/>
+      <path d="M900 96H964L911 190H847Z" fill="#151515"/>
+      <path d="M1018 96H1082L1029 190H965Z" fill="#151515"/>
+    </g>
+    <path d="M146 152C226 74 374 65 502 91C698 131 835 254 884 420C928 569 872 746 728 849C611 933 451 944 318 890C191 839 105 728 92 589C78 438 50 246 146 152Z" fill="url(#shine)"/>
   </g>
-  <text x="256" y="348" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="61" font-weight="900" letter-spacing="-1">GTMANN</text>
-  <text x="256" y="405" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="32" font-weight="800" letter-spacing="7">DISPATCH</text>
-  <path d="M116 435h280" stroke="#0d0d0f" stroke-width="6" stroke-linecap="round"/>
-  <text x="256" y="472" text-anchor="middle" fill="#0d0d0f" font-family="DejaVu Sans, Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="4">GT MANN CONTRACTING</text>
+
+  <circle cx="512" cy="528" r="306" fill="#0d1218" opacity="0.72"/>
+  <circle cx="512" cy="528" r="272" fill="none" stroke="#f5b51b" stroke-width="20" opacity="0.34"/>
+
+  <path d="M260 605C330 508 414 462 512 462C604 462 688 421 766 326" fill="none" stroke="#f5b51b" stroke-width="50" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
+  <path d="M260 605C330 508 414 462 512 462C604 462 688 421 766 326" fill="none" stroke="url(#gold)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="260" cy="605" r="36" fill="#101317" stroke="#f5b51b" stroke-width="17"/>
+  <circle cx="512" cy="462" r="31" fill="#101317" stroke="#f5b51b" stroke-width="16"/>
+  <circle cx="766" cy="326" r="40" fill="#101317" stroke="#f5b51b" stroke-width="19"/>
+
+  <g>
+    <rect x="142" y="410" width="740" height="188" rx="46" fill="#f8fafc"/>
+    <rect x="142" y="410" width="740" height="188" rx="46" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.75"/>
+    <svg x="205" y="464" width="614" height="91" viewBox="0 0 198.213 29.234">
+      <g transform="translate(-14762.003 168.271)">
+        <path d="M197.985,29.233h-3.243l8.659-23.4.672-1.753c.085-.263.222-.57.314-.876.071-.175.208-.483.358-.877h-.087c-.34.482-.614.833-.831,1.1a19.2,19.2,0,0,1-1.221,1.622L183.653,29.233h-3.287L179.2,5.347c-.037-.877-.073-1.754-.1-2.718h-.043L178.593,3.9c-.028.175-.307.833-.7,1.928l-8.659,23.4h-3.287L176.8,0h5.7l.77,18.934.135,3.024.02,1.535.064,1.534h.044l1.207-1.534,1.164-1.535,2.364-3.024L203.054,0h5.785Z" transform="translate(14663.852 -168.27)" fill="#1f1e1e"/>
+        <path d="M259.278,23.054l-4.529,6.18h-3.506L272.791,0h4.6l.1,29.234h-3.463l.014-6.18Zm14.886-20.38-12.979,17.75H274.07Z" transform="translate(14613.404 -168.271)" fill="#1f1e1e"/>
+        <path d="M347.835,29.233h-5.39l-4.87-19.9-.794-3.287-.4-1.622L336.024,2.8h-.088c-.229.614-.406,1.184-.628,1.753-.078.219-.393,1.1-.986,2.63l-8.138,22.046H322.9L333.751,0H339.1l4.249,17.444L344.466,22l.516,2.279.559,2.279h.044l.393-1.1.392-1.1.83-2.191L355.4,0h3.287Z" transform="translate(14571.024 -168.27)" fill="#1f1e1e"/>
+        <path d="M422.492,29.233H417.1l-4.869-19.9-.794-3.287-.4-1.622L410.681,2.8h-.087c-.228.614-.407,1.184-.628,1.753-.078.219-.393,1.1-.986,2.63l-8.137,22.046h-3.287L408.408,0h5.347L418,17.443,419.124,22l.515,2.279.56,2.279h.044l.392-1.1.393-1.1.829-2.191L430.06,0h3.287Z" transform="translate(14526.869 -168.27)" fill="#1f1e1e"/>
+        <path d="M76.923,0H14.133a6.485,6.485,0,0,0-6.08,4.228L.609,24.276h0L.178,25.431a2.821,2.821,0,0,0,2.645,3.8H35.009a6.1,6.1,0,0,0,5.722-3.979l2.894-7.8,1.389-3.734H24.86l-1.385,3.734H38.42l-2.531,6.819H5.817L12.991,4.956H53.614L44.6,29.232h5.616L59.23,4.956H75.084Z" transform="translate(14762 -168.271)" fill="#1f1e1e"/>
+      </g>
+    </svg>
+  </g>
+
+  <g>
+    <rect x="224" y="672" width="576" height="118" rx="34" fill="url(#gold)"/>
+    <rect x="224" y="672" width="576" height="118" rx="34" fill="none" stroke="#ffffff" stroke-width="5" opacity="0.78"/>
+    <text x="512" y="753" text-anchor="middle" font-family="Arial Black, Impact, system-ui, sans-serif" font-size="72" font-weight="900" letter-spacing="4" fill="#101317">DISPATCH</text>
+  </g>
+
+  <g transform="translate(696 206)">
+    <rect x="0" y="0" width="150" height="68" rx="34" fill="#143322" stroke="#35d07f" stroke-width="8"/>
+    <circle cx="40" cy="34" r="13" fill="#35d07f"/>
+    <text x="94" y="44" text-anchor="middle" font-family="Arial Black, Impact, system-ui, sans-serif" font-size="27" font-weight="900" fill="#bcffd9">LIVE</text>
+  </g>
+
+  <rect x="64" y="64" width="896" height="896" rx="210" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.16"/>
 </svg>
