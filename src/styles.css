@@ -130,6 +130,22 @@ select.field{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w
 .assignment-warning.show{display:block}
 .return-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--border-soft);border-left:3px solid var(--amber);border-radius:13px;padding:14px;margin-bottom:10px;cursor:pointer}
 .return-row strong{font-size:14px}
+.farm-toolbar{display:grid;grid-template-columns:1fr 170px;gap:10px;margin-bottom:12px}
+.inventory-selection{background:var(--ink);color:#fff;border-radius:16px;padding:14px;margin-bottom:14px}
+.inventory-selection .ttl{font-size:15px;font-weight:800;color:#fff;margin-bottom:4px}
+.inventory-selection .sub{font-size:12px;color:var(--ink-dim);line-height:1.45}
+.inventory-selection-list{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+.inventory-selection-row{display:grid;grid-template-columns:1fr 72px 38px;gap:8px;align-items:center}
+.inventory-selection-row input{padding:10px;text-align:center}
+.inventory-selection-row button{width:38px;height:38px;border-radius:10px}
+.inventory-card{position:relative}
+.inventory-card.pending{border-color:rgba(245,158,11,.35)}
+.inventory-card.retired{opacity:.68}
+.inventory-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.inventory-actions{display:flex;gap:8px;margin-top:12px}
+.inventory-actions .btn-outline,.inventory-actions .btn-primary{flex:1;padding:11px 12px;font-size:13px}
+.tracking-pill{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:var(--card2);border:1px solid var(--border-soft);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.stock-num{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--yellow);white-space:nowrap}
 .badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
 .b-pending{background:rgba(245,158,11,0.14);color:var(--amber)}
 .b-approved{background:rgba(34,197,94,0.14);color:var(--green)}
@@ -203,6 +219,11 @@ hr{border:none;border-top:1px solid var(--border-soft);margin:14px 0}
 .route-status.warn{color:var(--amber);border-color:rgba(245,158,11,.28)}
 .route-status.err{color:var(--red);border-color:rgba(239,68,68,.28)}
 @media (min-width:681px){.overlay{justify-content:center;padding:24px}.sheet{border-bottom:1px solid var(--border-soft);border-radius:20px}}
+@media (max-width:430px){
+  .farm-toolbar{grid-template-columns:1fr}
+  .bottomnav{left:8px;right:8px}
+  .nb{font-size:9px;letter-spacing:.03em}
+}
 
 /* help sheet */
 .help-role{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--faint);margin-bottom:14px}

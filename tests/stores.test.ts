@@ -11,7 +11,7 @@ vi.mock("@netlify/blobs", () => ({
   getStore: () => ({ setJSON, delete: deleteBlob }),
 }));
 
-import { deleteSiteIfMatch, saveSiteIfMatch } from "../netlify/functions/_shared/stores";
+import { deleteInventoryIfMatch, deleteSiteIfMatch, saveSiteIfMatch } from "../netlify/functions/_shared/stores";
 
 const site = {
   name: "New Site",
@@ -49,5 +49,29 @@ describe("crash-safe site writes", () => {
     expect(setJSON.mock.calls[0][2]).toEqual({ onlyIfMatch: "etag-2" });
     expect((setJSON.mock.calls[0][1] as { deletedAt?: string }).deletedAt).toBeTruthy();
     expect(calls[1]).toBe("delete:site/new%20site");
+  });
+
+  it("conditionally tombstones inventory before physical deletion", async () => {
+    await deleteInventoryIfMatch({
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      version: 1,
+      name: "Temp power panel",
+      category: "temp-power",
+      tracking: "returnable",
+      quantity: 1,
+      unit: "panel",
+      location: "Faithwood Farms",
+      condition: "good",
+      notes: "",
+      status: "active",
+      submittedBy: "Brent",
+      submittedById: "user-1",
+      createdAt: "2026-08-18T00:00:00.000Z",
+      updatedAt: "2026-08-18T00:00:00.000Z",
+    }, "etag-3");
+    expect(setJSON.mock.calls[0][0]).toBe("item/123e4567-e89b-42d3-a456-426614174000");
+    expect(setJSON.mock.calls[0][2]).toEqual({ onlyIfMatch: "etag-3" });
+    expect((setJSON.mock.calls[0][1] as { deletedAt?: string }).deletedAt).toBeTruthy();
+    expect(calls[1]).toBe("delete:item/123e4567-e89b-42d3-a456-426614174000");
   });
 });

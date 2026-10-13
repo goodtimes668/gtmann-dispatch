@@ -1,9 +1,12 @@
 import { HttpError } from "./http";
-import type { BookingPriority, BookingStatus, BookingType, Site } from "./types";
+import type { BookingPriority, BookingStatus, BookingType, InventoryCategory, InventoryStatus, InventoryTracking, Site } from "./types";
 
 const bookingTypes = new Set<BookingType>(["delivery", "pickup", "tool-delivery", "misc"]);
 const priorities = new Set<BookingPriority>(["urgent", "normal", "scheduled"]);
 const statuses = new Set<BookingStatus>(["pending", "approved", "declined", "in-progress", "completed"]);
+const inventoryCategories = new Set<InventoryCategory>(["formwork", "temp-power", "tools", "safety", "equipment", "consumables", "other"]);
+const inventoryTracking = new Set<InventoryTracking>(["returnable", "consumable", "transferable", "job-owned"]);
+const inventoryStatuses = new Set<InventoryStatus>(["active", "pending", "retired"]);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function isUuid(value: string) { return uuidPattern.test(value); }
@@ -30,6 +33,11 @@ function number(value: unknown, name: string, min: number, max: number) {
     throw new HttpError(422, `${name} must be between ${min} and ${max}`);
   }
   return value;
+}
+
+function optionalMoney(value: unknown, name: string) {
+  if (value == null || value === "") return undefined;
+  return number(value, name, 0, 1000000);
 }
 
 export function validateBookingInput(input: unknown) {
@@ -123,6 +131,28 @@ export function validateSiteInput(input: unknown): Omit<Site, "version" | "creat
     site.lng = lng;
   }
   return site;
+}
+
+export function validateInventoryInput(input: unknown, options: { canApprove: boolean }) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(422, "Invalid inventory item");
+  const body = input as Record<string, unknown>;
+  if (!inventoryCategories.has(body.category as InventoryCategory)) throw new HttpError(422, "Invalid inventory category");
+  if (!inventoryTracking.has(body.tracking as InventoryTracking)) throw new HttpError(422, "Invalid inventory tracking type");
+  const status = body.status == null ? "pending" : body.status;
+  if (!inventoryStatuses.has(status as InventoryStatus)) throw new HttpError(422, "Invalid inventory status");
+  if (status !== "pending" && !options.canApprove) throw new HttpError(403, "Dispatcher or manager approval is required");
+  return {
+    name: text(body.name, "Item name", 160, true),
+    category: body.category as InventoryCategory,
+    tracking: body.tracking as InventoryTracking,
+    quantity: number(body.quantity, "Quantity", 0, 100000),
+    unit: text(body.unit, "Unit", 40, true),
+    location: text(body.location, "Location", 160) || "Faithwood Farms",
+    condition: text(body.condition, "Condition", 80) || "unknown",
+    replacementValue: optionalMoney(body.replacementValue, "Replacement value"),
+    notes: text(body.notes, "Notes", 2000),
+    status: status as InventoryStatus,
+  };
 }
 
 export function validateStatus(value: unknown): BookingStatus {

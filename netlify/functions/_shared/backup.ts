@@ -1,4 +1,4 @@
-import { auditStore, backupsStore, bookingsStore, getBackupSnapshot, listAuditEvents, listBookings, listPhotoIds, listSites, photoLinksStore, photosStore, saveBackupSnapshot, sitesStore } from "./stores";
+import { auditStore, backupsStore, bookingsStore, getBackupSnapshot, inventoryKey, inventoryStore, listAuditEvents, listBookings, listInventory, listPhotoIds, listSites, photoLinksStore, photosStore, saveBackupSnapshot, sitesStore } from "./stores";
 import type { BackupSnapshot } from "./types";
 
 async function inBatches<T>(items: T[], work: (item: T) => Promise<void>, size = 10) {
@@ -9,9 +9,10 @@ async function inBatches<T>(items: T[], work: (item: T) => Promise<void>, size =
 
 export async function createBackup(createdBy: BackupSnapshot["createdBy"]) {
   const id = `${new Date().toISOString().replace(/[:.]/g, "-")}-${crypto.randomUUID()}`;
-  const [bookings, sites, audit, photoIds] = await Promise.all([
+  const [bookings, sites, inventory, audit, photoIds] = await Promise.all([
     listBookings(),
     listSites(),
+    listInventory(),
     listAuditEvents(500),
     listPhotoIds(),
   ]);
@@ -22,6 +23,7 @@ export async function createBackup(createdBy: BackupSnapshot["createdBy"]) {
     createdBy,
     bookings,
     sites,
+    inventory,
     audit,
     photoIds,
   };
@@ -48,6 +50,9 @@ export async function restoreBackup(id: string) {
   });
   await inBatches(snapshot.sites, async (site) => {
     await sitesStore().setJSON(`site/${encodeURIComponent(site.name.trim().toLowerCase())}`, site);
+  });
+  await inBatches(snapshot.inventory || [], async (item) => {
+    await inventoryStore().setJSON(inventoryKey(item.id), item);
   });
   await inBatches(snapshot.audit, async (event) => {
     const reverseTime = String(9_999_999_999_999 - Date.parse(event.occurredAt)).padStart(13, "0");
