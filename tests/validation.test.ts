@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HttpError } from "../netlify/functions/_shared/http";
-import { isISODate, validateBookingInput, validateCompletionInput, validateDispatchAssignment, validateSiteInput } from "../netlify/functions/_shared/validation";
+import { isISODate, validateBookingInput, validateCompletionInput, validateDispatchAssignment, validateInventoryInput, validateSiteInput } from "../netlify/functions/_shared/validation";
 
 const validBooking = {
   type: "delivery",
@@ -104,5 +104,38 @@ describe("site validation", () => {
       lat: 48.4952,
       lng: -123.3698,
     })).toMatchObject({ address: "4368 Lochside Drive, Saanich, British Columbia, Canada" });
+  });
+});
+
+describe("inventory validation", () => {
+  const validInventory = {
+    name: "Temp power panel",
+    category: "temp-power",
+    tracking: "returnable",
+    quantity: 2,
+    unit: "panels",
+    location: "Faithwood Farms",
+    condition: "good",
+    replacementValue: 1200,
+    status: "active",
+    notes: "Needs return date when sent out",
+  };
+
+  it("lets dispatchers approve an active master inventory item", () => {
+    expect(validateInventoryInput(validInventory, { canApprove: true })).toMatchObject({
+      name: "Temp power panel",
+      status: "active",
+      tracking: "returnable",
+    });
+  });
+
+  it("forces non-dispatcher additions into pending approval", () => {
+    expect(validateInventoryInput({ ...validInventory, status: "pending" }, { canApprove: false })).toMatchObject({ status: "pending" });
+    expect(() => validateInventoryInput(validInventory, { canApprove: false })).toThrow("approval is required");
+  });
+
+  it("rejects invalid categories and negative quantities", () => {
+    expect(() => validateInventoryInput({ ...validInventory, category: "random" }, { canApprove: true })).toThrow("Invalid inventory category");
+    expect(() => validateInventoryInput({ ...validInventory, quantity: -1 }, { canApprove: true })).toThrow("Quantity");
   });
 });

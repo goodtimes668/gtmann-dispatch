@@ -21,6 +21,30 @@ export type Site = {
   deletedAt?: string;
 };
 
+export type InventoryCategory = "formwork" | "temp-power" | "tools" | "safety" | "equipment" | "consumables" | "other";
+export type InventoryTracking = "returnable" | "consumable" | "transferable" | "job-owned";
+export type InventoryStatus = "active" | "pending" | "retired";
+
+export type InventoryItem = {
+  id: string;
+  version: number;
+  name: string;
+  category: InventoryCategory;
+  tracking: InventoryTracking;
+  quantity: number;
+  unit: string;
+  location: string;
+  condition: string;
+  replacementValue?: number;
+  notes: string;
+  status: InventoryStatus;
+  submittedBy: string;
+  submittedById: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
+};
+
 export type BookingStatus = "pending" | "approved" | "declined" | "in-progress" | "completed";
 export type BookingType = "delivery" | "pickup" | "tool-delivery" | "misc";
 export type BookingPriority = "urgent" | "normal" | "scheduled";
@@ -78,7 +102,7 @@ export type AuditEvent = {
   actorEmail: string;
   actorRole: DispatchRole;
   action: string;
-  targetType: "booking" | "site" | "user" | "photo" | "backup" | "system";
+  targetType: "booking" | "site" | "user" | "photo" | "backup" | "inventory" | "system";
   targetId: string;
   requestId?: string;
   details?: Record<string, string | number | boolean | null>;
@@ -91,6 +115,7 @@ export type BackupSnapshot = {
   createdBy: "scheduled" | "manager";
   bookings: Booking[];
   sites: Site[];
+  inventory: InventoryItem[];
   audit: AuditEvent[];
   photoIds: string[];
 };

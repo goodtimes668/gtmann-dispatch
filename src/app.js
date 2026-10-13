@@ -36,6 +36,10 @@ var siteRoutePending = false;
 
 var bookings = [];
 var bookingsRefreshInFlight = false;
+var inventory = [];
+var inventorySynced = false;
+var selectedInventory = {};
+var editInventoryId = null;
 var curType = 'delivery';
 var curPri = 'normal';
 var curPhoto = null;
@@ -249,7 +253,7 @@ async function signOut(){
 }
 
 function endSession(){
-  currentUser=null; bookings=[]; sites=[]; sitesSynced=false;
+  currentUser=null; bookings=[]; sites=[]; sitesSynced=false; inventory=[]; inventorySynced=false; selectedInventory={}; editInventoryId=null;
   if(curPhotoPreviewUrl) URL.revokeObjectURL(curPhotoPreviewUrl);
   curPhotoPreviewUrl=null; curPhotoFile=null; curPhoto=null; editId=null;
   el('appShell').classList.add('hidden');
@@ -654,6 +658,153 @@ async function deleteSite(){
   }catch(error){}
 }
 
+/* ---- Faithwood inventory ---- */
+function categoryLabel(value){
+  return ({formwork:'Formwork','temp-power':'Temp Power',tools:'Tools',safety:'Safety',equipment:'Equipment',consumables:'Consumables',other:'Other'})[value]||'Other';
+}
+function trackingLabel(value){
+  return ({returnable:'Returnable',consumable:'Consumable',transferable:'Transferable','job-owned':'Job-owned'})[value]||value||'Tracked';
+}
+async function loadInventory(){
+  try{
+    var remote=await apiRequest('GET','/inventory');
+    inventory=Array.isArray(remote)?remote:[];
+    inventorySynced=true;
+  }catch(error){
+    inventorySynced=false;
+    toast('Farm inventory could not be refreshed','warn');
+  }
+  renderInventory();
+}
+function inventoryItemById(id){ return inventory.find(function(item){ return item.id===id; }); }
+function inventoryCardHTML(item){
+  var selected=selectedInventory[item.id]||0;
+  var statusBadge=item.status==='pending'
+    ? '<span class="badge b-pending"><span class="dot"></span>Pending</span>'
+    : item.status==='retired'
+      ? '<span class="badge b-declined"><span class="dot"></span>Retired</span>'
+      : '<span class="badge b-approved"><span class="dot"></span>In Stock</span>';
+  var value=typeof item.replacementValue==='number'&&item.replacementValue>0?' · $'+Math.round(item.replacementValue):'';
+  return '<div class="bcard inventory-card '+esc(item.status||'')+'" style="--bc:var(--border);cursor:default">'
+    +'<div class="row"><div style="min-width:0"><div class="ttl" style="font-size:15px">'+esc(item.name)+'</div>'
+    +'<div class="sub">'+esc(categoryLabel(item.category))+' · '+esc(item.location||'Faithwood Farms')+'</div></div>'+statusBadge+'</div>'
+    +'<div class="desc">'+esc(item.notes||'No notes yet')+'</div>'
+    +'<div class="inventory-meta"><span class="stock-num">'+esc(item.quantity)+' '+esc(item.unit)+'</span><span class="tracking-pill">'+esc(trackingLabel(item.tracking))+'</span><span class="tracking-pill">'+esc(item.condition||'unknown')+value+'</span></div>'
+    +'<div class="inventory-actions">'
+    +(item.status==='active'?'<button type="button" class="btn-primary" data-action="select-inventory" data-item-id="'+esc(item.id)+'">'+(selected?'Add More':'Select')+'</button>':'')
+    +(isDispatcher()?'<button type="button" class="btn-outline" data-action="edit-inventory" data-item-id="'+esc(item.id)+'">Edit</button>':'')
+    +'</div></div>';
+}
+function filteredInventory(){
+  var search=(el('inventorySearch')&&el('inventorySearch').value||'').trim().toLowerCase();
+  var category=el('inventoryCategory')?el('inventoryCategory').value:'';
+  return inventory.filter(function(item){
+    if(category&&item.category!==category) return false;
+    if(!search) return true;
+    return [item.name,item.category,item.location,item.condition,item.notes,item.unit].join(' ').toLowerCase().indexOf(search)!==-1;
+  });
+}
+function renderInventory(){
+  var list=el('inventoryList'); if(!list) return;
+  var items=filteredInventory();
+  list.innerHTML=items.length?items.map(inventoryCardHTML).join(''):emptyState('package',inventorySynced?'No matching farm inventory':'Inventory unavailable');
+  renderInventorySelection();
+}
+function renderInventorySelection(){
+  var box=el('inventorySelection'); if(!box) return;
+  var selected=Object.keys(selectedInventory).map(function(id){ return { item: inventoryItemById(id), qty: selectedInventory[id] }; }).filter(function(entry){ return entry.item&&entry.qty>0; });
+  if(!selected.length){ box.classList.add('hidden'); box.innerHTML=''; return; }
+  var returnables=selected.filter(function(entry){ return entry.item.tracking==='returnable'; }).length;
+  box.classList.remove('hidden');
+  box.innerHTML='<div class="ttl">Selected for dispatch</div><div class="sub">'+selected.length+' item type'+(selected.length===1?'':'s')+' selected'+(returnables?' · return date recommended':'')+'</div>'
+    +'<div class="inventory-selection-list">'+selected.map(function(entry){
+      return '<div class="inventory-selection-row"><div><strong>'+esc(entry.item.name)+'</strong><div class="sub">'+esc(entry.item.unit)+' · '+esc(trackingLabel(entry.item.tracking))+'</div></div>'
+        +'<input class="field" type="number" min="1" max="'+esc(Math.max(entry.item.quantity,1))+'" value="'+esc(entry.qty)+'" data-action="inventory-qty" data-item-id="'+esc(entry.item.id)+'" aria-label="Quantity for '+esc(entry.item.name)+'"/>'
+        +'<button type="button" class="iconbtn" data-action="remove-inventory" data-item-id="'+esc(entry.item.id)+'" aria-label="Remove '+esc(entry.item.name)+'">'+ico('x',14)+'</button></div>';
+    }).join('')+'</div><button type="button" class="btn-primary" data-action="request-inventory" style="width:100%">Request Selected Items</button>';
+}
+function selectInventory(id){
+  var item=inventoryItemById(id); if(!item) return;
+  selectedInventory[id]=Math.min((selectedInventory[id]||0)+1,Math.max(item.quantity,1));
+  renderInventory();
+}
+function setInventoryQty(id,value){
+  var item=inventoryItemById(id); if(!item) return;
+  selectedInventory[id]=Math.max(1,Math.min(Number(value)||1,Math.max(item.quantity,1)));
+  renderInventorySelection();
+}
+function removeInventorySelection(id){
+  delete selectedInventory[id];
+  renderInventory();
+}
+function requestInventory(){
+  var selected=Object.keys(selectedInventory).map(function(id){ return { item: inventoryItemById(id), qty: selectedInventory[id] }; }).filter(function(entry){ return entry.item&&entry.qty>0; });
+  if(!selected.length){ toast('Select at least one farm item first','warn'); return; }
+  openForm('delivery');
+  setPri('normal');
+  var lines=selected.map(function(entry){ return entry.qty+' '+entry.item.unit+' - '+entry.item.name+' ('+trackingLabel(entry.item.tracking)+')'; });
+  var returnLines=selected.filter(function(entry){ return entry.item.tracking==='returnable'; }).map(function(entry){ return entry.qty+' '+entry.item.unit+' - '+entry.item.name; });
+  el('fDesc').value='Faithwood Farms inventory request:\n'+lines.join('\n');
+  el('fNotes').value='Requested from Faithwood Farms inventory. Confirm quantities and condition before loading.';
+  if(el('fPickup')) el('fPickup').value='Faithwood Farms';
+  if(returnLines.length) el('fReturnItem').value=returnLines.join(', ');
+  renderCostEstimate();
+}
+function openInventoryForm(id){
+  editInventoryId=id||null;
+  var item=editInventoryId?inventoryItemById(editInventoryId):null;
+  el('ifTitle').textContent=item?'Edit Inventory Item':'Add Inventory Item';
+  el('ifName').value=item?item.name:'';
+  el('ifCategory').value=item?item.category:'tools';
+  el('ifTracking').value=item?item.tracking:'returnable';
+  el('ifQty').value=item?item.quantity:1;
+  el('ifUnit').value=item?item.unit:'each';
+  el('ifLocation').value=item?item.location:'Faithwood Farms';
+  el('ifCondition').value=item?item.condition:'good';
+  el('ifValue').value=item&&typeof item.replacementValue==='number'?item.replacementValue:'';
+  el('ifNotes').value=item?item.notes:'';
+  el('ifStatus').value=item?item.status:(isDispatcher()?'active':'pending');
+  el('ifStatusWrap').classList.toggle('hidden',!isDispatcher());
+  el('ifDelete').className=item&&isDispatcher()?'':'hidden';
+  el('ifSave').textContent=item?'Save Inventory Item':isDispatcher()?'Save Inventory Item':'Submit For Approval';
+  showOverlay('inventoryFormOverlay');
+}
+function closeInventoryForm(){ hideOverlay('inventoryFormOverlay'); editInventoryId=null; }
+async function saveInventoryItem(){
+  var name=el('ifName').value.trim(), qty=Number(el('ifQty').value);
+  if(!name){ toast('Enter the item name','err'); el('ifName').focus(); return; }
+  if(!Number.isFinite(qty)||qty<0){ toast('Enter a valid quantity','err'); el('ifQty').focus(); return; }
+  var payload={name:name,category:el('ifCategory').value,tracking:el('ifTracking').value,quantity:qty,unit:el('ifUnit').value.trim(),location:el('ifLocation').value.trim(),condition:el('ifCondition').value.trim(),replacementValue:el('ifValue').value===''?undefined:Number(el('ifValue').value),status:isDispatcher()?el('ifStatus').value:'pending',notes:el('ifNotes').value};
+  if(!payload.unit){ toast('Enter a unit like each, sheets, or pieces','err'); el('ifUnit').focus(); return; }
+  var btn=el('ifSave'); btn.disabled=true; btn.textContent=editInventoryId?'Saving...':'Submitting...';
+  try{
+    var saved;
+    if(editInventoryId){
+      var current=inventoryItemById(editInventoryId);
+      if(!current) throw new Error('Inventory item no longer exists');
+      payload.version=current.version;
+      saved=await apiCall('PUT','/inventory/'+editInventoryId,payload,'Inventory updated',{queue:false,idempotencyKey:uid()});
+      Object.assign(current,saved);
+    } else {
+      saved=await apiCall('POST','/inventory',payload,isDispatcher()?'Inventory item saved':'Sent for inventory approval',{queue:false,idempotencyKey:uid()});
+      inventory.push(saved);
+    }
+    closeInventoryForm(); renderInventory();
+  }catch(error){ if(error.status===409) await loadInventory(); }
+  finally{ btn.disabled=false; btn.textContent=editInventoryId?'Save Inventory Item':isDispatcher()?'Save Inventory Item':'Submit For Approval'; }
+}
+async function deleteInventoryItem(){
+  if(!editInventoryId||!isDispatcher()) return;
+  var item=inventoryItemById(editInventoryId); if(!item) return;
+  if(!confirm('Delete this inventory item?')) return;
+  try{
+    await apiCall('DELETE','/inventory/'+editInventoryId+'?version='+encodeURIComponent(item.version),null,'Inventory item deleted',{queue:false,idempotencyKey:uid()});
+    inventory=inventory.filter(function(candidate){ return candidate.id!==editInventoryId; });
+    delete selectedInventory[editInventoryId];
+    closeInventoryForm(); renderInventory();
+  }catch(error){ if(error.status===409) await loadInventory(); }
+}
+
 /* ---- formatting ---- */
 function fmtD(d){
   if(!d) return '—';
@@ -729,6 +880,7 @@ async function manualRefresh(){
   await refreshAccess();
   await flushQueue();
   await loadSites();
+  await loadInventory();
   await loadData();
 }
 async function refreshBookingsIfActive(){
@@ -1309,12 +1461,13 @@ function setHomeTab(t){
 }
 
 function showPage(p){
-  ['home','bookings','brent','calendar','manager'].forEach(function(x){
+  ['home','bookings','farm','brent','calendar','manager'].forEach(function(x){
     var pg=el('pg-'+x); var nb=el('nb-'+x);
     if(pg) pg.className='page'+(x===p?'':' hidden');
     if(nb) nb.className='nb'+(x===p?' on':'');
   });
   window.scrollTo(0,0);
+  if(p==='farm') renderInventory();
   if(p==='calendar') renderCalendar();
   if(p==='manager'){
     renderManagerView();
@@ -1487,6 +1640,7 @@ function refreshAccess(){
     if((fresh.roles||[]).slice().sort().join(',')===before) return false;
     renderLock();
     renderManagerView();
+    renderInventory();
     await loadUsers();
     await loadData();
     toast('Your access was updated','ok');
@@ -1505,6 +1659,7 @@ async function startAuthenticated(){
   renderManagerView();
   await loadUsers();
   await loadSites();
+  await loadInventory();
   await flushQueue();
   await loadData();
 }
@@ -1519,6 +1674,7 @@ function closeHelp(){ hideOverlay('helpOverlay'); }
 function closeTopOverlay(){
   if(el('helpOverlay').classList.contains('show')) return closeHelp();
   if(el('detailOverlay').classList.contains('show')) return closeDetail();
+  if(el('inventoryFormOverlay').classList.contains('show')) return closeInventoryForm();
   if(el('siteFormOverlay').classList.contains('show')) return closeSiteForm();
   if(el('dayOverlay').classList.contains('show')) return closeDay();
   if(el('formOverlay').classList.contains('show')) return closeForm();
@@ -1559,11 +1715,14 @@ document.addEventListener('change',function(event){
   else if(event.target.id==='dCompletionPhoto') handleCompletionPhoto(event.target);
   else if(event.target.id==='mgrFrom'||event.target.id==='mgrTo') renderManagerSummary();
   else if(event.target.id==='fTimeWindow') setTimeWindow(event.target.value);
+  else if(event.target.id==='inventoryCategory') renderInventory();
 });
 document.addEventListener('input',function(event){
   if(event.target.id==='fSiteOther') renderCostEstimate();
   else if(event.target.id==='fSiteAddress') onBookingAddressInput();
   else if(event.target.id==='sfAddress') onSiteAddressInput();
+  else if(event.target.id==='inventorySearch') renderInventory();
+  else if(event.target.dataset&&event.target.dataset.action==='inventory-qty') setInventoryQty(event.target.dataset.itemId,event.target.value);
 });
 document.addEventListener('click',function(event){
   var target=event.target.closest('[data-action]'); if(!target) return;
@@ -1575,6 +1734,14 @@ document.addEventListener('click',function(event){
   else if(action==='open-help') openHelp();
   else if(action==='close-help') closeHelp();
   else if(action==='open-form') openForm(target.dataset.type);
+  else if(action==='open-inventory-form') openInventoryForm();
+  else if(action==='edit-inventory') openInventoryForm(target.dataset.itemId);
+  else if(action==='close-inventory-form') closeInventoryForm();
+  else if(action==='save-inventory') saveInventoryItem();
+  else if(action==='delete-inventory') deleteInventoryItem();
+  else if(action==='select-inventory') selectInventory(target.dataset.itemId);
+  else if(action==='remove-inventory') removeInventorySelection(target.dataset.itemId);
+  else if(action==='request-inventory') requestInventory();
   else if(action==='open-site') openSiteForm(target.dataset.siteIndex===undefined?undefined:Number(target.dataset.siteIndex));
   else if(action==='shift-month') calShiftMonth(Number(target.dataset.delta));
   else if(action==='calendar-today') calGoToday();

@@ -134,6 +134,37 @@
   </div>
 </div>
 
+<!-- FARM INVENTORY PAGE -->
+<div id="pg-farm" class="page hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px">
+    <div>
+      <h1 style="margin:0">Faithwood Inventory</h1>
+      <div class="sub" style="margin-top:4px">Request tools and material from the farm.</div>
+    </div>
+    <button data-action="open-inventory-form" class="btn-primary" style="padding:10px 14px;font-size:13px;white-space:nowrap">+ Add</button>
+  </div>
+
+  <div class="farm-toolbar">
+    <label class="sr-only" for="inventorySearch">Search inventory</label>
+    <input id="inventorySearch" class="field" placeholder="Search tools, formply, temp power..." type="search"/>
+    <label class="sr-only" for="inventoryCategory">Category</label>
+    <select id="inventoryCategory" class="field">
+      <option value="">All categories</option>
+      <option value="formwork">Formwork</option>
+      <option value="temp-power">Temp Power</option>
+      <option value="tools">Tools</option>
+      <option value="safety">Safety</option>
+      <option value="equipment">Equipment</option>
+      <option value="consumables">Consumables</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
+
+  <div id="inventorySelection" class="inventory-selection hidden"></div>
+  <h2>Farm Stock</h2>
+  <div id="inventoryList"><div class="skel"></div><div class="skel"></div></div>
+</div>
+
 <!-- CALENDAR PAGE -->
 <div id="pg-calendar" class="page hidden">
   <div class="calnav">
@@ -200,6 +231,7 @@
 <div class="bottomnav">
   <button class="nb on" id="nb-home" data-action="show-page" data-page="home"><span data-ic="home"></span>Home</button>
   <button class="nb" id="nb-bookings" data-action="show-page" data-page="bookings"><span data-ic="clipboard"></span>Bookings</button>
+  <button class="nb" id="nb-farm" data-action="show-page" data-page="farm"><span data-ic="package"></span>Farm</button>
   <button class="nb" id="nb-calendar" data-action="show-page" data-page="calendar"><span data-ic="calendar"></span>Calendar</button>
   <button class="nb" id="nb-brent" data-action="show-page" data-page="brent"><span data-ic="hardhat"></span>Dispatch</button>
   <button class="nb" id="nb-manager" data-action="show-page" data-page="manager"><span data-ic="dollarsign"></span>Manager</button>
@@ -295,6 +327,73 @@
   </div>
 </div>
 
+<!-- INVENTORY FORM OVERLAY -->
+<div id="inventoryFormOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ifTitle">
+  <div class="sheet" tabindex="-1">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <span id="ifTitle" style="font-size:19px;font-weight:800">Add Inventory Item</span>
+      <button data-action="close-inventory-form" class="closebtn" data-ic="x" aria-label="Close"></button>
+    </div>
+
+    <label class="lbl" for="ifName">Item Name *</label>
+    <input id="ifName" class="field" maxlength="160" placeholder="Example: Bosch rotary laser" type="text"/>
+
+    <div class="g2">
+      <div>
+        <label class="lbl" for="ifCategory">Category</label>
+        <select id="ifCategory" class="field">
+          <option value="tools">Tools</option>
+          <option value="formwork">Formwork</option>
+          <option value="temp-power">Temp Power</option>
+          <option value="safety">Safety</option>
+          <option value="equipment">Equipment</option>
+          <option value="consumables">Consumables</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl" for="ifTracking">Tracking</label>
+        <select id="ifTracking" class="field">
+          <option value="returnable">Returnable</option>
+          <option value="consumable">Consumable</option>
+          <option value="transferable">Transferable</option>
+          <option value="job-owned">Job-owned</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div><label class="lbl" for="ifQty">Quantity</label><input id="ifQty" class="field" type="number" min="0" max="100000" step="1" value="1"/></div>
+      <div><label class="lbl" for="ifUnit">Unit</label><input id="ifUnit" class="field" maxlength="40" placeholder="tools, sheets, pieces" type="text" value="each"/></div>
+    </div>
+
+    <label class="lbl" for="ifLocation">Location</label>
+    <input id="ifLocation" class="field" maxlength="160" type="text" value="Faithwood Farms"/>
+
+    <div class="g2">
+      <div><label class="lbl" for="ifCondition">Condition</label><input id="ifCondition" class="field" maxlength="80" placeholder="good, mixed, needs repair" type="text" value="good"/></div>
+      <div><label class="lbl" for="ifValue">Replacement Value</label><input id="ifValue" class="field" type="number" min="0" max="1000000" step="1" placeholder="Optional"/></div>
+    </div>
+
+    <div id="ifStatusWrap">
+      <label class="lbl" for="ifStatus">Status</label>
+      <select id="ifStatus" class="field">
+        <option value="active">Active</option>
+        <option value="pending">Pending Approval</option>
+        <option value="retired">Retired</option>
+      </select>
+    </div>
+
+    <label class="lbl" for="ifNotes">Notes</label>
+    <textarea id="ifNotes" class="field" maxlength="2000" placeholder="Serial number, receipt note, which job bought it, or where Brent can find it..."></textarea>
+
+    <button id="ifSave" data-action="save-inventory" class="btn-primary" style="width:100%;margin-top:18px;padding:16px;font-size:16px">Save Inventory Item</button>
+    <button id="ifDelete" data-action="delete-inventory" class="hidden" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;width:100%;padding:12px;margin-top:8px;font-family:inherit;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px"><span data-ic="trash" data-s="15"></span>Delete Item</button>
+    <button data-action="close-inventory-form" class="btn-outline" style="width:100%;margin-top:10px;padding:14px">Cancel</button>
+  </div>
+</div>
+
 <!-- SITE FORM OVERLAY -->
 <div id="siteFormOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="sfTitle">
   <div class="sheet" tabindex="-1">
@@ -352,6 +451,7 @@
         <ul>
           <li><b>Home</b> — today's counts, quick actions, and upcoming bookings.</li>
           <li><b>Bookings</b> — every booking; tap one to see details.</li>
+          <li><b>Farm</b> — Faithwood Farms inventory. Select items and turn them into a dispatch request.</li>
           <li><b>Calendar</b> — bookings by day. Tap a day to see its jobs or add one for that date.</li>
           <li><b>Dispatch</b> — approvals, today's run sheet, equipment returns, 30-day stats, and job sites.</li>
           <li><b>Manager</b> — cost summaries, user access, backups, and audit activity (managers only).</li>
