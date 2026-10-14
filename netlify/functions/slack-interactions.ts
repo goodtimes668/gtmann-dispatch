@@ -61,7 +61,6 @@ function appUrl() {
   return Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/";
 }
 
-const typeLabels = { delivery: "Material Delivery", pickup: "Tool Pickup", "tool-delivery": "Tool Delivery", misc: "Misc Task" };
 
 async function saveSlackBooking(actor: SlackActor, viewId: string, input: BookingInput, context: Context) {
   try {
@@ -104,31 +103,17 @@ async function saveSlackBooking(actor: SlackActor, viewId: string, input: Bookin
 
     const booking = result.value;
     await recordSlackTrace("booking_saved", { slackUserId: actor.id, bookingId: booking.id, linkedAccount: linked, hasSlackEmail: Boolean(user.email) });
-    const [channelNotification, , confirmation] = await Promise.allSettled([
-      notifyNewBooking(booking),
+    const [notification] = await Promise.allSettled([
+      notifyNewBooking(booking, linked
+        ? `Track it in Dispatch: ${appUrl()}`
+        : `Sign up in Dispatch with your Slack email to track or edit it: ${appUrl()}`),
       recordAudit(user, "booking.created", "booking", booking.id, context, { status: booking.status, site: booking.site, source: "slack", linkedAccount: linked }),
-      notifySlackUser(actor.id, [
-        `Request submitted: ${typeLabels[booking.type]}${booking.site ? ` for ${booking.site}` : ""} on ${booking.date}.`,
-        linked
-          ? `Track it in Dispatch: ${appUrl()}`
-          : `Sign up in Dispatch with your Slack email to track or edit it: ${appUrl()}`,
-      ].join("\n")),
     ]);
-    const channelSent = channelNotification.status === "fulfilled" ? channelNotification.value : null;
-    await recordSlackTrace("booking_channel_notification", {
-      ok: Boolean(channelSent?.materialChannel?.ok),
-      materialChannelOk: Boolean(channelSent?.materialChannel?.ok),
-      materialChannelError: channelSent?.materialChannel?.error || (channelNotification.status === "rejected" ? String(channelNotification.reason).slice(0, 200) : ""),
-      managerChannelOk: channelSent?.managerChannel?.ok ?? null,
-      managerChannelError: channelSent?.managerChannel?.error || "",
-      brentDmOk: channelSent?.brentDm?.ok ?? null,
-      brentDmError: channelSent?.brentDm?.error || "",
-    });
-    const sent = confirmation.status === "fulfilled" ? confirmation.value : null;
+    const sent = notification.status === "fulfilled" ? notification.value : null;
     await recordSlackTrace("requester_dm", {
       slackUserId: actor.id,
       ok: Boolean(sent?.ok),
-      error: confirmation.status === "rejected" ? String(confirmation.reason) : sent ? String(sent.error || "") : "bot token not set",
+      error: notification.status === "rejected" ? String(notification.reason) : sent ? String(sent.error || "") : "bot token not set",
     });
   } catch (error) {
     console.error(JSON.stringify({
