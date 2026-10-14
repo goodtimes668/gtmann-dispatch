@@ -68,11 +68,11 @@ Copy `.env.example` for the complete list. Configure secrets in Netlify—not in
 Optional Slack notifications use:
 
 - `DISPATCH_SLACK_BOT_TOKEN`
-- `BRENT_SLACK_ID`
-- `SLACK_MANAGER_CHANNEL_ID`
 - `DISPATCH_APP_URL`
 
-Slack messages deliberately contain only an **Open Dispatch** link. Approval and status changes happen inside the authenticated app.
+Booking confirmations, approval/decline, dispatch started, completion, assignment, and equipment-return notifications are sent privately to the booking creator. Slack-form requests use the saved Slack user ID; web requests match the creator’s authenticated email using `users.lookupByEmail` (requires `users:read.email`). Dispatch and Slack must use the same email address. If no account is found or the DM fails, the booking still saves and the error is logged; nothing is posted to a shared channel or Brent as a fallback. Legacy `BRENT_SLACK_ID` and `SLACK_MANAGER_CHANNEL_ID` variables no longer route booking notifications.
+
+Slack messages use an **Open Dispatch** link. Approval and status changes happen inside the authenticated app.
 
 ### Requests from Slack
 

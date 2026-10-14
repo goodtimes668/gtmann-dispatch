@@ -21,7 +21,7 @@ function requestedTime(booking: Booking) {
   return "time flexible";
 }
 
-type SlackResult = { ok?: boolean; error?: string; channel?: { id?: string } } & Record<string, unknown>;
+type SlackResult = { ok?: boolean; error?: string; channel?: { id?: string }; user?: { id?: string } } & Record<string, unknown>;
 
 export async function slackCall(method: string, body: Record<string, unknown>) {
   const token = Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN");
@@ -55,26 +55,30 @@ export async function notifySlackUser(slackUserId: string, text: string) {
   return slackCall("chat.postMessage", { channel: slackUserId, text: mrkdwn(text) });
 }
 
-async function notificationChannel() {
-  const brentId = Netlify.env.get("BRENT_SLACK_ID");
-  if (brentId) {
-    const opened = await slackCall("conversations.open", { users: brentId });
-    if (opened?.ok && opened.channel?.id) return opened.channel.id;
+// Resolve only server-owned requester fields; never fall back to a shared channel.
+async function requesterSlackId(booking: Booking): Promise<string | null> {
+  if (!Netlify.env.get("DISPATCH_SLACK_BOT_TOKEN")) return null;
+  const savedId = booking.slackUserId?.trim();
+  if (savedId && /^[UW][A-Z0-9]+$/.test(savedId)) return savedId;
+  const email = booking.requesterEmail?.trim().toLowerCase();
+  if (!email) {
+    console.error("Slack requester DM skipped", "requester email missing");
+    return null;
   }
-  return Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || null;
+  const result = await slackForm("users.lookupByEmail", { email });
+  const id = result?.ok ? result.user?.id : null;
+  return id && /^[UW][A-Z0-9]+$/.test(id) ? id : null;
 }
 
-export async function notifyNewBooking(booking: Booking) {
-  let brentDmChannel: string | null = null;
-  // Deliver each saved request to the material-handling team, plus configured manager and Brent targets.
-  const targets = new Set<string>(["C090X2NSHLY"]);
-  const managerChannel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID")?.trim();
-  if (managerChannel) targets.add(managerChannel);
-  const brentId = Netlify.env.get("BRENT_SLACK_ID")?.trim();
-  if (brentId) {
-    const opened = await slackCall("conversations.open", { users: brentId });
-    if (opened?.ok && opened.channel?.id) { brentDmChannel = opened.channel.id; targets.add(opened.channel.id); }
-  }
+async function notifyRequester(booking: Booking, text: string) {
+  const id = await requesterSlackId(booking);
+  if (!id) return { ok: false, error: "requester Slack account unavailable" };
+  return notifySlackUser(id, text);
+}
+
+export async function notifyNewBooking(booking: Booking, requesterNote = "") {
+  const channel = await requesterSlackId(booking);
+  if (!channel) return { ok: false, error: "requester Slack account unavailable" };
   const type = labels[booking.type] || booking.type;
   const priority = booking.priority === "urgent" ? "URGENT" : booking.priority === "scheduled" ? "Planned" : "Normal";
   const blocks = [
@@ -97,29 +101,15 @@ export async function notifyNewBooking(booking: Booking) {
         { type: "button", text: { type: "plain_text", text: "Open Dispatch" }, url: Netlify.env.get("DISPATCH_APP_URL") || Netlify.env.get("URL") || "https://gtmann-dispatch.netlify.app/", action_id: "open_dispatch_app" },
       ] },
     ];
-  const channels = [...targets];
-  const results = await Promise.all(channels.map((channel) => slackCall("chat.postMessage", {
+  if (requesterNote) blocks.push({ type: "section", text: { type: "mrkdwn", text: mrkdwn(requesterNote) } });
+  return slackCall("chat.postMessage", {
     channel,
-    text: `New dispatch request from ${mrkdwn(booking.requester)}`,
+    text: `Request submitted: ${mrkdwn(type)} for ${mrkdwn(booking.site || "TBD")} on ${mrkdwn(booking.date)}${requesterNote ? `\n${mrkdwn(requesterNote)}` : ""}`,
     blocks,
-  })));
-  const statusFor = (channel: string | null) => {
-    if (!channel) return null;
-    const result = results[channels.indexOf(channel)];
-    return { ok: Boolean(result?.ok), error: result?.ok ? "" : String(result?.error || "not sent") };
-  };
-  const materialChannel = statusFor("C090X2NSHLY") || { ok: false, error: "not sent" };
-  return {
-    // The required Material Handling post cannot be masked by optional Slack destinations.
-    ok: materialChannel.ok,
-    materialChannel,
-    managerChannel: statusFor(managerChannel),
-    brentDm: brentId ? statusFor(brentDmChannel) || { ok: false, error: "DM could not be opened" } : null,
-  };
+  });
 }
 
 export async function notifyStatus(booking: Booking) {
-  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
   const type = labels[booking.type] || booking.type;
   const messages: Partial<Record<Booking["status"], string>> = {
     approved: `Booking approved: ${type} for ${booking.site} on ${booking.date}`,
@@ -134,27 +124,14 @@ export async function notifyStatus(booking: Booking) {
   };
   const text = messages[booking.status];
   if (!text) return;
-  const sends = [];
-  if (channel) sends.push(slackCall("chat.postMessage", { channel, text: mrkdwn(text) }));
-  if (booking.slackUserId) sends.push(notifySlackUser(booking.slackUserId, text));
-  await Promise.all(sends);
+  return notifyRequester(booking, text);
 }
 
 export async function notifyAssignment(booking: Booking) {
-  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
-  if (!channel) return;
   const truck = booking.vehicle ? booking.vehicle.replace("-", " ") : "no truck set";
-  await slackCall("chat.postMessage", {
-    channel,
-    text: `Dispatch assignment updated: ${booking.assignedDriver || "driver not set"} · ${truck} · ${booking.site || "no site"} · ${booking.date}`,
-  });
+  return notifyRequester(booking, `Dispatch assignment updated: ${booking.assignedDriver || "driver not set"} · ${truck} · ${booking.site || "no site"} · ${booking.date}`);
 }
 
 export async function notifyReturn(booking: Booking) {
-  const channel = Netlify.env.get("SLACK_MANAGER_CHANNEL_ID") || await notificationChannel();
-  if (!channel) return;
-  await slackCall("chat.postMessage", {
-    channel,
-    text: `Equipment returned: ${booking.returnItem} from ${booking.site || booking.pickupLocation || "dispatch"}`,
-  });
+  return notifyRequester(booking, `Equipment returned: ${booking.returnItem} from ${booking.site || booking.pickupLocation || "dispatch"}`);
 }

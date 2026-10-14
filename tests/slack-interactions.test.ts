@@ -206,8 +206,9 @@ describe("Slack interactions endpoint", () => {
     expect(booking.estCost).toBeGreaterThan(0);
 
     const posts = slackCalls.filter((call) => call.method === "chat.postMessage");
-    expect(posts.some((call) => call.body.channel === "CMATERIAL" && call.body.blocks)).toBe(true);
-    expect(posts.some((call) => call.body.channel === "DBRENT" && call.body.blocks)).toBe(true);
+    expect(posts).toHaveLength(1);
+    expect(posts[0].body.channel).toBe("U123ABC");
+    expect(posts[0].body.blocks).toBeDefined();
     expect(posts.some((call) => call.body.channel === "U123ABC" && /Request submitted/.test(call.body.text))).toBe(true);
 
     const audit = [...blobs.get("dispatch-audit")!.values()].map((entry) => entry.value as any);
@@ -330,25 +331,22 @@ describe("Slack diagnostics", () => {
     const { context, settle } = makeContext();
     await handler(slackRequest(submission()), context);
     await settle();
-    expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_channel_notification", "booking_saved", "form_submitted", "requester_dm"]);
-    expect(traces()).toContainEqual(expect.objectContaining({ event: "booking_channel_notification", ok: true, materialChannelOk: true, managerChannelOk: true, brentDmOk: true }));
+    expect(traces().map((trace) => trace.event).sort()).toEqual(["booking_saved", "form_submitted", "requester_dm"]);
+    expect(traces()).toContainEqual(expect.objectContaining({ event: "requester_dm", ok: true }));
     expect(JSON.stringify(traces())).not.toContain("20 sheets");
   });
 
-  it("reports a Material Handling failure even when manager and Brent destinations succeed", async () => {
-    slackOutcomes.set("C090X2NSHLY", { ok: false, error: "not_in_channel" });
+  it("reports a requester DM failure without broadcasting to a channel", async () => {
+    slackOutcomes.set("U123ABC", { ok: false, error: "channel_not_found" });
     listUsers.mockResolvedValue([{ id: "identity-1", email: "ryan@example.com", name: "Ryan Jones", roles: ["dispatcher"], confirmedAt: "2026-09-01T00:00:00Z" }]);
     const { context, settle } = makeContext();
     await handler(slackRequest(submission()), context);
     await settle();
 
-    const trace = traces().find((item) => item.event === "booking_channel_notification");
+    const trace = traces().find((item) => item.event === "requester_dm");
     expect(trace).toMatchObject({
       ok: false,
-      materialChannelOk: false,
-      materialChannelError: "not_in_channel",
-      managerChannelOk: true,
-      brentDmOk: true,
+      error: "channel_not_found",
     });
   });
   it("serves the readout only with the configured key", async () => {
