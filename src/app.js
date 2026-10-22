@@ -919,10 +919,10 @@ function renderAll(){
   var now=new Date();
   setToday(now);
   var pend=bookings.filter(function(b){ return b.status==='pending'; });
-  var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'; });
-  var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'; });
+  var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'&&b.status!=='completed'; });
+  var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'&&b.status!=='completed'; });
   var urg=bookings.filter(function(b){ return b.priority==='urgent'&&b.status!=='completed'&&b.status!=='declined'; });
-  var inProgress=bookings.filter(function(b){ return b.status==='in-progress'; });
+  var inProgress=bookings.filter(function(b){ return b.status==='in-progress'&&b.date>=today(); });
   var scheduledToday=bookings.filter(function(b){ return isToday(b.date)&&b.status==='approved'; });
   el('nP').textContent=pend.length; el('nT').textContent=tod.length; el('nW').textContent=wk.length; el('nU').textContent=urg.length;
   el('brentTxt').textContent=inProgress.length
@@ -946,6 +946,10 @@ function renderAll(){
   renderCalendar();
 }
 
+function isOverdueBooking(b){
+  return Boolean(b && b.date && b.date < today() && (b.status === 'pending' || (b.priority === 'urgent' && b.status !== 'completed' && b.status !== 'declined')));
+}
+
 function cardHTML(b,runsheet){
   var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
@@ -956,6 +960,7 @@ function cardHTML(b,runsheet){
   var badge=b._queued
     ? '<span class="badge '+(b._queueBlocked?'b-declined':'b-queued')+'"><span class="dot"></span>'+(b._queueBlocked?'Needs Attention':'Queued')+'</span>'
     : '<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span>';
+  if(isOverdueBooking(b)) badge += ' <span class="badge b-declined">Overdue</span>';
   var when=runsheet ? timeWindowLabel(b) : fmtD(b.date)+' · '+timeWindowLabel(b);
   var extras='';
   if(b.photo||b.photoId) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
