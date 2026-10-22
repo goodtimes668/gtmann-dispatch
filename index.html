@@ -173,6 +173,7 @@
     <button data-action="shift-month" data-delta="1" class="iconbtn" data-ic="chevronright" aria-label="Next month"></button>
   </div>
   <div class="calgrid-head"><div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div></div>
+  <div class="sub" style="margin:8px 0" aria-label="Calendar booking status legend">● Red: urgent &nbsp; ● Amber: pending &nbsp; ● Green: approved or in progress &nbsp; ● Blue: completed &nbsp; ● Grey: declined</div>
   <div id="calGrid" class="calgrid"></div>
   <button data-action="calendar-today" class="btn-outline" style="width:100%;margin-top:16px;padding:12px;font-size:13px">Jump to Today</button>
 </div>
@@ -222,6 +223,8 @@
     <div id="mgrBackupList"><div class="skel"></div></div>
 
     <h2>Recent Audit Activity</h2>
+    <label class="sub" for="auditDateFilter">Show activity from</label>
+    <input type="date" id="auditDateFilter" class="field" aria-label="Filter audit activity by date" style="margin:8px 0 12px">
     <div id="mgrAuditList"><div class="skel"></div></div>
 
   </div>
