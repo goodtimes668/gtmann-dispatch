@@ -919,10 +919,10 @@ function renderAll(){
   var now=new Date();
   setToday(now);
   var pend=bookings.filter(function(b){ return b.status==='pending'; });
-  var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'; });
-  var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'; });
+  var tod=bookings.filter(function(b){ return isToday(b.date)&&b.status!=='declined'&&b.status!=='completed'; });
+  var wk=bookings.filter(function(b){ return isThisWeek(b.date)&&b.status!=='declined'&&b.status!=='completed'; });
   var urg=bookings.filter(function(b){ return b.priority==='urgent'&&b.status!=='completed'&&b.status!=='declined'; });
-  var inProgress=bookings.filter(function(b){ return b.status==='in-progress'; });
+  var inProgress=bookings.filter(function(b){ return b.status==='in-progress'&&b.date>=today(); });
   var scheduledToday=bookings.filter(function(b){ return isToday(b.date)&&b.status==='approved'; });
   el('nP').textContent=pend.length; el('nT').textContent=tod.length; el('nW').textContent=wk.length; el('nU').textContent=urg.length;
   el('brentTxt').textContent=inProgress.length
@@ -946,6 +946,10 @@ function renderAll(){
   renderCalendar();
 }
 
+function isOverdueBooking(b){
+  return Boolean(b && b.date && b.date < today() && (b.status === 'pending' || (b.priority === 'urgent' && b.status !== 'completed' && b.status !== 'declined')));
+}
+
 function cardHTML(b,runsheet){
   var ic={delivery:'package',pickup:'wrench','tool-delivery':'truck',misc:'file'};
   var lb={delivery:'Material Delivery',pickup:'Tool Pickup','tool-delivery':'Tool Delivery',misc:'Misc Task'};
@@ -956,6 +960,7 @@ function cardHTML(b,runsheet){
   var badge=b._queued
     ? '<span class="badge '+(b._queueBlocked?'b-declined':'b-queued')+'"><span class="dot"></span>'+(b._queueBlocked?'Needs Attention':'Queued')+'</span>'
     : '<span class="badge '+(scls[b.status]||'b-pending')+'"><span class="dot"></span>'+esc(sl[b.status]||b.status)+'</span>';
+  if(isOverdueBooking(b)) badge += ' <span class="badge b-declined">Overdue</span>';
   var when=runsheet ? timeWindowLabel(b) : fmtD(b.date)+' · '+timeWindowLabel(b);
   var extras='';
   if(b.photo||b.photoId) extras+=' <span style="display:inline-flex;vertical-align:-2px">'+ico('camera',12,'var(--faint)')+'</span>';
@@ -1567,6 +1572,8 @@ async function loadUsers(){
 
 async function saveUserRole(id){
   var select=document.querySelector('[data-user-role="'+CSS.escape(id)+'"]'); if(!select) return;
+  var name=select.closest('.bcard')?.querySelector('.ttl')?.textContent || 'this user';
+  if(!confirm('Change '+name+' access to '+select.value+'? This changes what they can do in Dispatch.')) return;
   try{
     await apiCall('PUT','/admin/users/'+encodeURIComponent(id),{role:select.value},null,{queue:false,idempotencyKey:uid()});
     toast('Access updated — they will see it after tapping refresh','ok');
@@ -1617,9 +1624,9 @@ function downloadOwnerReport(){
 async function loadAudit(){
   var list=el('mgrAuditList'); if(!list||!isManager()) return;
   try{
-    var events=await apiRequest('GET','/admin/audit?limit=50');
+    var events=await apiRequest('GET','/admin/audit?limit=20');
     list.innerHTML=events.length?events.map(function(event){
-      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail)+' · '+esc(event.targetType)+' '+esc(event.targetId)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
+      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail?event.actorEmail.split('@')[0].replace(/[._-]/g,' '):'System')+' · '+esc(event.targetType)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
     }).join(''):emptyState('inbox','No administrative activity recorded yet');
   }catch(error){ list.innerHTML=emptyState('alert','Audit activity could not be loaded'); }
 }
