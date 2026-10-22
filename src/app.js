@@ -1572,6 +1572,8 @@ async function loadUsers(){
 
 async function saveUserRole(id){
   var select=document.querySelector('[data-user-role="'+CSS.escape(id)+'"]'); if(!select) return;
+  var name=select.closest('.bcard')?.querySelector('.ttl')?.textContent || 'this user';
+  if(!confirm('Change '+name+' access to '+select.value+'? This changes what they can do in Dispatch.')) return;
   try{
     await apiCall('PUT','/admin/users/'+encodeURIComponent(id),{role:select.value},null,{queue:false,idempotencyKey:uid()});
     toast('Access updated — they will see it after tapping refresh','ok');
@@ -1622,9 +1624,9 @@ function downloadOwnerReport(){
 async function loadAudit(){
   var list=el('mgrAuditList'); if(!list||!isManager()) return;
   try{
-    var events=await apiRequest('GET','/admin/audit?limit=50');
+    var events=await apiRequest('GET','/admin/audit?limit=20');
     list.innerHTML=events.length?events.map(function(event){
-      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail)+' · '+esc(event.targetType)+' '+esc(event.targetId)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
+      return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail?event.actorEmail.split('@')[0].replace(/[._-]/g,' '):'System')+' · '+esc(event.targetType)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
     }).join(''):emptyState('inbox','No administrative activity recorded yet');
   }catch(error){ list.innerHTML=emptyState('alert','Audit activity could not be loaded'); }
 }
