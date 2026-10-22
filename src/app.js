@@ -407,8 +407,10 @@ function renderSiteOptions(){
   var sel=el('fSite'); if(!sel) return;
   var current=sel.value;
   var html='<option value="">— Select job site —</option>';
-  sites.slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(s){
-    html+='<option value="'+esc(s.name)+'">'+esc(s.name)+(s.address?' — '+esc(s.address):'')+'</option>';
+  sites.filter(function(site){ return site.name && site.name.trim().toLowerCase()!=='test'; }).slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(s){
+    var displayName=/^grand\s*(?:&|and)\s*fir$/i.test(s.name.trim())?'Grand & Fir':s.name;
+    if(html.indexOf('value="'+esc(displayName)+'"')!==-1) return;
+    html+='<option value="'+esc(displayName)+'">'+esc(displayName)+(s.address?' — '+esc(s.address):'')+'</option>';
   });
   html+='<option value="__other__">Other / Not Listed</option>';
   sel.innerHTML=html;
@@ -1625,6 +1627,9 @@ async function loadAudit(){
   var list=el('mgrAuditList'); if(!list||!isManager()) return;
   try{
     var events=await apiRequest('GET','/admin/audit?limit=20');
+    var filter=el('auditDateFilter');
+    if(filter && !filter.dataset.bound){ filter.dataset.bound='1'; filter.addEventListener('change',loadAudit); }
+    if(filter && filter.value) events=events.filter(function(event){ return event.occurredAt && event.occurredAt.slice(0,10)>=filter.value; });
     list.innerHTML=events.length?events.map(function(event){
       return '<div class="bcard" style="--bc:var(--violet);cursor:default"><div class="ttl" style="font-size:14px">'+esc(event.action.replace(/\./g,' '))+'</div><div class="sub">'+esc(event.actorEmail?event.actorEmail.split('@')[0].replace(/[._-]/g,' '):'System')+' · '+esc(event.targetType)+' · '+esc(new Date(event.occurredAt).toLocaleString())+'</div></div>';
     }).join(''):emptyState('inbox','No administrative activity recorded yet');
